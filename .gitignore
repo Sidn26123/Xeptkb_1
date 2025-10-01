@@ -1,0 +1,9 @@
+# dependencies
+/node_modules
+/server/node_modules
+/adminsite/node_modules
+/studentsite/node_modules
+/teachersite/node_modules
+
+# environment variables
+.env
