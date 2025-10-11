@@ -1,6 +1,4 @@
 // Đọc biến môi trường và kết nối MySQL
-
-require('dotenv').config();
 const mysql = require('mysql2');
 
 const db = mysql.createConnection({
@@ -14,6 +12,7 @@ const db = mysql.createConnection({
 db.connect((err) => {
   if (err) {
     console.error('MySQL connection error:', err);
+    process.exit(1); // Crash server nếu không kết nối được DB
   } else {
     console.log('Connected to MySQL');
   }

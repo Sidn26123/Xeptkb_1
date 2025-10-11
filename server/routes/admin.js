@@ -1,8 +1,8 @@
 // Router cho admin site
 const router = require('express').Router();
+const { verifyToken, authorize } = require('../middleware/auth');
+const { adminTest } = require('../controller/adminController');
 
-router.get('/', (req, res) => {
-  res.json({ msg: 'Admin API' });
-});
+router.get('/', verifyToken, authorize('admin'), adminTest);
 
 module.exports = router;
