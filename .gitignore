@@ -1,6 +1,7 @@
 # dependencies
 /node_modules
 /server/node_modules
+/server/.env
 /adminsite/node_modules
 /studentsite/node_modules
 /teachersite/node_modules
