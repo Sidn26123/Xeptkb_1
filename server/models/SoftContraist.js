@@ -1,28 +1,23 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const User = sequelize.define('User', {
+const SoftContraist = sequelize.define('SoftContraist', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  password: {
-    type: DataTypes.STRING,
+  name: {
+    type: DataTypes.STRING(255),
     allowNull: false,
   },
-  role: {
-    type: DataTypes.STRING,
+  description: {
+    type: DataTypes.TEXT,
     allowNull: true,
   },
 }, {
-  tableName: 'users',
+  tableName: 'softcontraist',
   timestamps: false,
 });
 
-module.exports = User;
+module.exports = SoftContraist;

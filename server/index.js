@@ -5,7 +5,7 @@ const express = require('express');
 const cors = require('./config/cors');
 const compression = require('compression');
 const session = require('express-session');
-const { db } = require('./config/db');
+const sequelize = require('./config/initSequelize');
 
 const adminRoutes = require('./routes/admin');
 const studentRoutes = require('./routes/student');
@@ -73,6 +73,14 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
-});
+sequelize.authenticate()
+ .then(() => {
+   console.log('Kết nối database thành công!');
+   app.listen(PORT, () => {
+     console.log(`Server đang chạy tại http://localhost:${PORT}`);
+   });
+ })
+ .catch(err => {
+   console.error('Lỗi kết nối database:', err);
+   process.exit(1);
+ });
