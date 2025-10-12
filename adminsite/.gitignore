@@ -1,24 +1,109 @@
-# Logs
-logs
+# ============================================
+# == Java / Maven / Gradle build artifacts ==
+# ============================================
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+*.venv
+# Allow Maven wrapper JAR
+!.mvn/wrapper/maven-wrapper.jar
+
+# Allow target folders under source
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# =======================
+# == Secret / Config ==
+# =======================
+.env
+*.env
+*secrets.yml
+*.key
+*.crt
+*.pem
+application-secrets.yml
+
+# =======================
+# == Log files ==
+# =======================
 *.log
+
+# =======================
+# == IDE / Editor ==
+# =======================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse / Spring Tool Suite (STS)
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# VS Code
+.vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =========================
+# == Others / Misc ==
+# =========================
+.mtj.tmp/
+*.ctxt
+*.json
+*.yml
+*.yaml
+.yml
+*.properties
+# Logs (bổ sung thêm các log tools khác)
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node.js (nếu bạn dùng frontend như React/Vite)
+node_modules/
+*.node_modules/
+dist/
+*.dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
+# VS Code - giữ lại extensions.json nếu bạn có config team
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+
+# Visual Studio / JetBrains extra
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+
+# Service folders (nếu có)
+services/config-server/
+
+docker-compose.yml
