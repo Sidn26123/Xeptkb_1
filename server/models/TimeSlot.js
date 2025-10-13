@@ -1,28 +1,23 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const User = sequelize.define('User', {
+const TimeSlot = sequelize.define('TimeSlot', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  password: {
-    type: DataTypes.STRING,
+  name: {
+    type: DataTypes.STRING(100),
     allowNull: false,
   },
-  role: {
-    type: DataTypes.STRING,
-    allowNull: true,
+  idx: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
 }, {
-  tableName: 'users',
+  tableName: 'timeslots',
   timestamps: false,
 });
 
-module.exports = User;
+module.exports = TimeSlot;
