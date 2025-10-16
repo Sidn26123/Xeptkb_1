@@ -1,0 +1,244 @@
+import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    faBackwardStep,
+    faChevronLeft,
+    faChevronRight,
+    faForwardStep,
+} from '@fortawesome/free-solid-svg-icons';
+
+const DefaultNavigator = ({ data, goNext, goBack, goFirst, goLast }) => {
+    return (
+        <>
+            <div>
+                <div
+                    className={
+                        'flex flex-row justify-end items-center gap-x-1 w-full'
+                    }
+                >
+                    <div></div>
+                    <div
+                        className={
+                            'flex flex-row justify-between gap-x-2 items-center'
+                        }
+                    >
+                        <div
+                            className={
+                                'flex flex-row justify-between gap-x-2 items-center'
+                            }
+                        >
+                            <span>Số dòng trên trang</span>
+                            <div className={'w-36'}>
+                                {/*<SimpleDropdown dropdown={}/>*/}
+                                {/*<input />*/}
+                            </div>
+                        </div>
+
+                        <span>
+                            {data.currentPage * data.pageSize}-
+                            {data.currentPage * (data.pageSize + 1) - 1} cua{' '}
+                            {data.totalElements}
+                        </span>
+                        <div className={'gap-x-2 flex flex-row text-sm'}>
+                            <FontAwesomeIcon
+                                icon={faBackwardStep}
+                                onClick={goFirst}
+                            />
+                            <FontAwesomeIcon
+                                icon={faChevronLeft}
+                                onClick={goBack}
+                            />
+                            <FontAwesomeIcon
+                                icon={faChevronRight}
+                                onClick={goNext}
+                            />
+                            <FontAwesomeIcon
+                                icon={faForwardStep}
+                                onClick={goLast}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
+
+const PageNavigator = ({
+    page = 1,
+    pageSize = 10,
+    totalPages = 1,
+    totalElements = 0,
+    onPageChange,
+    onPageSizeChange,
+}) => {
+    const [inputPage, setInputPage] = useState(page.toString());
+    const [currentPage, setCurrentPage] = useState(page);
+    const [currentPageSize, setCurrentPageSize] = useState(pageSize.toString());
+
+    // const changePage = onPageChange;
+    const changePage = onPageChange;
+    const changePageSize = onPageSizeChange;
+
+    // Update state when props change
+    useEffect(() => {
+        setCurrentPage(page - 1);
+        setInputPage(page.toString());
+    }, [page]);
+
+    useEffect(() => {
+        setCurrentPageSize(pageSize.toString());
+    }, [pageSize]);
+
+    // Page navigation handlers
+    const handleFirstPage = () => {
+        if (currentPage > 1) {
+            changePage(1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            changePage(currentPage);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            changePage(currentPage + 2);
+        }
+    };
+
+    const handleLastPage = () => {
+        if (currentPage < totalPages) {
+            changePage(totalPages);
+        }
+    };
+
+    // Page input handlers
+    const handlePageInputChange = (e) => {
+        // Allow only numbers
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        setInputPage(value);
+    };
+
+    const handlePageInputKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handlePageInputBlur();
+        }
+    };
+
+    const handlePageInputBlur = () => {
+        let newPage = parseInt(inputPage, 10);
+
+        // Validate the page number
+        if (isNaN(newPage) || newPage < 1) {
+            newPage = 1;
+        } else if (newPage > totalPages) {
+            newPage = totalPages;
+        }
+
+        setInputPage(newPage.toString());
+        if (newPage !== currentPage) {
+            onPageChange(newPage);
+        }
+    };
+
+    // Page size input handlers
+    const handlePageSizeInputChange = (e) => {
+        // Allow only numbers
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        setCurrentPageSize(value);
+    };
+
+    const handlePageSizeInputKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handlePageSizeInputBlur();
+        }
+    };
+
+    const handlePageSizeInputBlur = () => {
+        let newPageSize = parseInt(currentPageSize, 10);
+
+        // Validate the page size
+        if (isNaN(newPageSize)) {
+            newPageSize = 10; // Default page size
+        } else if (newPageSize < 1) {
+            newPageSize = 1; // Min page size
+        } else if (newPageSize > 100) {
+            newPageSize = 100; // Max page size
+        }
+
+        setCurrentPageSize(newPageSize.toString());
+        if (newPageSize !== pageSize) {
+            onPageSizeChange(newPageSize);
+        }
+    };
+    return (
+        <div className="flex flex-row text-sm justify-center items-center gap-x-5 text-gray-500">
+            {/* First page button */}
+            <FontAwesomeIcon
+                icon={faBackwardStep}
+                className={`text-md ${currentPage > 1 ? 'hover:text-primary hover:cursor-pointer' : 'opacity-50'}`}
+                onClick={handleFirstPage}
+                aria-label="Go to first page"
+            />
+
+            {/* Previous page button */}
+            <FontAwesomeIcon
+                icon={faChevronLeft}
+                className={`text-md ${currentPage > 1 ? 'hover:text-primary hover:cursor-pointer' : 'opacity-50'}`}
+                onClick={handlePreviousPage}
+                aria-label="Go to previous page"
+            />
+
+            {/* Page input with total pages indicator */}
+            <div className="relative">
+                <input
+                    type="text"
+                    value={inputPage}
+                    onChange={handlePageInputChange}
+                    onKeyDown={handlePageInputKeyDown}
+                    onBlur={handlePageInputBlur}
+                    className="border border-primary border-gray-500 rounded h-8 w-20 pl-4 bg-inherit  placeholder:text-gray-500 text-sm"
+                    aria-label="Current page"
+                />
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    <span className="text-gray-500 text-sm">/{totalPages}</span>
+                </div>
+            </div>
+
+            {/* Next page button */}
+            <FontAwesomeIcon
+                icon={faChevronRight}
+                className={`text-md ${currentPage < totalPages ? 'hover:text-primary hover:cursor-pointer' : 'opacity-50'}`}
+                onClick={handleNextPage}
+                aria-label="Go to next page"
+            />
+
+            {/* Last page button */}
+            <FontAwesomeIcon
+                icon={faForwardStep}
+                className={`text-md ${currentPage < totalPages ? 'hover:text-primary hover:cursor-pointer' : 'opacity-50'}`}
+                onClick={handleLastPage}
+                aria-label="Go to last page"
+            />
+
+            {/* Page size input */}
+            <div className="flex flex-row gap-x-1 items-center">
+                <input
+                    type="text"
+                    value={currentPageSize}
+                    onChange={handlePageSizeInputChange}
+                    onKeyDown={handlePageSizeInputKeyDown}
+                    onBlur={handlePageSizeInputBlur}
+                    className="border border-primary border-gray-500 rounded h-8 w-12 pl-4 bg-inherit placeholder:text-gray-500 text-sm"
+                    aria-label="Items per page"
+                />
+                <span className="text-sm ml-1">/ {totalElements}</span>
+            </div>
+        </div>
+    );
+};
+
+export { DefaultNavigator, PageNavigator };
