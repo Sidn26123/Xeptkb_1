@@ -606,7 +606,7 @@ const SemesterConfig = () => {
     );
 };
 
-const InputTaking = () => {
+const InputResourcesManagement = () => {
     const [activeTab, setActiveTab] = useState('courses');
 
     return (
@@ -659,5 +659,5 @@ export {
     TeacherManager,
     RoomManager,
     SemesterConfig,
-    InputTaking,
+    InputResourcesManagement,
 };
