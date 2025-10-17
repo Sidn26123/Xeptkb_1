@@ -3,7 +3,7 @@ import { Menu, X, Home, Users, Settings, FileText } from 'lucide-react';
 import Sidebar from './admin/Sidebar.jsx';
 import { Outlet } from 'react-router-dom';
 
-import Content from './admin/SchedulerResources.jsx';
+import SchedulerResourcesManagement from './admin/SchedulerResources.jsx';
 
 // const Sidebar = ({ isOpen, toggleSidebar }) => {
 //     return (
@@ -109,11 +109,8 @@ export default function AdminLayout({ children }) {
     };
 
     return (
-        <div className="flex min-h-screen w-screen overflow-hidden">
-            {/* Sidebar */}
-            {/*<Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />*/}
+        <div className="flex min-h-screen max-w-screen overflow-hidden dark:bg-gray-900">
             <Sidebar />
-            {/* Overlay for mobile */}
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
@@ -130,7 +127,7 @@ export default function AdminLayout({ children }) {
                 {/*<div className="flex-1 overflow-auto bg-gray-900 text-white">*/}
                 {/*    {children ? children : <Content />}*/}
                 {/*</div>*/}
-                <div className="flex flex-col p-4">
+                <div className="flex flex-col">
                     <Outlet />
                 </div>
             </div>
