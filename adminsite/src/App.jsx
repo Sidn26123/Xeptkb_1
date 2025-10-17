@@ -4,8 +4,17 @@ import AdminLayout from './components/Layout.jsx';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminRoutes from './routers/AdminRoutes';
 import { ToastContainer } from 'react-toastify';
+import { useTheme } from './stores/themeStore.js';
+import { useEffect } from 'react';
 
 function App() {
+    const theme = useTheme();
+
+    // Theo dõi theme và cập nhật class HTML
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+    }, [theme]);
+
     return (
         <>
             {/*<div className="flex">*/}
