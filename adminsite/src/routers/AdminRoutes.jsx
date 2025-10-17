@@ -2,7 +2,7 @@ import { Route } from 'react-router-dom';
 import AdminLayout from '../components/Layout.jsx';
 import ProtectedRoute from '../commons/ProtectedRoute.jsx';
 import { InputTaking } from '../components/admin/InputComponent.jsx';
-import Content from '../components/admin/SchedulerResources.jsx';
+import SchedulerResourcesManagement from '../components/admin/SchedulerResources.jsx';
 
 const adminRoutesPrefix = '/admin';
 
@@ -17,7 +17,7 @@ const AdminRoutes = () => {
                 />
                 <Route
                     path={`${adminRoutesPrefix}/xep-lich`}
-                    element={<Content />}
+                    element={<SchedulerResourcesManagement />}
                 />
 
                 {/* <Route path="settings" element={<Settings />} /> */}
