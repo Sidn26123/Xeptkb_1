@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import CommonTable from '../../commons/CommonTable.jsx';
 import ScheduleGeneratorApp from './Scheduler.jsx';
+import ScheduleViewer from './SchedulerViewer.jsx';
+import {
+    useCourses,
+    useGAConfig,
+    useRooms,
+    useSemesterConfig,
+    useTeachers,
+} from '../../stores/ScheduleDataStore.js';
 // Sample data
 const sampleData = {
     departments: [
@@ -125,6 +133,49 @@ const SchedulerResourcesManagement = () => {
             [subject]: !prev[subject],
         }));
     };
+
+    const courses = useCourses();
+    const teachers = useTeachers();
+    const rooms = useRooms();
+    const semester_config = useSemesterConfig();
+    const ga_config = useGAConfig();
+
+    const [result, setResult] = useState(null);
+
+    const API_URL = 'http://localhost:5000/api/schedule';
+
+    const generateSchedule = async () => {
+        try {
+            const data = {
+                courses,
+                teachers,
+                rooms,
+                semester_config,
+                ga_config,
+            };
+
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            const responseData = await response.json();
+
+            if (response.ok && responseData.success) {
+                setResult(responseData);
+            } else {
+                /* empty */
+            }
+        } catch (err) {
+            /* empty */
+        } finally {
+            /* empty */
+        }
+    };
+    useEffect(() => {
+        generateSchedule();
+    }, []);
 
     // return (
     //     <div className="p-6 min-h-full bg-gray-50 dark:bg-gray-800">
@@ -573,7 +624,8 @@ const SchedulerResourcesManagement = () => {
                 </>
             ) : (
                 <>
-                    <ScheduleGeneratorApp />
+                    {/*<ScheduleGeneratorApp />*/}
+                    {result && <ScheduleViewer resultData={result} />}
                 </>
             )}
         </div>
