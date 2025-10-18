@@ -11,18 +11,56 @@ const adminRoutes = require('./routes/admin');
 const studentRoutes = require('./routes/student');
 const teacherRoutes = require('./routes/teacher');
 const authRoutes = require('./routes/auth');
+const classRoutes = require('./routes/class');
+const academicYearRoutes = require('./routes/academicYear');
+const buildingRoutes = require('./routes/building');
+const campusRoutes = require('./routes/campus');
+const courseClassRoutes = require('./routes/courseClass');
+const equipmentRoutes = require('./routes/equipment');
+const facultyRoutes = require('./routes/faculty');
+const holidayActualRoutes = require('./routes/holidayActual');
+const holidayRuleRoutes = require('./routes/holidayRule');
+const roomEquipmentRoutes = require('./routes/roomEquipment');
+const roomRoutes = require('./routes/room');
+const scheduleRoutes = require('./routes/schedule');
+const semesterRoutes = require('./routes/semester');
+const softContraistRoutes = require('./routes/softContraist');
+const studentRoutes = require('./routes/student');
+const subjectRequiresEquipmentRoutes = require('./routes/subjectRequiresEquipment');
+const subjectRoutes = require('./routes/subject');
+const teacherRoutes = require('./routes/teacher');
+const teachingRoutes = require('./routes/teaching');
+const trainingTypeRoutes = require('./routes/trainingType');
 const app = express();
 app.use(express.json());
 app.use(cors);
 
 app.use(compression());
 
+
 // API routes
 app.use('/api/', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/teacher', teacherRoutes);
-
+app.use('/api/classes', classRoutes);
+app.use('/api/academic-years', academicYearRoutes);
+app.use('/api/buildings', buildingRoutes);
+app.use('/api/campus', campusRoutes);
+app.use('/api/course-classes', courseClassRoutes);
+app.use('/api/equipments', equipmentRoutes);
+app.use('/api/faculties', facultyRoutes);
+app.use('/api/holiday-actuals', holidayActualRoutes);
+app.use('/api/holiday-rules', holidayRuleRoutes);
+app.use('/api/room-equipments', roomEquipmentRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/semesters', semesterRoutes);
+app.use('/api/soft-contraists', softContraistRoutes);
+app.use('/api/subject-requires-equipments', subjectRequiresEquipmentRoutes);
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/teachings', teachingRoutes);
+app.use('/api/training-types', trainingTypeRoutes);
 // 404 handler for unknown routes
 const ErrorResponse = require('./utils/errorResponse');
 app.use((req, res, next) => {

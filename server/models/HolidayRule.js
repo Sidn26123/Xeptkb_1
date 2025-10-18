@@ -11,6 +11,10 @@ const HolidayRule = sequelize.define('HolidayRule', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
+  day_start: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   day_end: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -22,10 +26,6 @@ const HolidayRule = sequelize.define('HolidayRule', {
   recurring: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
-  },
-  day_start: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
   },
 }, {
   tableName: 'holidayrule',
