@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Set, Dict
 import json
 
-from Doantotnghiep.backend.soft_constraint.constraints import RoomDiversityConstraint, TeacherConflictConstraint, WeeklyBalanceConstraint
+from soft_constraint.constraints import RoomDiversityConstraint, TeacherConflictConstraint, WeeklyBalanceConstraint
 
 # ============================================================================
 # DATA STRUCTURES - EXTENDED FOR SEMESTER
@@ -386,11 +386,11 @@ class SemesterGeneticScheduler:
         breakdown['room_diversity'] = room_penalty
         
         # 6. Penalty cho conflicts (soft)
-        conflict_penalty = self._calculate_soft_conflicts(schedule)
-        penalty += conflict_penalty
-        if conflict_penalty > 0:
-            breakdown['soft_conflicts'] = conflict_penalty
-        
+        for constraint in self.soft_constraints:
+            c_penalty = constraint.evaluate(schedule)
+            if c_penalty > 0:
+                breakdown[constraint.name] = c_penalty
+                penalty += c_penalty
         schedule.fitness_score = penalty
         schedule.penalty_breakdown = breakdown
         
