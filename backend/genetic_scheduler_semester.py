@@ -9,11 +9,14 @@ New Features:
 - Tự động đẩy môn về sau khi slot đầy
 """
 
+import datetime
 import random
 import copy
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Set, Dict
 import json
+
+from Doantotnghiep.backend.soft_constraint.constraints import RoomDiversityConstraint, TeacherConflictConstraint, WeeklyBalanceConstraint
 
 # ============================================================================
 # DATA STRUCTURES - EXTENDED FOR SEMESTER
@@ -184,7 +187,9 @@ class SemesterGeneticScheduler:
                  teachers: List[dict],
                  rooms: List[dict],
                  semester_config: dict,
-                 ga_config: dict = None):
+                 ga_config: dict = None,
+                 enabled_constraints: List[str] = None
+                 ):
         """
         Args:
             courses_to_schedule: [
@@ -220,9 +225,24 @@ class SemesterGeneticScheduler:
         self.elite_size = self.config.get('elite_size', 10)
         self.tournament_size = self.config.get('tournament_size', 5)
         
+        self.available_constraints = {
+            "balance": WeeklyBalanceConstraint(),
+            "soft_conflicts": TeacherConflictConstraint(),
+            "room_diversity": RoomDiversityConstraint(),
+        }
+
+        self.soft_constraints = [
+            self.available_constraints[name]
+            for name in (enabled_constraints or self.available_constraints.keys())
+            if name in self.available_constraints
+        ]
+        
+        
         # Statistics
         self.best_fitness_history = []
         self.avg_fitness_history = []
+        
+        
     
     # ========================================================================
     # INITIALIZATION
@@ -679,6 +699,8 @@ if __name__ == "__main__":
         'tournament_size': 3
     }
     
+    start_time = datetime.now()
+    
     # Run scheduler
     scheduler = SemesterGeneticScheduler(
         courses_to_schedule=courses,
@@ -690,6 +712,7 @@ if __name__ == "__main__":
     
     result = scheduler.evolve()
     
+    end_time = datetime.now()
     if result['success']:
         print(f"\n✅ Scheduling Success!")
         print(f"   Fitness: {result['fitness']}")
@@ -734,7 +757,9 @@ if __name__ == "__main__":
                     'end_week': schedule.semester_end_week,
                     'max_concurrent': schedule.max_concurrent_courses
                 },
-                'courses': []
+                'courses': [],
+                'started_at': start_time.isoformat(),
+                'finished_at': end_time.isoformat()
             }
             
             for course in schedule.courses:
