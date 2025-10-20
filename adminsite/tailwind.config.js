@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 const config = {
     content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+    darkMode: false,
     theme: {
         extend: {
             colors: {
@@ -15,6 +16,18 @@ const config = {
                     700: '#006bb3',
                     800: '#004d80',
                     900: '#002e4d', // rất đậm (dùng dark)
+                },
+                grayneu: {
+                    50: '#f9fafb', // rất nhạt
+                    100: '#f3f4f6', // nhạt hơn
+                    200: '#e5e7eb', // viền nhẹ
+                    300: '#d1d5db', // viền trung bình
+                    400: '#9ca3af', // text phụ
+                    500: '#6b7280', // màu chữ chính xám
+                    600: '#4b5563', // xám đậm
+                    700: '#374151', // nền dark nhẹ
+                    800: '#1f2937', // nền dark chính
+                    900: '#111827', // rất đậm (dùng dark mode)
                 },
             },
             surface: {
