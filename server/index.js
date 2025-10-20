@@ -63,6 +63,7 @@ app.use('/api/teachings', teachingRoutes);
 app.use('/api/training-types', trainingTypeRoutes);
 // 404 handler for unknown routes
 const ErrorResponse = require('./utils/errorResponse');
+const errorHandler = require("./middleware/errorHandler");
 app.use((req, res, next) => {
   // Forward to the global error handler with a 404 error
   const error = new ErrorResponse('Route not found', 404);
@@ -108,6 +109,21 @@ app.use((err, req, res, next) => {
     error: error.message || 'Server Error'
   });
 });
+app.use(errorHandler);
+process.on('unhandledRejection', (err) => {
+  console.log('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
+// Xử lý Uncaught Exception
+process.on('uncaughtException', (err) => {
+  console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
+
 
 // Start server
 const PORT = process.env.PORT || 5000;
