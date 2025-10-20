@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { Loader2, Calendar, Settings, Play } from 'lucide-react';
 import useInputStore from '../../stores/InputDataStore.js';
+import {
+    useCourses,
+    useGAConfig,
+    useRooms,
+    useSemesterConfig,
+    useTeachers,
+} from '../../stores/ScheduleDataStore.js';
 
 const DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
 const PERIODS = 14;
@@ -92,12 +99,17 @@ const defaultInputData = {
 };
 
 export default function ScheduleGeneratorApp() {
-    const [inputData, setInputData] = useState(
-        JSON.stringify(defaultInputData, null, 2)
-    );
+    // const [inputData, setInputData] = useState(
+    //     JSON.stringify(defaultInputData, null, 2)
+    // );
 
-    const { courses, teachers, rooms, semester_config, ga_config } =
-        useInputStore();
+    // const { courses, teachers, rooms, semester_config, ga_config } =
+    //     useInputStore();
+    const courses = useCourses();
+    const teachers = useTeachers();
+    const rooms = useRooms();
+    const semester_config = useSemesterConfig();
+    const ga_config = useGAConfig();
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);

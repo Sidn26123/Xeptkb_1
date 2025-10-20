@@ -78,8 +78,17 @@ const useSchedulerStore = create((set) => ({
 
     semester_config: {
         start_week: 1,
-        end_week: 15,
+        end_week: 10,
         max_concurrent_courses: 4,
+    },
+
+    ga_config: {
+        population_size: 50,
+        generations: 300,
+        crossover_rate: 0.8,
+        mutation_rate: 0.2,
+        elite_size: 5,
+        tournament_size: 3,
     },
 
     // --- NEW DATA (from sampleData) ---
@@ -280,7 +289,5 @@ export const useSchools = () => useSchedulerStore((state) => state.schools);
 export const useSubjects = () => useSchedulerStore((state) => state.subjects);
 export const useSchedulingActions = () =>
     useSchedulerStore((state) => state.actions);
-
-export const useSchedulerActions = () =>
-    useSchedulerStore((state) => state.actions);
+export const useGAConfig = () => useSchedulerStore((state) => state.ga_config);
 export default useSchedulerStore;

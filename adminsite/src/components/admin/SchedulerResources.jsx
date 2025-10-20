@@ -12,6 +12,7 @@ import {
     useSemesterConfig,
     useTeachers,
 } from '../../stores/ScheduleDataStore.js';
+import ScheduleAnalyzer from './SchedulerAnalyzer.jsx';
 // Sample data
 const sampleData = {
     departments: [
@@ -626,6 +627,11 @@ const SchedulerResourcesManagement = () => {
                 <>
                     {/*<ScheduleGeneratorApp />*/}
                     {result && <ScheduleViewer resultData={result} />}
+                    {result && (
+                        <>
+                            <ScheduleAnalyzer />
+                        </>
+                    )}
                 </>
             )}
         </div>

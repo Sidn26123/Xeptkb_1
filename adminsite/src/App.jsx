@@ -11,8 +11,17 @@ function App() {
     const theme = useTheme();
 
     // Theo dõi theme và cập nhật class HTML
+    // useEffect(() => {
+    //     // document.documentElement.classList.toggle('dark', theme === 'dark');
+    //     document.documentElement.classList.toggle('light', theme === 'light');
+    // }, [theme]);
+
     useEffect(() => {
-        document.documentElement.classList.toggle('dark', theme === 'dark');
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     }, [theme]);
 
     return (
