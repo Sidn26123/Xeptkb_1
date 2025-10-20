@@ -12,7 +12,6 @@ build/
 *.rar
 hs_err_pid*
 replay_pid*
-*.venv
 # Allow Maven wrapper JAR
 !.mvn/wrapper/maven-wrapper.jar
 
