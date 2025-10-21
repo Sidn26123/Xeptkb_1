@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axios from 'axios';
-
+import { showSuccess, showError } from '../utils/toastUtils'; // 👈 import helper
 
 
 const tableData = [
@@ -57,15 +57,18 @@ export default function TeacherManagement() {
   const onSubmit = async (data) => {
     try {
       const res = await axios.post('/api/teachers', data);
-      alert(res.data.message);
       reset();
       handleAddClose();
     } catch (err) {
+      showError(err.response?.data?.message);
+
       if (err.response?.data?.errors) {
         // Lỗi validate từ backend
+        showError('Dữ liệu không hợp lệ — vui lòng kiểm tra lại');
         setServerErrors(err.response.data.errors);
       } else {
-        alert(err.response?.data?.message || 'Có lỗi xảy ra');
+
+        // alert(err.response?.data?.message || 'Có lỗi xảy ra');
       }
     }
   };
