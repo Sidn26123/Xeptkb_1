@@ -1,0 +1,81 @@
+{
+  "name": "holidayActual",
+  "item": [
+    {
+      "name": "GET /",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{holidayActual}}/",
+          "host": [
+            "{{holidayActual}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "GET /:id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{holidayActual}}/:id",
+          "host": [
+            "{{holidayActual}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{holidayActual}}/",
+          "host": [
+            "{{holidayActual}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "PUT /:id",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{holidayActual}}/:id",
+          "host": [
+            "{{holidayActual}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /:id",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{holidayActual}}/:id",
+          "host": [
+            "{{holidayActual}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    }
+  ]
+}

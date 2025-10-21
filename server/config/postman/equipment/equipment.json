@@ -1,0 +1,81 @@
+{
+  "name": "equipment",
+  "item": [
+    {
+      "name": "GET /",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{equipment}}/",
+          "host": [
+            "{{equipment}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "GET /:id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{equipment}}/:id",
+          "host": [
+            "{{equipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{equipment}}/",
+          "host": [
+            "{{equipment}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "PUT /:id",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{equipment}}/:id",
+          "host": [
+            "{{equipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /:id",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{equipment}}/:id",
+          "host": [
+            "{{equipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    }
+  ]
+}

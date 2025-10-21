@@ -1,0 +1,81 @@
+{
+  "name": "roomEquipment",
+  "item": [
+    {
+      "name": "GET /",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{roomEquipment}}/",
+          "host": [
+            "{{roomEquipment}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "GET /:id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{roomEquipment}}/:id",
+          "host": [
+            "{{roomEquipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{roomEquipment}}/",
+          "host": [
+            "{{roomEquipment}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "PUT /:id",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{roomEquipment}}/:id",
+          "host": [
+            "{{roomEquipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /:id",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{roomEquipment}}/:id",
+          "host": [
+            "{{roomEquipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    }
+  ]
+}

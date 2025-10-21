@@ -1,0 +1,81 @@
+{
+  "name": "trainingType",
+  "item": [
+    {
+      "name": "GET /",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{trainingType}}/",
+          "host": [
+            "{{trainingType}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "GET /:id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{trainingType}}/:id",
+          "host": [
+            "{{trainingType}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{trainingType}}/",
+          "host": [
+            "{{trainingType}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "PUT /:id",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{trainingType}}/:id",
+          "host": [
+            "{{trainingType}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /:id",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{trainingType}}/:id",
+          "host": [
+            "{{trainingType}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    }
+  ]
+}

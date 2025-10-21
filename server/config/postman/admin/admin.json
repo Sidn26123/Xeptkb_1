@@ -1,0 +1,19 @@
+{
+  "name": "admin",
+  "item": [
+    {
+      "name": "GET /",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{admin}}/",
+          "host": [
+            "{{admin}}"
+          ],
+          "path": []
+        }
+      }
+    }
+  ]
+}

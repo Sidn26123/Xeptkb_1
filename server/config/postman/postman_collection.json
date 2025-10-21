@@ -1,0 +1,1700 @@
+{
+  "info": {
+    "name": "Auto Generated Express API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "academicYear",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{academicYear}}/",
+              "host": [
+                "{{academicYear}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{academicYear}}/:id",
+              "host": [
+                "{{academicYear}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{academicYear}}/",
+              "host": [
+                "{{academicYear}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{academicYear}}/:id",
+              "host": [
+                "{{academicYear}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{academicYear}}/:id",
+              "host": [
+                "{{academicYear}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{admin}}/",
+              "host": [
+                "{{admin}}"
+              ],
+              "path": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "POST /login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{auth}}/login",
+              "host": [
+                "{{auth}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /refresh-token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{auth}}/refresh-token",
+              "host": [
+                "{{auth}}"
+              ],
+              "path": [
+                "refresh-token"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{auth}}/register",
+              "host": [
+                "{{auth}}"
+              ],
+              "path": [
+                "register"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "building",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{building}}/",
+              "host": [
+                "{{building}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{building}}/:id",
+              "host": [
+                "{{building}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{building}}/",
+              "host": [
+                "{{building}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{building}}/:id",
+              "host": [
+                "{{building}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{building}}/:id",
+              "host": [
+                "{{building}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "campus",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{campus}}/",
+              "host": [
+                "{{campus}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{campus}}/:id",
+              "host": [
+                "{{campus}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{campus}}/",
+              "host": [
+                "{{campus}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{campus}}/:id",
+              "host": [
+                "{{campus}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{campus}}/:id",
+              "host": [
+                "{{campus}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "class",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{class}}/",
+              "host": [
+                "{{class}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{class}}/:id",
+              "host": [
+                "{{class}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{class}}/",
+              "host": [
+                "{{class}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{class}}/:id",
+              "host": [
+                "{{class}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{class}}/:id",
+              "host": [
+                "{{class}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "courseClass",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{courseClass}}/",
+              "host": [
+                "{{courseClass}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{courseClass}}/:id",
+              "host": [
+                "{{courseClass}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{courseClass}}/",
+              "host": [
+                "{{courseClass}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{courseClass}}/:id",
+              "host": [
+                "{{courseClass}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{courseClass}}/:id",
+              "host": [
+                "{{courseClass}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "equipment",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{equipment}}/",
+              "host": [
+                "{{equipment}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{equipment}}/:id",
+              "host": [
+                "{{equipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{equipment}}/",
+              "host": [
+                "{{equipment}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{equipment}}/:id",
+              "host": [
+                "{{equipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{equipment}}/:id",
+              "host": [
+                "{{equipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "faculty",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{faculty}}/",
+              "host": [
+                "{{faculty}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{faculty}}/:id",
+              "host": [
+                "{{faculty}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{faculty}}/",
+              "host": [
+                "{{faculty}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{faculty}}/:id",
+              "host": [
+                "{{faculty}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{faculty}}/:id",
+              "host": [
+                "{{faculty}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "holidayActual",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{holidayActual}}/",
+              "host": [
+                "{{holidayActual}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{holidayActual}}/:id",
+              "host": [
+                "{{holidayActual}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{holidayActual}}/",
+              "host": [
+                "{{holidayActual}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{holidayActual}}/:id",
+              "host": [
+                "{{holidayActual}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{holidayActual}}/:id",
+              "host": [
+                "{{holidayActual}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "holidayRule",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{holidayRule}}/",
+              "host": [
+                "{{holidayRule}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{holidayRule}}/:id",
+              "host": [
+                "{{holidayRule}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{holidayRule}}/",
+              "host": [
+                "{{holidayRule}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{holidayRule}}/:id",
+              "host": [
+                "{{holidayRule}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{holidayRule}}/:id",
+              "host": [
+                "{{holidayRule}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "room",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{room}}/",
+              "host": [
+                "{{room}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{room}}/:id",
+              "host": [
+                "{{room}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{room}}/",
+              "host": [
+                "{{room}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{room}}/:id",
+              "host": [
+                "{{room}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{room}}/:id",
+              "host": [
+                "{{room}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "roomEquipment",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{roomEquipment}}/",
+              "host": [
+                "{{roomEquipment}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{roomEquipment}}/:id",
+              "host": [
+                "{{roomEquipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{roomEquipment}}/",
+              "host": [
+                "{{roomEquipment}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{roomEquipment}}/:id",
+              "host": [
+                "{{roomEquipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{roomEquipment}}/:id",
+              "host": [
+                "{{roomEquipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "schedule",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{schedule}}/",
+              "host": [
+                "{{schedule}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{schedule}}/:id",
+              "host": [
+                "{{schedule}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{schedule}}/",
+              "host": [
+                "{{schedule}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{schedule}}/:id",
+              "host": [
+                "{{schedule}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{schedule}}/:id",
+              "host": [
+                "{{schedule}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "semester",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{semester}}/",
+              "host": [
+                "{{semester}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{semester}}/:id",
+              "host": [
+                "{{semester}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{semester}}/",
+              "host": [
+                "{{semester}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{semester}}/:id",
+              "host": [
+                "{{semester}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{semester}}/:id",
+              "host": [
+                "{{semester}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "softContraist",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{softContraist}}/",
+              "host": [
+                "{{softContraist}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{softContraist}}/:id",
+              "host": [
+                "{{softContraist}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{softContraist}}/",
+              "host": [
+                "{{softContraist}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{softContraist}}/:id",
+              "host": [
+                "{{softContraist}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{softContraist}}/:id",
+              "host": [
+                "{{softContraist}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "student",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{student}}/",
+              "host": [
+                "{{student}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{student}}/:id",
+              "host": [
+                "{{student}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{student}}/",
+              "host": [
+                "{{student}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{student}}/:id",
+              "host": [
+                "{{student}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{student}}/:id",
+              "host": [
+                "{{student}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "subject",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{subject}}/",
+              "host": [
+                "{{subject}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{subject}}/:id",
+              "host": [
+                "{{subject}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{subject}}/",
+              "host": [
+                "{{subject}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{subject}}/:id",
+              "host": [
+                "{{subject}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{subject}}/:id",
+              "host": [
+                "{{subject}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "subjectRequiresEquipment",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{subjectRequiresEquipment}}/",
+              "host": [
+                "{{subjectRequiresEquipment}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{subjectRequiresEquipment}}/:id",
+              "host": [
+                "{{subjectRequiresEquipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{subjectRequiresEquipment}}/",
+              "host": [
+                "{{subjectRequiresEquipment}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{subjectRequiresEquipment}}/:id",
+              "host": [
+                "{{subjectRequiresEquipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{subjectRequiresEquipment}}/:id",
+              "host": [
+                "{{subjectRequiresEquipment}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "teacher",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{teacher}}/",
+              "host": [
+                "{{teacher}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{teacher}}/:id",
+              "host": [
+                "{{teacher}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{teacher}}/",
+              "host": [
+                "{{teacher}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{teacher}}/:id",
+              "host": [
+                "{{teacher}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{teacher}}/:id",
+              "host": [
+                "{{teacher}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "teaching",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{teaching}}/",
+              "host": [
+                "{{teaching}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{teaching}}/:id",
+              "host": [
+                "{{teaching}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{teaching}}/",
+              "host": [
+                "{{teaching}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{teaching}}/:id",
+              "host": [
+                "{{teaching}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{teaching}}/:id",
+              "host": [
+                "{{teaching}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "trainingType",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{trainingType}}/",
+              "host": [
+                "{{trainingType}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "GET /:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{trainingType}}/:id",
+              "host": [
+                "{{trainingType}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{trainingType}}/",
+              "host": [
+                "{{trainingType}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "PUT /:id",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{trainingType}}/:id",
+              "host": [
+                "{{trainingType}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{trainingType}}/:id",
+              "host": [
+                "{{trainingType}}"
+              ],
+              "path": [
+                ":id"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

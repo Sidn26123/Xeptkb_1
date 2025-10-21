@@ -1,0 +1,81 @@
+{
+  "name": "subjectRequiresEquipment",
+  "item": [
+    {
+      "name": "GET /",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{subjectRequiresEquipment}}/",
+          "host": [
+            "{{subjectRequiresEquipment}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "GET /:id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{subjectRequiresEquipment}}/:id",
+          "host": [
+            "{{subjectRequiresEquipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{subjectRequiresEquipment}}/",
+          "host": [
+            "{{subjectRequiresEquipment}}"
+          ],
+          "path": []
+        }
+      }
+    },
+    {
+      "name": "PUT /:id",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{subjectRequiresEquipment}}/:id",
+          "host": [
+            "{{subjectRequiresEquipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE /:id",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{subjectRequiresEquipment}}/:id",
+          "host": [
+            "{{subjectRequiresEquipment}}"
+          ],
+          "path": [
+            ":id"
+          ]
+        }
+      }
+    }
+  ]
+}
