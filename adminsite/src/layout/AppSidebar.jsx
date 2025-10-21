@@ -21,59 +21,85 @@ const navItems = [
       { name: "Student Management", path: "/student-management", pro: false },
       { name: "Class Management", path: "/class-management", pro: false },
       { name: "Teacher Management", path: "/teacher-management", pro: false },
-      { name: "Holiday Management", path: "/holiday-management", pro: false },
+      { name: "Faculty Management", path: "/faculty-management", pro: false },
+      { name: "Semester Management", path: "/semester-management", pro: false },
+      { name: "AcademicYears Management", path: "/academicyear-management", pro: false },
+      { name: "Subject Management", path: "/Subject-management", pro: false },
+    ],
+  },
+   {
+    name: "Scheduling",
+    icon: <Icon color="green" />,
+    subItems: [
+      { name: "Homeroom Teachers", path: "/homeroom-teachers", pro: false },
+      { name: "Teaching Assignment", path: "/teaching-assignment", pro: false },
+      { name: "Grade - Subject - Period", path: "/grade-subject-period", pro: false },
+      { name: "Timetable Arrangement", path: "/timetable-arrangement", pro: false },
+    ],
+  },
+    {
+    name: "Configuration",
+    icon: <Icon color="purple" />,
+    subItems: [
+      { name: "Set School Days", path: "/set-school-days", pro: false },
+      { name: "Set Break Periods", path: "/set-break-periods", pro: false },
+      { name: "Fixed Periods", path: "/fixed-periods", pro: false },
     ],
   },
   {
-    name: "Forms",
-    icon: <Icon color="green" />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <Icon color="orange" />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <Icon color="red" />,
+    name: "Merge Classes",
+    icon: <Icon color="blue" />,
     subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
+      { name: "Select Class", path: "/select-merge-class", pro: false },
+      { name: "Merged Timetable", path: "/merged-timetable", pro: false },
+    ],
+  },
+  {
+    name: "Split Classes",
+    icon: <Icon color="orange" />,
+    subItems: [
+      { name: "Select Class", path: "/select-split-class", pro: false },
+      { name: "Split Timetable", path: "/split-timetable", pro: false },
+    ],
+  },
+  {
+    name: "Print Timetable",
+    icon: <Icon color="cyan" />, // light blue tone for print
+    subItems: [
+      { name: "Students", path: "/print-timetable/students", pro: false },
+      { name: "Teachers", path: "/print-timetable/teachers", pro: false },
+    ],
+  },
+  {
+    name: "Publish Timetable",
+    icon: <Icon color="lime" />, // bright green for public visibility
+    subItems: [
+      { name: "Students", path: "/publish-timetable/students", pro: false },
+      { name: "Teachers", path: "/publish-timetable/teachers", pro: false },
+      { name: "Entire School", path: "/publish-timetable/school", pro: false },
+      { name: "Change Link", path: "/publish-timetable/change-link", pro: false },
+    ],
+  },
+  {
+    name: "Timetable Backup",
+    icon: <Icon color="amber" />, // yellow/orange for backup/restore
+    subItems: [
+      { name: "Backup", path: "/timetable-backup/backup", pro: false },
+      { name: "Restore", path: "/timetable-backup/restore", pro: false },
+      { name: "Refresh", path: "/timetable-backup/refresh", pro: false },
+    ],
+  },
+  {
+    name: "Room Arrangement",
+    icon: <Icon color="indigo" />, // deep blue-purple for organization
+    subItems: [
+      { name: "Rooms", path: "/room-arrangement/rooms", pro: false },
+      { name: "Arrange", path: "/room-arrangement/arrange", pro: false },
     ],
   },
 ];
 
-const othersItems = [
-  {
-    icon: <Icon color="pink" />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <Icon color="brown" />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <Icon color="black" />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
-  },
-];
+/* othersItems đã bị loại bỏ theo yêu cầu */
 
 function ChevronDownIcon({ className }) {
   return (
@@ -97,7 +123,7 @@ function AppSidebar() {
   useEffect(() => {
     let submenuMatched = false;
     ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+      const items = menuType === "main" ? navItems : [];
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -310,22 +336,7 @@ function AppSidebar() {
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <span>...</span>
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
+            {/* Phần giao diện Others đã bị loại bỏ theo yêu cầu */}
           </div>
         </nav>
       </div>

@@ -25,12 +25,10 @@ const roomRoutes = require('./routes/room');
 const scheduleRoutes = require('./routes/schedule');
 const semesterRoutes = require('./routes/semester');
 const softContraistRoutes = require('./routes/softContraist');
-const studentRoutes = require('./routes/student');
 const subjectRequiresEquipmentRoutes = require('./routes/subjectRequiresEquipment');
 const subjectRoutes = require('./routes/subject');
-const teacherRoutes = require('./routes/teacher');
-const teachingRoutes = require('./routes/teaching');
 const trainingTypeRoutes = require('./routes/trainingType');
+const teachingRoutes = require('./routes/teaching');
 const app = express();
 app.use(express.json());
 app.use(cors);
@@ -41,8 +39,8 @@ app.use(compression());
 // API routes
 app.use('/api/', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/student', studentRoutes);
-app.use('/api/teacher', teacherRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/teachers', teacherRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/academic-years', academicYearRoutes);
 app.use('/api/buildings', buildingRoutes);
@@ -62,7 +60,7 @@ app.use('/api/subjects', subjectRoutes);
 app.use('/api/teachings', teachingRoutes);
 app.use('/api/training-types', trainingTypeRoutes);
 // 404 handler for unknown routes
-const ErrorResponse = require('./utils/errorResponse');
+const { ErrorResponse } = require('./utils/responseUtils');
 app.use((req, res, next) => {
   // Forward to the global error handler with a 404 error
   const error = new ErrorResponse('Route not found', 404);

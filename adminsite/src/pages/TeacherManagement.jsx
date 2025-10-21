@@ -1,38 +1,27 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import PageMeta from "../components/common/PageMeta.jsx";
 import Button from "../components/ui/button/Button.jsx";
 import Modal from "../components/ui/modal/index.jsx";
-
-const tableData = [
-  {
-    id: 1,
-    name: "Nguyễn Văn Hùng",
-    teacher_identifier: "GV001",
-    faculty_id: "CNTT",
-  },
-  {
-    id: 2,
-    name: "Trần Thị Lan",
-    teacher_identifier: "GV002",
-    faculty_id: "Kinh tế",
-  },
-  {
-    id: 3,
-    name: "Lê Văn Minh",
-    teacher_identifier: "GV003",
-    faculty_id: "CNTT",
-  },
-];
+import { getAllFaculties } from '../services/facultyService.js';
+import { getAllTeachers, createTeacher, updateTeacher, deleteTeacher } from '../services/teacherService.js';
 
 export default function TeacherManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editTeacher, setEditTeacher] = useState(null);
+  const [faculties, setFaculties] = useState([]);
+  const [form, setForm] = useState({ name: '', teacher_identifier: '', faculty_id: '' });
+  const [teachers, setTeachers] = useState([]);
+  
 
-  const handleAddOpen = () => setIsAddOpen(true);
-  const handleAddClose = () => setIsAddOpen(false);
+  // clear form when opening add
+  const openAdd = () => { setForm({ name: '', teacher_identifier: '', faculty_id: '' }); setIsAddOpen(true); };
+  const closeAdd = () => { setIsAddOpen(false); };
 
   const handleEditOpen = (teacher) => {
     setEditTeacher(teacher);
+    // populate form with teacher values
+    setForm({ name: teacher.name || '', teacher_identifier: teacher.teacher_identifier || '', faculty_id: teacher.faculty_id || '' });
     setIsEditOpen(true);
   };
   const handleEditClose = () => {
@@ -40,11 +29,38 @@ export default function TeacherManagement() {
     setIsEditOpen(false);
   };
 
+  useEffect(() => { fetchFaculties(); }, []);
+
+  useEffect(() => { fetchTeachers(); }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      const data = await getAllTeachers();
+      setTeachers(Array.isArray(data) ? data : []);
+    } catch (err) { console.error('Failed to load teachers', err); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Bạn có chắc muốn xóa giáo viên này?')) return;
+    try {
+      await deleteTeacher(id);
+      fetchTeachers();
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchFaculties = async () => {
+    try {
+      const data = await getAllFaculties();
+      setFaculties(Array.isArray(data) ? data : []);
+    } catch (err) { console.error('Failed to load faculties', err); }
+  };
+
   return (
     <>
+      <PageMeta title="Quản lý giáo viên" description="Trang quản lý danh sách giáo viên trong hệ thống." />
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="flex justify-end items-center p-4">
-          <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-purple-600 hover:bg-purple-700" onClick={handleAddOpen}>
+          <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-purple-600 hover:bg-purple-700" onClick={openAdd}>
             Thêm giáo viên
           </Button>
         </div>
@@ -60,12 +76,12 @@ export default function TeacherManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {tableData.map((teacher, idx) => (
+              {teachers.map((teacher, idx) => (
                 <tr key={teacher.id}>
                   <td className="px-5 py-4 sm:px-6 text-start">{idx + 1}</td>
                   <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{teacher.name}</td>
                   <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{teacher.teacher_identifier}</td>
-                  <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{teacher.faculty_id}</td>
+                  <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{(faculties.find(f => String(f.id) === String(teacher.faculty_id)) || {}).name || teacher.faculty_id}</td>
                   <td className="px-4 py-3 text-center">
                     <Button
                       size="sm"
@@ -75,7 +91,7 @@ export default function TeacherManagement() {
                     >
                       Sửa
                     </Button>
-                    <Button size="sm" variant="primary" className="bg-red-600 hover:bg-red-700 font-semibold">
+                    <Button size="sm" variant="primary" className="bg-red-600 hover:bg-red-700 font-semibold" onClick={() => handleDelete(teacher.id)}>
                       Xóa
                     </Button>
                   </td>
@@ -87,27 +103,30 @@ export default function TeacherManagement() {
       </div>
 
       {/* Modal Thêm giáo viên */}
-      <Modal isOpen={isAddOpen} onClose={handleAddClose} className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
+  <Modal isOpen={isAddOpen} onClose={closeAdd} className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
         <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-center text-purple-700">Thêm giáo viên</h2>
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={async (e) => { e.preventDefault(); try { await createTeacher(form); closeAdd(); fetchTeachers(); } catch (err) { console.error(err); } }}>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Tên giáo viên</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập tên giáo viên" />
+              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nhập tên giáo viên" required />
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Mã giáo viên</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập mã giáo viên" />
+              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" value={form.teacher_identifier} onChange={(e) => setForm({ ...form, teacher_identifier: e.target.value })} placeholder="Nhập mã giáo viên" required />
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Khoa</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập khoa" />
+              <select className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" value={form.faculty_id} onChange={(e) => setForm({ ...form, faculty_id: e.target.value })} required>
+                <option value="">-- Chọn khoa --</option>
+                {faculties.map(f => (<option key={f.id} value={f.id}>{f.name || f.id}</option>))}
+              </select>
             </div>
             <div className="flex justify-end mt-6 gap-3">
               <Button size="md" variant="primary" className="bg-purple-600 hover:bg-purple-700 font-semibold px-6 py-2 rounded-lg shadow">
                 Lưu
               </Button>
-              <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={handleAddClose}>
+              <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={closeAdd}>
                 Hủy
               </Button>
             </div>
@@ -119,18 +138,21 @@ export default function TeacherManagement() {
       <Modal isOpen={isEditOpen} onClose={handleEditClose} className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
         <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-center text-yellow-700">Sửa thông tin giáo viên</h2>
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={async (e) => { e.preventDefault(); try { await updateTeacher(editTeacher.id, form); setIsEditOpen(false); fetchTeachers(); } catch (err) { console.error(err); } }}>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Tên giáo viên</label>
-              <input className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" defaultValue={editTeacher?.name} />
+              <input className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Mã giáo viên</label>
-              <input className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" defaultValue={editTeacher?.teacher_identifier} />
+              <input className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" value={form.teacher_identifier} onChange={(e) => setForm({ ...form, teacher_identifier: e.target.value })} required />
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Khoa</label>
-              <input className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" defaultValue={editTeacher?.faculty_id} />
+              <select className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" value={form.faculty_id || ''} onChange={(e) => setForm({ ...form, faculty_id: e.target.value })} required>
+                <option value="">-- Chọn khoa --</option>
+                {faculties.map(f => (<option key={f.id} value={f.id}>{f.name || f.id}</option>))}
+              </select>
             </div>
             <div className="flex justify-end mt-6 gap-3">
               <Button size="md" variant="primary" className="bg-yellow-500 hover:bg-yellow-600 font-semibold px-6 py-2 rounded-lg shadow">

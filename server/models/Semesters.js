@@ -7,7 +7,7 @@ const Semester = sequelize.define('Semester', {
     autoIncrement: true,
     primaryKey: true,
   },
-  year_id: {
+  AcademicYearsid: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
@@ -27,6 +27,10 @@ const Semester = sequelize.define('Semester', {
   end: {
     type: DataTypes.DATEONLY,
     allowNull: false,
+  },
+  status: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
   },
 }, {
   tableName: 'semesters',

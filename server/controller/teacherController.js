@@ -25,10 +25,16 @@ exports.getTeacherById = async (req, res) => {
 // Tạo giáo viên mới
 exports.createTeacher = async (req, res) => {
   try {
-    const { name, faculty_id, email, phone } = req.body;
-    const newTeacher = await Teacher.create({ name, faculty_id, email, phone });
+    const { name, faculty_id, teacher_identifier } = req.body;
+    if (!name || !faculty_id || !teacher_identifier) {
+      return res.status(400).json(new ValidationResponse([{ field: 'name/faculty_id/teacher_identifier', message: 'Các trường name, faculty_id và teacher_identifier là bắt buộc' }]));
+    }
+    const newTeacher = await Teacher.create({ name, faculty_id, teacher_identifier });
     res.status(201).json(new SuccessResponse(newTeacher, 'Tạo giáo viên thành công', 201));
   } catch (err) {
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json(new ErrorResponse('teacher_identifier đã tồn tại', 409));
+    }
     res.status(500).json(new ErrorResponse(err.message, 500));
   }
 };
@@ -36,12 +42,15 @@ exports.createTeacher = async (req, res) => {
 // Cập nhật giáo viên
 exports.updateTeacher = async (req, res) => {
   try {
-    const { name, faculty_id, email, phone } = req.body;
+    const { name, faculty_id, teacher_identifier } = req.body;
     const teacher = await Teacher.findByPk(req.params.id);
     if (!teacher) return res.status(404).json(new ErrorResponse('Không tìm thấy giáo viên', 404));
-    await teacher.update({ name, faculty_id, email, phone });
+    await teacher.update({ name: name ?? teacher.name, faculty_id: faculty_id ?? teacher.faculty_id, teacher_identifier: teacher_identifier ?? teacher.teacher_identifier });
     res.status(200).json(new SuccessResponse(teacher, 'Cập nhật giáo viên thành công'));
   } catch (err) {
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json(new ErrorResponse('teacher_identifier đã tồn tại', 409));
+    }
     res.status(500).json(new ErrorResponse(err.message, 500));
   }
 };

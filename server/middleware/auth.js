@@ -1,9 +1,12 @@
 const { verifyToken: jwtVerifyToken } = require('../utils/jwtUtils');
 const bcrypt = require('bcrypt');
-const ErrorResponse = require('../utils/errorResponse');
+const { ErrorResponse } = require('../utils/responseUtils');
+
+const AUTH_ENABLED = process.env.AUTH_ENABLED !== 'false';
 
 // Middleware xác thực token
 function verifyToken(req, res, next) {
+  if (!AUTH_ENABLED) return next();
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'Thiếu token' });
   const user = jwtVerifyToken(token);
@@ -11,7 +14,6 @@ function verifyToken(req, res, next) {
   req.user = user;
   next();
 }
-
 // Middleware xác thực mật khẩu
 function verifyPassword(req, res, next) {
   const { password } = req.body;
