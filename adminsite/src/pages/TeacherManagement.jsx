@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import Button from "../components/ui/button/Button.jsx";
 import Modal from "../components/ui/modal/index.jsx";
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import axios from 'axios';
+
+
 
 const tableData = [
   {
@@ -39,7 +45,30 @@ export default function TeacherManagement() {
     setEditTeacher(null);
     setIsEditOpen(false);
   };
+  const [serverErrors, setServerErrors] = useState([]);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({ resolver: yupResolver(schema) });
+
+  const onSubmit = async (data) => {
+    try {
+      const res = await axios.post('/api/teachers', data);
+      alert(res.data.message);
+      reset();
+      handleAddClose();
+    } catch (err) {
+      if (err.response?.data?.errors) {
+        // Lỗi validate từ backend
+        setServerErrors(err.response.data.errors);
+      } else {
+        alert(err.response?.data?.message || 'Có lỗi xảy ra');
+      }
+    }
+  };
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -87,34 +116,47 @@ export default function TeacherManagement() {
       </div>
 
       {/* Modal Thêm giáo viên */}
-      <Modal isOpen={isAddOpen} onClose={handleAddClose} className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
-        <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold mb-6 text-center text-purple-700">Thêm giáo viên</h2>
-          <form className="space-y-5">
+      <Modal isOpen={isAddOpen} onClose={handleAddClose} className="max-w-lg w-full mx-auto bg-white shadow-lg rounded-lg">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold text-center mb-4">Thêm giáo viên</h2>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">Tên giáo viên</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập tên giáo viên" />
+              <label className="block text-sm font-medium text-gray-700">Tên giáo viên</label>
+              <input {...register('name')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.name?.message}</p>
             </div>
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">Mã giáo viên</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập mã giáo viên" />
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input {...register('email')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.email?.message}</p>
             </div>
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">Khoa</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập khoa" />
+              <label className="block text-sm font-medium text-gray-700">Khoa</label>
+              <input {...register('faculty_id')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.faculty_id?.message}</p>
             </div>
-            <div className="flex justify-end mt-6 gap-3">
-              <Button size="md" variant="primary" className="bg-purple-600 hover:bg-purple-700 font-semibold px-6 py-2 rounded-lg shadow">
-                Lưu
-              </Button>
-              <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={handleAddClose}>
-                Hủy
-              </Button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">SĐT</label>
+              <input {...register('phone')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.phone?.message}</p>
+            </div>
+
+            {/* Hiển thị lỗi từ backend */}
+            {serverErrors.length > 0 && (
+                <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                  {serverErrors.map((err, idx) => (
+                      <p key={idx}>⚠️ {err.field}: {err.message}</p>
+                  ))}
+                </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Lưu</button>
+              <button type="button" onClick={handleAddClose} className="border border-gray-400 px-4 py-2 rounded">Hủy</button>
             </div>
           </form>
         </div>
       </Modal>
-
       {/* Modal Sửa giáo viên */}
       <Modal isOpen={isEditOpen} onClose={handleEditClose} className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
         <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
@@ -144,5 +186,85 @@ export default function TeacherManagement() {
         </div>
       </Modal>
     </>
+  );
+}
+
+
+
+const schema = yup.object({
+  name: yup.string().required('Tên giáo viên là bắt buộc').min(3, 'Tên phải có ít nhất 3 ký tự'),
+  email: yup.string().required('Email là bắt buộc').email('Email không hợp lệ'),
+  faculty_id: yup.string().required('Khoa phải là số').nullable(),
+  phone: yup.string().nullable(),
+});
+
+export function AddTeacherModal({ isAddOpen, handleAddClose }) {
+  const [serverErrors, setServerErrors] = useState([]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({ resolver: yupResolver(schema) });
+
+  const onSubmit = async (data) => {
+    try {
+      const res = await axios.post('/api/teachers', data);
+      alert(res.data.message);
+      reset();
+      handleAddClose();
+    } catch (err) {
+      if (err.response?.data?.errors) {
+        // Lỗi validate từ backend
+        setServerErrors(err.response.data.errors);
+      } else {
+        alert(err.response?.data?.message || 'Có lỗi xảy ra');
+      }
+    }
+  };
+
+  return (
+      <Modal isOpen={isAddOpen} onClose={handleAddClose} className="max-w-lg w-full mx-auto bg-white shadow-lg rounded-lg">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold text-center mb-4">Thêm giáo viên</h2>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Tên giáo viên</label>
+              <input {...register('name')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.name?.message}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input {...register('email')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.email?.message}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Khoa</label>
+              <input {...register('faculty_id')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.faculty_id?.message}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">SĐT</label>
+              <input {...register('phone')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.phone?.message}</p>
+            </div>
+
+            {/* Hiển thị lỗi từ backend */}
+            {serverErrors.length > 0 && (
+                <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                  {serverErrors.map((err, idx) => (
+                      <p key={idx}>⚠️ {err.field}: {err.message}</p>
+                  ))}
+                </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Lưu</button>
+              <button type="button" onClick={handleAddClose} className="border border-gray-400 px-4 py-2 rounded">Hủy</button>
+            </div>
+          </form>
+        </div>
+      </Modal>
   );
 }
