@@ -8,8 +8,8 @@ const session = require('express-session');
 const sequelize = require('./config/initSequelize');
 
 const adminRoutes = require('./routes/admin');
-const studentRoutes = require('./routes/student');
-const teacherRoutes = require('./routes/teacher');
+// const studentRoutes = require('./routes/student');
+// const teacherRoutes = require('./routes/teacher');
 const authRoutes = require('./routes/auth');
 const classRoutes = require('./routes/class');
 const academicYearRoutes = require('./routes/academicYear');
@@ -36,33 +36,33 @@ app.use(express.json());
 app.use(cors);
 
 app.use(compression());
-
+const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 
 // API routes
-app.use('/api/', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/student', studentRoutes);
-app.use('/api/teacher', teacherRoutes);
-app.use('/api/classes', classRoutes);
-app.use('/api/academic-years', academicYearRoutes);
-app.use('/api/buildings', buildingRoutes);
-app.use('/api/campus', campusRoutes);
-app.use('/api/course-classes', courseClassRoutes);
-app.use('/api/equipments', equipmentRoutes);
-app.use('/api/faculties', facultyRoutes);
-app.use('/api/holiday-actuals', holidayActualRoutes);
-app.use('/api/holiday-rules', holidayRuleRoutes);
-app.use('/api/room-equipments', roomEquipmentRoutes);
-app.use('/api/rooms', roomRoutes);
-app.use('/api/schedules', scheduleRoutes);
-app.use('/api/semesters', semesterRoutes);
-app.use('/api/soft-contraists', softContraistRoutes);
-app.use('/api/subject-requires-equipments', subjectRequiresEquipmentRoutes);
-app.use('/api/subjects', subjectRoutes);
-app.use('/api/teachings', teachingRoutes);
-app.use('/api/training-types', trainingTypeRoutes);
+app.use(API_PREFIX + '/', authRoutes);
+app.use(API_PREFIX + '/admin', adminRoutes);
+app.use(API_PREFIX + '/student', studentRoutes);
+app.use(API_PREFIX + '/teacher', teacherRoutes);
+app.use(API_PREFIX + '/classes', classRoutes);
+app.use(API_PREFIX + '/academic-years', academicYearRoutes);
+app.use(API_PREFIX + '/buildings', buildingRoutes);
+app.use(API_PREFIX + '/campus', campusRoutes);
+app.use(API_PREFIX + '/course-classes', courseClassRoutes);
+app.use(API_PREFIX + '/equipments', equipmentRoutes);
+app.use(API_PREFIX + '/faculties', facultyRoutes);
+app.use(API_PREFIX + '/holiday-actuals', holidayActualRoutes);
+app.use(API_PREFIX + '/holiday-rules', holidayRuleRoutes);
+app.use(API_PREFIX + '/room-equipments', roomEquipmentRoutes);
+app.use(API_PREFIX + '/rooms', roomRoutes);
+app.use(API_PREFIX + '/schedules', scheduleRoutes);
+app.use(API_PREFIX + '/semesters', semesterRoutes);
+app.use(API_PREFIX + '/soft-contraists', softContraistRoutes);
+app.use(API_PREFIX + '/subject-requires-equipments', subjectRequiresEquipmentRoutes);
+app.use(API_PREFIX + '/subjects', subjectRoutes);
+app.use(API_PREFIX + '/teachings', teachingRoutes);
+app.use(API_PREFIX + '/training-types', trainingTypeRoutes);
 // 404 handler for unknown routes
-const ErrorResponse = require('./utils/errorResponse');
+const ErrorResponse = require('./utils/responseUtils').ErrorResponse;
 const errorHandler = require("./middleware/errorHandler");
 app.use((req, res, next) => {
   // Forward to the global error handler with a 404 error
@@ -128,8 +128,9 @@ process.on('uncaughtException', (err) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 sequelize.authenticate()
- .then(() => {
+ .then(async () => {
    console.log('Kết nối database thành công!');
+   await sequelize.sync({alter: true});
    app.listen(PORT, () => {
      console.log(`Server đang chạy tại http://localhost:${PORT}`);
    });
