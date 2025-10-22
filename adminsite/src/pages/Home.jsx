@@ -1,8 +1,12 @@
 
+import PageMeta from "../components/common/PageMeta.jsx";
+
 // Home.jsx
 export default function Home() {
-  return (
-    <div className="flex-1 grid grid-cols-12 gap-6">
+ return (
+   <>
+     <PageMeta title="Trang chủ" description="Trang tổng quan hệ thống quản lý trường học." />
+     <div className="flex-1 grid grid-cols-12 gap-6">
       <div className="col-span-12 xl:col-span-7 space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-xl font-bold mb-2">Thống kê tổng quan</h2>
@@ -26,5 +30,6 @@ export default function Home() {
         </div>
       </div>
     </div>
+    </>
   );
 }

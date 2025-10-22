@@ -28,148 +28,94 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `academicyears` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `year_code` varchar(50) NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `status` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
+  `status` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `year_code` (`year_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `activitivelog`
 --
-
 CREATE TABLE `activitivelog` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `account_id` varchar(100) NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `adminuser`
---
-
-CREATE TABLE `adminuser` (
-  `id` int(11) NOT NULL,
-  `account_id` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `buildings`
 --
-
 CREATE TABLE `buildings` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `campus_id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `floor_count` int(11) DEFAULT NULL,
   `code` varchar(50) NOT NULL,
   `location` varchar(255) DEFAULT NULL,
-  `status` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `status` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `campus_id` (`campus_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
 -- Table structure for table `campus`
 --
 
 CREATE TABLE `campus` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `code` varchar(50) NOT NULL,
   `status` varchar(50) DEFAULT NULL,
   `address` text DEFAULT NULL,
   `location` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `classes`
---
-
-CREATE TABLE `classes` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `training_type_id` int(11) NOT NULL,
-  `faculty_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `courseclasses`
---
-
-CREATE TABLE `courseclasses` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `subject_id` int(11) NOT NULL,
-  `class_id` int(11) NOT NULL,
-  `semester_id` int(11) NOT NULL,
-  `teacher_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `days`
 --
 
 CREATE TABLE `days` (
-  `id` int(11) NOT NULL,
-  `name` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
 -- Table structure for table `equipments`
 --
 
 CREATE TABLE `equipments` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `total` int(11) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `total` int(11) DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
 -- Table structure for table `faculty`
 --
 
 CREATE TABLE `faculty` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `faculty_id` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `faculty_id` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `faculty_id` (`faculty_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
 -- Table structure for table `holidayactual`
 --
 
-CREATE TABLE `holidayactual` (
-  `id` int(11) NOT NULL,
-  `note` text DEFAULT NULL,
-  `rule_id` int(11) DEFAULT NULL,
-  `start_date` date NOT NULL,
-  `end_date` date NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- --------------------------------------------------------
 
@@ -178,34 +124,93 @@ CREATE TABLE `holidayactual` (
 --
 
 CREATE TABLE `holidayrule` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `day_end` int(11) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `day_start` varchar(5) DEFAULT NULL,
+  `day_end` varchar(5) DEFAULT NULL,
   `is_lunar` tinyint(1) DEFAULT 0,
   `recurring` tinyint(1) DEFAULT 0,
-  `day_start` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `instructorsunavailabletime`
+-- Table structure for table `softcontraist`
 --
 
-CREATE TABLE `instructorsunavailabletime` (
-  `day_id` int(11) NOT NULL,
-  `teacher_id` int(11) NOT NULL,
-  `time_slot_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+CREATE TABLE `softcontraist` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
+-- Table structure for table `systemconfigs`
 --
+
+CREATE TABLE `systemconfigs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `value` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `timeslots`
+--
+
+CREATE TABLE `timeslots` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `idx` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `trainingtypes`
+--
+
+CREATE TABLE `trainingtypes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `semesters`
+--
+
+CREATE TABLE `semesters` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `AcademicYearsid` int(11) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `start` date NOT NULL,
+  `end` date NOT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `AcademicYearsid` (`AcademicYearsid`),
+  CONSTRAINT `semesters_ibfk_1` FOREIGN KEY (`AcademicYearsid`) REFERENCES `academicyears` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Table structure for table `rooms`
 --
 
 CREATE TABLE `rooms` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) NOT NULL,
   `type` varchar(100) DEFAULT NULL,
@@ -216,182 +221,170 @@ CREATE TABLE `rooms` (
   `buildings_id` int(11) NOT NULL,
   `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `buildings_id` (`buildings_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
+-- Table structure for table `instructorsunavailabletime`
 --
+
+CREATE TABLE `instructorsunavailabletime` (
+  `day_id` int(11) NOT NULL,
+  `teacher_id` int(11) NOT NULL,
+  `time_slot_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Table structure for table `roomsequipments`
 --
 
 CREATE TABLE `roomsequipments` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `equipment_id` int(11) NOT NULL,
   `room_id` int(11) NOT NULL,
   `quantity` int(11) DEFAULT 0,
-  `status` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `status` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `equipment_id` (`equipment_id`),
+  KEY `room_id` (`room_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `schedules`
---
-
-CREATE TABLE `schedules` (
-  `id` int(11) NOT NULL,
-  `course_class_id` int(11) NOT NULL,
-  `day_id` int(11) NOT NULL,
-  `time_slot_id` int(11) DEFAULT NULL,
-  `scheduler` varchar(255) DEFAULT NULL,
-  `num_of_period` int(11) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `semesters`
+-- Table structure for table `teachers`
 --
 
-CREATE TABLE `semesters` (
-  `id` int(11) NOT NULL,
-  `year_id` int(11) NOT NULL,
-  `code` varchar(50) NOT NULL,
+CREATE TABLE `teachers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `start` date NOT NULL,
-  `end` date NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `teacher_identifier` varchar(50) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `teacher_identifier` (`teacher_identifier`),
+  KEY `faculty_id` (`faculty_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
+-- Table structure for table `classes`
 --
--- Table structure for table `softcontraist`
---
 
-CREATE TABLE `softcontraist` (
-  `id` int(11) NOT NULL,
+CREATE TABLE `classes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `training_type_id` int(11) NOT NULL,
+  `faculty_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `training_type_id` (`training_type_id`),
+  KEY `faculty_id` (`faculty_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `students`
---
-
-CREATE TABLE `students` (
-  `id` int(11) NOT NULL,
-  `class_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `student_identifier` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `subjectrequiresequipment`
---
-
-CREATE TABLE `subjectrequiresequipment` (
-  `id` int(11) NOT NULL,
-  `subject_id` int(11) NOT NULL,
-  `equipment_id` int(11) NOT NULL,
-  `require_quantity_per_person` int(11) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `subjects`
 --
 
 CREATE TABLE `subjects` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `training_type_id` int(11) NOT NULL,
   `code` varchar(50) NOT NULL,
   `theory_hours` int(11) DEFAULT 0,
   `self_study_hours` int(11) DEFAULT 0,
   `practice_hours` int(11) DEFAULT 0,
-  `requires_lab` tinyint(1) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `requires_lab` tinyint(1) DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `training_type_id` (`training_type_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
+-- Table structure for table `holidayactual`
 --
--- Table structure for table `systemconfigs`
+
+CREATE TABLE `holidayactual` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `semester_id` int(11) NOT NULL,
+  `rule_id` int(11) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `semester_id` (`semester_id`),
+  KEY `rule_id` (`rule_id`),
+  CONSTRAINT `holidayactual_ibfk_1` FOREIGN KEY (`rule_id`) REFERENCES `holidayrule` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `holidayactual_ibfk_2` FOREIGN KEY (`semester_id`) REFERENCES `semesters` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `students`
 --
 
-CREATE TABLE `systemconfigs` (
-  `id` int(11) NOT NULL,
+CREATE TABLE `students` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `class_id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `value` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `student_identifier` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `student_identifier` (`student_identifier`),
+  KEY `class_id` (`class_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
+-- Table structure for table `courseclasses`
 --
--- Table structure for table `teachers`
---
 
-CREATE TABLE `teachers` (
-  `id` int(11) NOT NULL,
+CREATE TABLE `courseclasses` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `teacher_identifier` varchar(50) NOT NULL,
-  `faculty_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `subject_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  `semester_id` int(11) NOT NULL,
+  `teacher_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `subject_id` (`subject_id`),
+  KEY `class_id` (`class_id`),
+  KEY `semester_id` (`semester_id`),
+  KEY `teacher_id` (`teacher_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
-
+-- Table structure for table `subjectrequiresequipment`
 --
+
+CREATE TABLE `subjectrequiresequipment` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `subject_id` int(11) NOT NULL,
+  `equipment_id` int(11) NOT NULL,
+  `require_quantity_per_person` int(11) DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `subject_id` (`subject_id`),
+  KEY `equipment_id` (`equipment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `schedules`
+--
+
+CREATE TABLE `schedules` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `course_class_id` int(11) NOT NULL,
+  `day_id` int(11) NOT NULL,
+  `time_slot_id` int(11) DEFAULT NULL,
+  `scheduler` varchar(255) DEFAULT NULL,
+  `num_of_period` int(11) DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `course_class_id` (`course_class_id`),
+  KEY `day_id` (`day_id`),
+  KEY `time_slot_id` (`time_slot_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Table structure for table `teachings`
 --
 
 CREATE TABLE `teachings` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `course_class_id` int(11) NOT NULL,
-  `teacher_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `timeslots`
---
-
-CREATE TABLE `timeslots` (
-  `id` int(11) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `idx` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `trainingtypes`
---
-
-CREATE TABLE `trainingtypes` (
-  `id` int(11) NOT NULL,
-  `code` varchar(50) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `users`
---
-
-CREATE TABLE `users` (
-  `id` int(11) NOT NULL,
-  `username` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `role` varchar(50) DEFAULT NULL
+  `teacher_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `course_class_id` (`course_class_id`),
+  KEY `teacher_id` (`teacher_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 
 --
 -- Dumping data for table `users`
@@ -402,6 +395,67 @@ INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
 (2, 'student', '$2b$10$94GkiGkFFjME/I0jHt.BjOF6KhxB.TBHEiTlieFQXEmTrF2WbloTG', 'student'),
 (3, 'teacher', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'teacher');
 
+-- Sample data for academic years (3 recent years)
+INSERT INTO `academicyears` (`id`, `year_code`, `start_date`, `end_date`, `status`) VALUES
+  (1, '2025-2026', '2025-09-01', '2026-06-30', 'upcoming'),
+  (2, '2024-2025', '2024-09-01', '2025-06-30', 'finished'),
+  (3, '2023-2024', '2023-09-01', '2024-06-30', 'finished');
+
+-- Sample data for semesters (HK1 and HK2 for each academic year)
+INSERT INTO `semesters` (`id`, `AcademicYearsid`, `code`, `name`, `start`, `end`, `status`) VALUES
+  (1, 1, '2025-HK1', 'Học kỳ 1 2025-2026', '2025-09-01', '2026-01-15', 'upcoming'),
+  (2, 1, '2026-HK2', 'Học kỳ 2 2025-2026', '2026-02-01', '2026-06-30', 'upcoming'),
+  (3, 2, '2024-HK1', 'Học kỳ 1 2024-2025', '2024-09-01', '2025-01-15', 'finished'),
+  (4, 2, '2025-HK2', 'Học kỳ 2 2024-2025', '2025-02-01', '2025-06-30', 'finished'),
+  (5, 3, '2023-HK1', 'Học kỳ 1 2023-2024', '2023-09-01', '2024-01-15', 'finished'),
+  (6, 3, '2024-HK2', 'Học kỳ 2 2023-2024', '2024-02-01', '2024-06-30', 'finished');
+
+-- Sample holiday rules (recurring holidays within a year)
+INSERT INTO `holidayrule` (`id`, `name`, `description`, `day_start`, `day_end`, `is_lunar`, `recurring`) VALUES
+  (1, 'Tết Nguyên Đán', 'Nghỉ Tết âm lịch', '01-01', '01-03', 1, 1),
+  (2, 'Giỗ Tổ Hùng Vương', 'Giỗ Tổ - nghỉ lễ', '04-10', '04-10', 0, 1),
+  (3, 'Ngày Giải phóng miền Nam', '30/4 - thống nhất đất nước', '30-04', '30-04', 0, 1),
+  (4, 'Quốc tế Lao động', 'Ngày Quốc tế Lao động', '01-05', '01-05', 0, 1),
+  (5, 'Quốc khánh', 'Ngày Quốc khánh 2/9', '02-09', '02-09', 0, 1),
+  (6, 'Ngày Quốc tế Thiếu nhi', 'Nghỉ lễ thiếu nhi (tùy chính sách trường)', '01-06', '01-06', 0, 1);
+
+-- Dữ liệu mẫu cho bảng faculty (các ngành CNTT)
+INSERT INTO `faculty` (`faculty_id`, `name`) VALUES
+  ('CNTT', 'Công nghệ thông tin'),
+  ('HTTT', 'Hệ thống thông tin'),
+  ('KHMT', 'Khoa học máy tính'),
+  ('KTMT', 'Kỹ thuật máy tính'),
+  ('TMDT', 'Thương mại điện tử');
+
+-- Dữ liệu mẫu cho bảng subjects
+INSERT INTO `subjects` (`name`, `training_type_id`, `code`, `theory_hours`, `self_study_hours`, `practice_hours`, `requires_lab`) VALUES
+  ('Lập trình Cơ bản', 1, 'MH001', 30, 15, 15, false),
+  ('Cơ sở dữ liệu', 1, 'MH002', 30, 15, 15, true),
+  ('Trí tuệ nhân tạo', 1, 'MH003', 45, 20, 20, true);
+
+-- Dữ liệu mẫu cho bảng trainingtypes
+INSERT INTO `trainingtypes` (`code`, `name`, `description`) VALUES
+  ('CQ', 'Chính quy', 'Đào tạo chính quy tập trung'),
+  ('VB2', 'Văn bằng 2', 'Đào tạo văn bằng 2'),
+  ('TX', 'Từ xa', 'Đào tạo từ xa');
+
+-- Dữ liệu mẫu cho bảng classes
+INSERT INTO `classes` (`name`, `training_type_id`, `faculty_id`) VALUES
+  ('D21CQCN01-N', 1, 1),
+  ('D21CQHT01-N', 1, 2);
+
+-- Dữ liệu mẫu cho bảng teachers
+INSERT INTO `teachers` (`id`, `name`, `teacher_identifier`, `faculty_id`) VALUES
+  (1, 'Nguyễn Văn A', 'GV001', 1),
+  (2, 'Trần Thị B', 'GV002', 2),
+  (3, 'Lê Văn C', 'GV003', 3);
+
+-- Dữ liệu mẫu cho bảng students
+INSERT INTO `students` (`class_id`, `name`, `student_identifier`) VALUES
+  (1, 'Nguyễn Văn An', 'B21DCCN001'),
+  (1, 'Trần Thị Bình', 'B21DCCN002'),
+  (2, 'Lê Văn Cường', 'B21DCAT001');
+
 --
 -- Indexes for dumped tables
 --
@@ -409,89 +463,57 @@ INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
 --
 -- Indexes for table `academicyears`
 --
-ALTER TABLE `academicyears`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `year_code` (`year_code`);
+-- Đã chuyển PRIMARY KEY và UNIQUE KEY vào CREATE TABLE `academicyears`
 
 --
 -- Indexes for table `activitivelog`
 --
-ALTER TABLE `activitivelog`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `adminuser`
---
-ALTER TABLE `adminuser`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `account_id` (`account_id`);
+-- Đã chuyển PRIMARY KEY vào CREATE TABLE `activitivelog`
 
 --
 -- Indexes for table `buildings`
 --
-ALTER TABLE `buildings`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`),
-  ADD KEY `campus_id` (`campus_id`);
+-- Đã chuyển PRIMARY KEY, UNIQUE KEY và KEY vào CREATE TABLE `buildings`
 
 --
 -- Indexes for table `campus`
 --
-ALTER TABLE `campus`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`);
+-- Đã chuyển PRIMARY KEY và UNIQUE KEY vào CREATE TABLE `campus`
 
 --
 -- Indexes for table `classes`
 --
-ALTER TABLE `classes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `training_type_id` (`training_type_id`),
-  ADD KEY `faculty_id` (`faculty_id`);
+-- Đã chuyển PRIMARY KEY và KEY vào CREATE TABLE `classes`
 
 --
 -- Indexes for table `courseclasses`
 --
-ALTER TABLE `courseclasses`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `subject_id` (`subject_id`),
-  ADD KEY `class_id` (`class_id`),
-  ADD KEY `semester_id` (`semester_id`),
-  ADD KEY `teacher_id` (`teacher_id`);
+-- Đã chuyển PRIMARY KEY và KEY vào CREATE TABLE `courseclasses`
 
 --
 -- Indexes for table `days`
 --
-ALTER TABLE `days`
-  ADD PRIMARY KEY (`id`);
+-- Đã chuyển PRIMARY KEY vào CREATE TABLE `days`
 
 --
 -- Indexes for table `equipments`
 --
-ALTER TABLE `equipments`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`);
+-- Đã chuyển PRIMARY KEY và UNIQUE KEY vào CREATE TABLE `equipments`
 
 --
 -- Indexes for table `faculty`
 --
-ALTER TABLE `faculty`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `faculty_id` (`faculty_id`);
+-- Đã chuyển PRIMARY KEY và UNIQUE KEY vào CREATE TABLE `faculty`
 
 --
 -- Indexes for table `holidayactual`
 --
-ALTER TABLE `holidayactual`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `rule_id` (`rule_id`);
+-- Đã chuyển PRIMARY KEY và KEY vào CREATE TABLE `holidayactual`
 
 --
 -- Indexes for table `holidayrule`
 --
-ALTER TABLE `holidayrule`
-  ADD PRIMARY KEY (`id`);
-
+--
 --
 -- Indexes for table `instructorsunavailabletime`
 --
@@ -503,108 +525,72 @@ ALTER TABLE `instructorsunavailabletime`
 --
 -- Indexes for table `rooms`
 --
-ALTER TABLE `rooms`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`),
-  ADD KEY `buildings_id` (`buildings_id`);
+-- Đã chuyển PRIMARY KEY, UNIQUE KEY và KEY vào CREATE TABLE `rooms`
 
 --
 -- Indexes for table `roomsequipments`
 --
-ALTER TABLE `roomsequipments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `equipment_id` (`equipment_id`),
-  ADD KEY `room_id` (`room_id`);
+-- Đã chuyển PRIMARY KEY và KEY vào CREATE TABLE `roomsequipments`
 
 --
 -- Indexes for table `schedules`
 --
-ALTER TABLE `schedules`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `course_class_id` (`course_class_id`),
-  ADD KEY `day_id` (`day_id`),
-  ADD KEY `time_slot_id` (`time_slot_id`);
+-- Đã chuyển PRIMARY KEY và KEY vào CREATE TABLE `schedules`
 
 --
 -- Indexes for table `semesters`
 --
-ALTER TABLE `semesters`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`),
-  ADD KEY `year_id` (`year_id`);
+-- Đã chuyển PRIMARY KEY, UNIQUE KEY và KEY vào CREATE TABLE `semesters`
 
 --
 -- Indexes for table `softcontraist`
 --
-ALTER TABLE `softcontraist`
-  ADD PRIMARY KEY (`id`);
+-- Đã chuyển PRIMARY KEY vào CREATE TABLE `softcontraist`
 
 --
 -- Indexes for table `students`
 --
-ALTER TABLE `students`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `student_identifier` (`student_identifier`),
-  ADD KEY `class_id` (`class_id`);
+-- Đã chuyển PRIMARY KEY, UNIQUE KEY và KEY vào CREATE TABLE `students`
 
 --
 -- Indexes for table `subjectrequiresequipment`
 --
-ALTER TABLE `subjectrequiresequipment`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `subject_id` (`subject_id`),
-  ADD KEY `equipment_id` (`equipment_id`);
+-- Đã chuyển PRIMARY KEY và KEY vào CREATE TABLE `subjectrequiresequipment`
 
 --
 -- Indexes for table `subjects`
 --
-ALTER TABLE `subjects`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`),
-  ADD KEY `training_type_id` (`training_type_id`);
+-- Đã chuyển PRIMARY KEY, UNIQUE KEY và KEY vào CREATE TABLE `subjects`
 
 --
 -- Indexes for table `systemconfigs`
 --
-ALTER TABLE `systemconfigs`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `name` (`name`);
+-- Đã chuyển PRIMARY KEY và UNIQUE KEY vào CREATE TABLE `systemconfigs`
 
 --
 -- Indexes for table `teachers`
 --
-ALTER TABLE `teachers`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `teacher_identifier` (`teacher_identifier`),
-  ADD KEY `faculty_id` (`faculty_id`);
+-- Đã chuyển PRIMARY KEY, UNIQUE KEY và KEY vào CREATE TABLE `teachers`
 
 --
 -- Indexes for table `teachings`
 --
-ALTER TABLE `teachings`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `course_class_id` (`course_class_id`),
-  ADD KEY `teacher_id` (`teacher_id`);
+-- Đã chuyển PRIMARY KEY và KEY vào CREATE TABLE `teachings`
 
 --
 -- Indexes for table `timeslots`
 --
-ALTER TABLE `timeslots`
-  ADD PRIMARY KEY (`id`);
+-- Đã chuyển PRIMARY KEY vào CREATE TABLE `timeslots`
 
 --
 -- Indexes for table `trainingtypes`
 --
-ALTER TABLE `trainingtypes`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`);
+-- Đã chuyển PRIMARY KEY và UNIQUE KEY vào CREATE TABLE `trainingtypes`
 
 --
 -- Indexes for table `users`
 --
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`);
+-- Đã chuyển PRIMARY KEY và UNIQUE KEY vào CREATE TABLE `users`
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -621,13 +607,7 @@ ALTER TABLE `academicyears`
 --
 ALTER TABLE `activitivelog`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `adminuser`
---
-ALTER TABLE `adminuser`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
+  
 --
 -- AUTO_INCREMENT for table `buildings`
 --
@@ -795,8 +775,7 @@ ALTER TABLE `courseclasses`
 --
 -- Constraints for table `holidayactual`
 --
-ALTER TABLE `holidayactual`
-  ADD CONSTRAINT `holidayactual_ibfk_1` FOREIGN KEY (`rule_id`) REFERENCES `holidayrule` (`id`) ON DELETE SET NULL;
+-- Đã chuyển CONSTRAINT vào CREATE TABLE `holidayactual`
 
 --
 -- Constraints for table `instructorsunavailabletime`
@@ -830,8 +809,7 @@ ALTER TABLE `schedules`
 --
 -- Constraints for table `semesters`
 --
-ALTER TABLE `semesters`
-  ADD CONSTRAINT `semesters_ibfk_1` FOREIGN KEY (`year_id`) REFERENCES `academicyears` (`id`) ON DELETE CASCADE;
+-- Đã chuyển CONSTRAINT vào CREATE TABLE `semesters`
 
 --
 -- Constraints for table `students`

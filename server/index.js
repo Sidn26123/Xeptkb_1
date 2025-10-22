@@ -8,8 +8,8 @@ const session = require('express-session');
 const sequelize = require('./config/initSequelize');
 
 const adminRoutes = require('./routes/admin');
-// const studentRoutes = require('./routes/student');
-// const teacherRoutes = require('./routes/teacher');
+const studentRoutes = require('./routes/student');
+const teacherRoutes = require('./routes/teacher');
 const authRoutes = require('./routes/auth');
 const classRoutes = require('./routes/class');
 const academicYearRoutes = require('./routes/academicYear');

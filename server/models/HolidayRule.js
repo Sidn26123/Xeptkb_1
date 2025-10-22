@@ -11,12 +11,16 @@ const HolidayRule = sequelize.define('HolidayRule', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   day_start: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING(5),
     allowNull: true,
   },
   day_end: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING(5),
     allowNull: true,
   },
   is_lunar: {
