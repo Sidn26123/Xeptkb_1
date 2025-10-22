@@ -1,6 +1,6 @@
 const { verifyToken: jwtVerifyToken } = require('../utils/jwtUtils');
 const bcrypt = require('bcrypt');
-const ErrorResponse = require('../utils/errorResponse');
+const ErrorResponse = require('../utils/responseUtils').ErrorResponse;
 
 // Middleware xác thực token
 function verifyToken(req, res, next) {
