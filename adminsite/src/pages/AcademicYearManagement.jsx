@@ -8,38 +8,13 @@ import {
   updateAcademicYear,
   deleteAcademicYear,
 } from "../services/academicYearService.js";
-
+import { formatDateDisplay, toISODate } from "../utils/dateUtils.js";
 // Helpers for date formatting/parsing (same style as SemesterManagement)
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
 
-function formatDateDisplay(dateStr) {
-  if (!dateStr) return "";
-  if (typeof dateStr === "object" && dateStr instanceof Date) {
-    return `${pad(dateStr.getDate())}/${pad(dateStr.getMonth() + 1)}/${dateStr.getFullYear()}`;
-  }
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-  const m = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (m) {
-    const [_, year, month, day] = m;
-    return `${day}/${month}/${year}`;
-  }
-  const d = new Date(dateStr);
-  if (!isNaN(d)) return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-  return dateStr;
-}
 
-function toISODate(dateStr) {
-  if (!dateStr) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-  const m = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (m) {
-    const [, day, month, year] = m;
-    return `${year}-${month}-${day}`;
-  }
-  const d = new Date(dateStr);
-  if (!isNaN(d)) return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  return dateStr;
-}
+
+
 
 const initialForm = {
   year_code: "",
