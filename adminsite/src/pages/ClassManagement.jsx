@@ -242,6 +242,7 @@ import { getAllTrainingTypes, createTrainingType, updateTrainingType } from '../
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
+import {showError, showSuccess} from "../utils/toastUtils.js";
 
 // Schema cho Lớp học
 const classSchema = yup.object({
@@ -381,9 +382,11 @@ export default function ClassManagement() {
     try {
       await createClass(data);
       handleAddClose();
+      showSuccess('Thêm lớp học thành công.');
       fetchList();
     } catch (err) {
-      console.error('Create failed:', err);
+      // console.error('Create failed:', err);
+      showError('Thêm lớp học thất bại.');
       handleBackendErrors(err, classAddForm);
     }
   };
@@ -392,9 +395,10 @@ export default function ClassManagement() {
     try {
       await updateClass(editClass.id, data);
       handleEditClose();
+      showSuccess('Cập nhật lớp học thành công.');
       fetchList();
     } catch (err) {
-      console.error('Update failed:', err);
+      showError('Cập nhật lớp học thất bại.');
       handleBackendErrors(err, classEditForm);
     }
   };

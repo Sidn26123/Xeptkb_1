@@ -6,6 +6,7 @@ import { getAllFaculties, createFaculty, updateFaculty, deleteFaculty } from '..
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
+import {showError, showSuccess} from "../utils/toastUtils.js";
 
 const facultySchema = yup.object({
   name: yup
@@ -111,9 +112,10 @@ export default function FacultyManagement() {
       await createFaculty(data);
       setIsAddOpen(false);
       addForm.reset();
+      showSuccess('Thêm khoa thành công');
       fetchList();
     } catch (err) {
-      console.error('Create failed:', err);
+      showError('Lỗi khi thêm khoa');
       handleBackendErrors(err, addForm);
     }
   };
@@ -122,10 +124,11 @@ export default function FacultyManagement() {
     try {
       await updateFaculty(editFaculty.id, data);
       setIsEditOpen(false);
+        showSuccess('Cập nhật khoa thành công');
       editForm.reset();
       fetchList();
     } catch (err) {
-      console.error('Update failed:', err);
+        showError('Lỗi khi cập nhật khoa');
       handleBackendErrors(err, editForm);
     }
   };

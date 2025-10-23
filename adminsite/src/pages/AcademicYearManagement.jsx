@@ -9,6 +9,7 @@ import {
   deleteAcademicYear,
 } from "../services/academicYearService.js";
 import { formatDateDisplay, toISODate } from "../utils/dateUtils.js";
+import {showError, showSuccess} from "../utils/toastUtils.js";
 // Helpers for date formatting/parsing (same style as SemesterManagement)
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
 
@@ -122,13 +123,16 @@ export default function AcademicYearManagement() {
     try {
       if (editId) {
         await updateAcademicYear(editId, payload);
+        showSuccess('Cập nhật năm học thành công');
       } else {
         await createAcademicYear(payload);
+        showSuccess('Thêm năm học thành công');
       }
       setIsModalOpen(false);
       fetchYears();
     } catch (err) {
       console.error('Failed to save academic year', err);
+      showError('Lỗi khi lưu năm học');
       setErrors({ submit: err?.message || 'Lỗi khi lưu năm học' });
     } finally {
       setIsSubmitting(false);
