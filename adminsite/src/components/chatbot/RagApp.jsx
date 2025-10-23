@@ -1,0 +1,50 @@
+import React, { useState } from 'react';
+import ChatComponent from './ChatCompo';
+import DocumentUploader from './DocumentUploader';
+import DocumentList from './DocumentList';
+import ConversationList from './ConversationList';
+import DocumentViewer from './DocumentViewer.jsx';
+
+const RAGApp = () => {
+    const [activeConversationId, setActiveConversationId] = useState(null);
+    const [showUploader, setShowUploader] = useState(false);
+    console.log("RAGApp rendered with activeConversationId:", activeConversationId);
+    return (
+        <div className="container base-text-color mx-auto p-4">
+            {/*<DocumentViewer />*/}
+
+            <div className="flex flex-col lg:flex-row gap-4">
+                {/* Sidebar */}
+                <div className="lg:w-1/4 space-y-4">
+                    <ConversationList onSelect={setActiveConversationId} />
+
+                    <DocumentList />
+
+                    <button
+                        onClick={() => setShowUploader(!showUploader)}
+                        className="w-full py-2 bg-gray-300 base-text-color hover:bg-gray-500 rounded text-center"
+                    >
+                        {showUploader ? 'Hide Document Uploader' : 'Upload New Document'}
+                    </button>
+
+                    {showUploader && (
+                        <DocumentUploader onSuccess={() => setShowUploader(false)} />
+                    )}
+                </div>
+
+                {/* Main chat area */}
+                <div className="lg:w-3/4 bg-white border rounded-lg shadow-sm h-[600px]">
+                    {true ? (
+                        <ChatComponent conversationId={activeConversationId} />
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-gray-500">
+                            Select a conversation or start a new one
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default RAGApp;
