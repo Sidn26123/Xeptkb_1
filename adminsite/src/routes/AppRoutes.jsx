@@ -11,6 +11,9 @@ import AcademicYearManagement from "../pages/AcademicYearManagement";
 import FacultyManagement from "../pages/FacultyManagement";
 import SubjectManagement from "../pages/SubjectManagement";
 import SignIn from "../pages/SignIn";
+import RAGApp from "../components/chatbot/RagApp.jsx";
+import GuidePage from "../pages/GuidePage.jsx";
+import TutorialPage from "../pages/GuidePage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -25,6 +28,11 @@ export default function AppRoutes() {
         <Route path="/academicyear-management" element={<AcademicYearManagement />} />
         <Route path="/faculty-management" element={<FacultyManagement />} />
         <Route path="/subject-management" element={<SubjectManagement />} />
+        <Route path="/chatbot" element={<RAGApp />} />
+          <Route path="/guide" element={<TutorialPage />} />
+
+
+
       </Route>
     </Routes>
   );
