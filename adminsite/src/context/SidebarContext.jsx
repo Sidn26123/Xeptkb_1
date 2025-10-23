@@ -7,6 +7,7 @@ export function SidebarProvider({ children }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -27,6 +28,8 @@ export function SidebarProvider({ children }) {
       value={{
         isExpanded: isMobile ? false : isExpanded,
         isMobileOpen,
+        isHovered,
+        setIsHovered,
         toggleSidebar,
         toggleMobileSidebar,
       }}
