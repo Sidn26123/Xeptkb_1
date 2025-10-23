@@ -14,6 +14,7 @@ export const getSemesterById = async (id) => {
 
 export const createSemester = async (data) => {
   const res = await api.post('/semesters', data);
+  console.log('response from createSemester:', res);
   return res?.data?.data ?? null;
 };
 
