@@ -144,7 +144,7 @@ let server; // giữ lại server instance
 sequelize.authenticate()
     .then(async () => {
       console.log('✅ Kết nối database thành công!');
-      await sequelize.sync({ alter: true });
+      await sequelize.sync({ force: false });
       server = app.listen(PORT, () => {
         console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
       });
