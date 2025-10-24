@@ -17,70 +17,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { CheckSquare, Square, RefreshCw, CheckCircle2, Users, BookOpen, Home } from 'lucide-react';
 
 
-// Sample data
-// const sampleData = {
-//     departments: [
-//         {
-//             id: 1,
-//             name: 'Khoa Công nghệ thông tin',
-//             classes: [
-//                 {
-//                     id: 1,
-//                     name: 'T.Chang [10, 11, 12]',
-//                     info: 'Chào cô, S hoạt, Toán, N.ngữ',
-//                     grades: [10, 11, 12],
-//                 },
-//                 {
-//                     id: 2,
-//                     name: 'C.Hiền [10, 11, 12]',
-//                     info: 'Chào cô, S hoạt, Sinh',
-//                     grades: [10, 11, 12],
-//                 },
-//                 {
-//                     id: 3,
-//                     name: 'Cô Dịu [10, 11, 12]',
-//                     info: 'Lđtl, S hoạt, Chào cô',
-//                     grades: [10, 11, 12],
-//                 },
-//             ],
-//         },
-//         {
-//             id: 2,
-//             name: 'Khoa Khoa học tự nhiên',
-//             classes: [
-//                 {
-//                     id: 4,
-//                     name: 'C.Thủy [10, 11, 12]',
-//                     info: 'Sinh, GDQP',
-//                     grades: [10, 11, 12],
-//                 },
-//                 {
-//                     id: 5,
-//                     name: 'C.Minh [11, 12]',
-//                     info: 'N.ngữ',
-//                     grades: [11, 12],
-//                 },
-//                 {
-//                     id: 6,
-//                     name: 'C.Dung [10, 11, 12]',
-//                     info: 'N.ngữ',
-//                     grades: [10, 11, 12],
-//                 },
-//             ],
-//         },
-//     ],
-//     schools: ['THCS Nghĩa Dân', 'THPT Lê Quý Đôn', 'THCS Trần Phú'],
-//     subjects: [
-//         'Chào cờ',
-//         'Tiếng Anh có yêu tố nước ngoài',
-//         'Sinh hoạt',
-//         'Toán',
-//         'Ngữ văn',
-//         'Vật lý',
-//         'Hóa học',
-//     ],
-// };
-
 const SchedulerResourcesManagement = () => {
     const [expandedDepts, setExpandedDepts] = useState({});
     const [selectedClasses, setSelectedClasses] = useState({});
@@ -162,13 +98,11 @@ const SchedulerResourcesManagement = () => {
                 semester_config: semester_config,
                 ga_config: ga_config,
             };
-            console.log('Sending data to API:', data);
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
-            console.log('Response status:', response.status);
             const responseData = await response.json();
 
             if (response.ok && responseData.success) {

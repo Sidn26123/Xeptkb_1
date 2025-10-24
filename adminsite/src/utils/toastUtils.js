@@ -1,17 +1,46 @@
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 
+const autoClose = 1000;
 export const showSuccess = (message) => {
-    toast.success(message || 'Thành công');
+    toast.success(message, {
+        position: 'top-right',
+        autoClose: autoClose,
+        hideProgressBar: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+    });
 };
 
 export const showError = (message) => {
-    toast.error(message || 'Đã xảy ra lỗi!!');
+    toast.error(message, {
+        position: 'top-right',
+        autoClose: autoClose,
+        hideProgressBar: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+    });
 };
 
 export const showInfo = (message) => {
-    toast.info(message || 'Thông tin');
+    toast.info(message, {
+        position: 'top-right',
+        autoClose: autoClose,
+        hideProgressBar: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+    });
 };
 
 export const showWarning = (message) => {
-    toast.warning(message || 'Cảnh báo !');
+    toast.warning(message, {
+        position: 'top-right',
+        autoClose: autoClose,
+        hideProgressBar: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+    });
 };
