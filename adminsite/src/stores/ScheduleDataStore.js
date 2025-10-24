@@ -75,21 +75,11 @@ const useSchedulerStore = create((set) => ({
         { id: 3, name: 'Room 103', capacity: 40 },
         { id: 4, name: 'Room 201', capacity: 70 },
     ],
+    selected_courses: [], //ids of selected courses for scheduling
+    selected_teachers: [],  //id of selected teacher for scheduling
+    selected_rooms: [],
 
-    semester_config: {
-        start_week: 1,
-        end_week: 10,
-        max_concurrent_courses: 4,
-    },
 
-    ga_config: {
-        population_size: 50,
-        generations: 300,
-        crossover_rate: 0.8,
-        mutation_rate: 0.2,
-        elite_size: 5,
-        tournament_size: 3,
-    },
 
     // --- NEW DATA (from sampleData) ---
     departments: [
@@ -155,6 +145,22 @@ const useSchedulerStore = create((set) => ({
         'Hóa học',
     ],
 
+
+
+    semester_config: {
+        start_week: 1,
+        end_week: 15,
+        max_concurrent_courses: 4,
+    },
+
+    ga_config: {
+        population_size: 50,
+        generations: 300,
+        crossover_rate: 0.8,
+        mutation_rate: 0.2,
+        elite_size: 5,
+        tournament_size: 3,
+    },
     // --- ACTIONS ---
     actions: {
         // ====== COURSES ======
@@ -276,6 +282,109 @@ const useSchedulerStore = create((set) => ({
             set((state) => ({
                 subjects: state.subjects.filter((s) => s !== subject),
             })),
+        // ====== SELECTED COURSES ACTIONS ======
+        /**
+         * Thêm một khóa học vào danh sách được chọn.
+         * @param {Object} course - Object khóa học (phải có id).
+         */
+        selectCourse: (course) =>{
+            console.log("Selecting course:", course);
+            set((state) => {
+                if (!state.selected_courses.some((c) => c.id === course.id)) {
+                    return {
+                        selected_courses: [...state.selected_courses, course],
+                    };
+                }
+                return state; // Không thay đổi nếu đã tồn tại
+            })
+        },
+
+        /**
+         * Xóa một khóa học khỏi danh sách được chọn.
+         * @param {number} courseId - ID của khóa học.
+         */
+        unselectCourse: (courseId) =>
+            set((state) => ({
+                selected_courses: state.selected_courses.filter(
+                    (course) => course.id !== courseId
+                ),
+            })),
+
+        /**
+         * Đặt lại danh sách các khóa học được chọn thành rỗng.
+         */
+        clearSelectedCourses: () =>
+            set(() => ({
+                selected_courses: [],
+            })),
+
+// ====== SELECTED TEACHERS ACTIONS ======
+        /**
+         * Thêm một giáo viên vào danh sách được chọn.
+         * @param {Object} teacher - Object giáo viên (phải có id).
+         */
+        selectTeacher: (teacher) =>
+            set((state) => {
+                if (!state.selected_teachers.some((t) => t.id === teacher.id)) {
+                    return {
+                        selected_teachers: [...state.selected_teachers, teacher],
+                    };
+                }
+                return state;
+            }),
+
+        /**
+         * Xóa một giáo viên khỏi danh sách được chọn.
+         * @param {number} teacherId - ID của giáo viên.
+         */
+        unselectTeacher: (teacherId) =>
+            set((state) => ({
+                selected_teachers: state.selected_teachers.filter(
+                    (teacher) => teacher.id !== teacherId
+                ),
+            })),
+
+        /**
+         * Đặt lại danh sách các giáo viên được chọn thành rỗng.
+         */
+        clearSelectedTeachers: () =>
+            set(() => ({
+                selected_teachers: [],
+            })),
+
+// ====== SELECTED ROOMS ACTIONS ======
+        /**
+         * Thêm một phòng học vào danh sách được chọn.
+         * @param {Object} room - Object phòng học (phải có id).
+         */
+        selectRoom: (room) =>
+            set((state) => {
+                if (!state.selected_rooms.some((r) => r.id === room.id)) {
+                    return {
+                        selected_rooms: [...state.selected_rooms, room],
+                    };
+                }
+                return state;
+            }),
+
+        /**
+         * Xóa một phòng học khỏi danh sách được chọn.
+         * @param {number} roomId - ID của phòng học.
+         */
+        unselectRoom: (roomId) =>
+            set((state) => ({
+                selected_rooms: state.selected_rooms.filter(
+                    (room) => room.id !== roomId
+                ),
+            })),
+
+        /**
+         * Đặt lại danh sách các phòng học được chọn thành rỗng.
+         */
+        clearSelectedRooms: () =>
+            set(() => ({
+                selected_rooms: [],
+            })),
     },
 }));
 export const useCourses = () => useSchedulerStore((state) => state.courses);
@@ -287,7 +396,14 @@ export const useDepartments = () =>
     useSchedulerStore((state) => state.departments);
 export const useSchools = () => useSchedulerStore((state) => state.schools);
 export const useSubjects = () => useSchedulerStore((state) => state.subjects);
+
+export const useGAConfig = () => useSchedulerStore((state) => state.ga_config);
+export const useSelectedCourses = () => useSchedulerStore((state) => state.selected_courses);
+export const useSelectedTeachers = () => useSchedulerStore((state) => state.selected_teachers);
+export const useSelectedRooms = () => useSchedulerStore((state) => state.selected_rooms);
+
+
 export const useSchedulingActions = () =>
     useSchedulerStore((state) => state.actions);
-export const useGAConfig = () => useSchedulerStore((state) => state.ga_config);
+
 export default useSchedulerStore;
