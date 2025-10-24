@@ -8,193 +8,124 @@ import {
     Clock,
     AlertTriangle,
 } from 'lucide-react';
+import {useCourses, useTeachers} from "../../stores/ScheduleDataStore.js";
 
-const ScheduleAnalyzer = () => {
+const ScheduleAnalyzer = ({courses, teachers, rooms, result}) => {
     // Input data
-    const courses = [
-        {
-            id: 1,
-            course_id: 101,
-            student_count: 50,
-            weeks_needed: 4,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 2,
-            course_id: 102,
-            student_count: 40,
-            weeks_needed: 3,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 3,
-            course_id: 103,
-            student_count: 60,
-            weeks_needed: 5,
-            sessions_per_week: 3,
-            duration_per_session: 2,
-        },
-        {
-            id: 4,
-            course_id: 104,
-            student_count: 45,
-            weeks_needed: 4,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 5,
-            course_id: 105,
-            student_count: 50,
-            weeks_needed: 3,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 6,
-            course_id: 106,
-            student_count: 35,
-            weeks_needed: 4,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 7,
-            course_id: 107,
-            student_count: 55,
-            weeks_needed: 5,
-            sessions_per_week: 3,
-            duration_per_session: 2,
-        },
-    ];
-
-    const teachers = [
-        { id: 1, name: 'Teacher A', can_teach_courses: [101, 102] },
-        { id: 2, name: 'Teacher B', can_teach_courses: [102, 103, 104] },
-        { id: 3, name: 'Teacher C', can_teach_courses: [104, 105, 106] },
-        { id: 4, name: 'Teacher D', can_teach_courses: [106, 107] },
-    ];
-
-    const rooms = [
-        { id: 1, name: 'Room 101', capacity: 60 },
-        { id: 2, name: 'Room 102', capacity: 50 },
-        { id: 3, name: 'Room 103', capacity: 40 },
-        { id: 4, name: 'Room 201', capacity: 70 },
-    ];
-
-    const result = {
-        success: true,
-        semester: {
-            start_week: 1,
-            end_week: 10,
-            max_concurrent: 4,
-        },
-        courses: [
-            {
-                course_id: 106,
-                class_id: 6,
-                teacher_id: 4,
-                room_id: 3,
-                start_week: 1,
-                end_week: 4,
-                duration: 4,
-                student_count: 35,
-                weekly_slots: [
-                    { day: 3, period: 2, duration: 2 },
-                    { day: 6, period: 2, duration: 2 },
-                ],
-            },
-            {
-                course_id: 107,
-                class_id: 7,
-                teacher_id: 4,
-                room_id: 1,
-                start_week: 6,
-                end_week: 10,
-                duration: 5,
-                student_count: 55,
-                weekly_slots: [
-                    { day: 4, period: 3, duration: 2 },
-                    { day: 6, period: 6, duration: 2 },
-                    { day: 2, period: 10, duration: 2 },
-                ],
-            },
-            {
-                course_id: 104,
-                class_id: 4,
-                teacher_id: 3,
-                room_id: 2,
-                start_week: 1,
-                end_week: 4,
-                duration: 4,
-                student_count: 45,
-                weekly_slots: [
-                    { day: 6, period: 5, duration: 2 },
-                    { day: 4, period: 4, duration: 2 },
-                ],
-            },
-            {
-                course_id: 102,
-                class_id: 2,
-                teacher_id: 1,
-                room_id: 4,
-                start_week: 5,
-                end_week: 7,
-                duration: 3,
-                student_count: 40,
-                weekly_slots: [
-                    { day: 2, period: 9, duration: 2 },
-                    { day: 3, period: 7, duration: 2 },
-                ],
-            },
-            {
-                course_id: 101,
-                class_id: 1,
-                teacher_id: 1,
-                room_id: 1,
-                start_week: 1,
-                end_week: 4,
-                duration: 4,
-                student_count: 50,
-                weekly_slots: [
-                    { day: 2, period: 3, duration: 2 },
-                    { day: 6, period: 4, duration: 2 },
-                ],
-            },
-            {
-                course_id: 105,
-                class_id: 5,
-                teacher_id: 3,
-                room_id: 1,
-                start_week: 5,
-                end_week: 7,
-                duration: 3,
-                student_count: 50,
-                weekly_slots: [
-                    { day: 2, period: 5, duration: 2 },
-                    { day: 6, period: 1, duration: 2 },
-                ],
-            },
-            {
-                course_id: 104,
-                class_id: 4,
-                teacher_id: 2,
-                room_id: 2,
-                start_week: 6,
-                end_week: 9,
-                duration: 4,
-                student_count: 45,
-                weekly_slots: [
-                    { day: 5, period: 8, duration: 2 },
-                    { day: 7, period: 3, duration: 2 },
-                ],
-            },
-        ],
-        fitness: 18,
-        generations: 4,
-    };
+    // const courses = useCourses();
+    //
+    // const teachers = useTeachers();
+    // const result = {
+    //     success: true,
+    //     semester: {
+    //         start_week: 1,
+    //         end_week: 10,
+    //         max_concurrent: 4,
+    //     },
+    //     courses: [
+    //         {
+    //             course_id: 106,
+    //             class_id: 6,
+    //             teacher_id: 4,
+    //             room_id: 3,
+    //             start_week: 1,
+    //             end_week: 4,
+    //             duration: 4,
+    //             student_count: 35,
+    //             weekly_slots: [
+    //                 { day: 3, period: 2, duration: 2 },
+    //                 { day: 6, period: 2, duration: 2 },
+    //             ],
+    //         },
+    //         {
+    //             course_id: 107,
+    //             class_id: 7,
+    //             teacher_id: 4,
+    //             room_id: 1,
+    //             start_week: 6,
+    //             end_week: 10,
+    //             duration: 5,
+    //             student_count: 55,
+    //             weekly_slots: [
+    //                 { day: 4, period: 3, duration: 2 },
+    //                 { day: 6, period: 6, duration: 2 },
+    //                 { day: 2, period: 10, duration: 2 },
+    //             ],
+    //         },
+    //         {
+    //             course_id: 104,
+    //             class_id: 4,
+    //             teacher_id: 3,
+    //             room_id: 2,
+    //             start_week: 1,
+    //             end_week: 4,
+    //             duration: 4,
+    //             student_count: 45,
+    //             weekly_slots: [
+    //                 { day: 6, period: 5, duration: 2 },
+    //                 { day: 4, period: 4, duration: 2 },
+    //             ],
+    //         },
+    //         {
+    //             course_id: 102,
+    //             class_id: 2,
+    //             teacher_id: 1,
+    //             room_id: 4,
+    //             start_week: 5,
+    //             end_week: 7,
+    //             duration: 3,
+    //             student_count: 40,
+    //             weekly_slots: [
+    //                 { day: 2, period: 9, duration: 2 },
+    //                 { day: 3, period: 7, duration: 2 },
+    //             ],
+    //         },
+    //         {
+    //             course_id: 101,
+    //             class_id: 1,
+    //             teacher_id: 1,
+    //             room_id: 1,
+    //             start_week: 1,
+    //             end_week: 4,
+    //             duration: 4,
+    //             student_count: 50,
+    //             weekly_slots: [
+    //                 { day: 2, period: 3, duration: 2 },
+    //                 { day: 6, period: 4, duration: 2 },
+    //             ],
+    //         },
+    //         {
+    //             course_id: 105,
+    //             class_id: 5,
+    //             teacher_id: 3,
+    //             room_id: 1,
+    //             start_week: 5,
+    //             end_week: 7,
+    //             duration: 3,
+    //             student_count: 50,
+    //             weekly_slots: [
+    //                 { day: 2, period: 5, duration: 2 },
+    //                 { day: 6, period: 1, duration: 2 },
+    //             ],
+    //         },
+    //         {
+    //             course_id: 104,
+    //             class_id: 4,
+    //             teacher_id: 2,
+    //             room_id: 2,
+    //             start_week: 6,
+    //             end_week: 9,
+    //             duration: 4,
+    //             student_count: 45,
+    //             weekly_slots: [
+    //                 { day: 5, period: 8, duration: 2 },
+    //                 { day: 7, period: 3, duration: 2 },
+    //             ],
+    //         },
+    //     ],
+    //     fitness: 18,
+    //     generations: 4,
+    // };
 
     const [activeTab, setActiveTab] = useState('violations');
 

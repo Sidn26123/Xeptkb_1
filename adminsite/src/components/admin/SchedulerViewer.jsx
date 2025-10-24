@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, X, BarChart3, Calendar } from 'lucide-react';
+import ScheduleAnalyzer from "./SchedulerAnalyzer.jsx";
 
 const DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
 const PERIODS = 12;
@@ -115,7 +116,7 @@ const scheduleData = {
     ],
 };
 
-const ScheduleViewer = ({ resultData }) => {
+const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
     const [currentWeek, setCurrentWeek] = useState(1);
     const [viewMode, setViewMode] = useState('schedule'); // 'schedule', 'overview', 'data'
     const [selectedCell, setSelectedCell] = useState(null);
@@ -274,7 +275,7 @@ const ScheduleViewer = ({ resultData }) => {
                                     : 'bg-white text-gray-700 border'
                             }`}
                         >
-                            <Calendar size={18} />
+                            <Calendar size={18}/>
                             Lịch Học
                         </button>
                         <button
@@ -285,7 +286,7 @@ const ScheduleViewer = ({ resultData }) => {
                                     : 'bg-white text-gray-700 border'
                             }`}
                         >
-                            <BarChart3 size={18} />
+                            <BarChart3 size={18}/>
                             Tổng Quan
                         </button>
                         <button
@@ -296,7 +297,18 @@ const ScheduleViewer = ({ resultData }) => {
                                     : 'bg-white text-gray-700 border'
                             }`}
                         >
-                            <BarChart3 size={18} />
+                            <BarChart3 size={18}/>
+                            Dữ Liệu
+                        </button>
+                        <button
+                            onClick={() => setViewMode('analysis')}
+                            className={`px-4 py-2 rounded-md flex items-center gap-2 ${
+                                viewMode === 'analysis'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white text-gray-700 border'
+                            }`}
+                        >
+                            <BarChart3 size={18}/>
                             Dữ Liệu
                         </button>
                     </div>
@@ -626,6 +638,12 @@ const ScheduleViewer = ({ resultData }) => {
                     </div>
                 )}
 
+                {viewMode === 'analysis' && (
+                    <>
+                        <ScheduleAnalyzer courses={courses} teachers={teachers} rooms={rooms} result={resultData}/>
+                    </>
+                )
+                }
                 {/* Cell Detail Modal */}
                 {selectedCell && (
                     <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4">
