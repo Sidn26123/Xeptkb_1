@@ -9,7 +9,7 @@ import {
   deleteAcademicYear,
 } from "../services/academicYearService.js";
 import { formatDateDisplay, toISODate } from "../utils/dateUtils.js";
-import {showError, showSuccess} from "../utils/toastUtils.js";
+import {showError, showSuccess} from "../utils/ToastUtils.js";
 // Helpers for date formatting/parsing (same style as SemesterManagement)
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
 

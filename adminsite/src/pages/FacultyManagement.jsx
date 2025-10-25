@@ -6,7 +6,7 @@ import { getAllFaculties, createFaculty, updateFaculty, deleteFaculty } from '..
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
-import {showError, showSuccess} from "../utils/toastUtils.js";
+import {showError, showSuccess} from "../utils/ToastUtils.js";
 
 const facultySchema = yup.object({
   name: yup

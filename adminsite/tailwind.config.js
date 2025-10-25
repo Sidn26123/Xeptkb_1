@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 const config = {
     content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
-    darkMode: false,
+    darkMode: 'class',
     theme: {
         extend: {
             colors: {
@@ -29,34 +29,35 @@ const config = {
                     800: '#1f2937', // nền dark chính
                     900: '#111827', // rất đậm (dùng dark mode)
                 },
-            },
-            surface: {
-                light: '#f9fafb', // tương đương gray-50
-                dark: '#1f2937', // tương đương gray-800
-            },
-            card: {
-                light: '#ffffff',
-                dark: '#374151',
-            },
-            border: {
-                light: '#e5e7eb',
-                dark: '#4b5563',
-            },
-            text: {
+                surface: {
+                    light: '#f9fafb', // tương đương gray-50
+                    dark: '#1f2937', // tương đương gray-800
+                },
+                card: {
+                    light: '#ffffff',
+                    dark: '#374151',
+                },
+                border: {
+                    light: '#e5e7eb',
+                    dark: '#4b5563',
+                },
+                text: {
+                    primary: {
+                        light: '#111827',
+                        dark: '#f9fafb',
+                    },
+                    secondary: {
+                        light: '#6b7280',
+                        dark: '#d1d5db',
+                    },
+                },
                 primary: {
-                    light: '#111827',
-                    dark: '#f9fafb',
-                },
-                secondary: {
-                    light: '#6b7280',
-                    dark: '#d1d5db',
+                    DEFAULT: '#2563eb', // blue-600
+                    light: '#3b82f6', // blue-500
+                    dark: '#1d4ed8', // blue-700
                 },
             },
-            primary: {
-                DEFAULT: '#2563eb', // blue-600
-                light: '#3b82f6', // blue-500
-                dark: '#1d4ed8', // blue-700
-            },
+
         },
     },
     plugins: [],

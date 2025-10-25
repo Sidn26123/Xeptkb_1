@@ -14,6 +14,8 @@ import SignIn from "../pages/SignIn";
 import RAGApp from "../components/chatbot/RagApp.jsx";
 import GuidePage from "../pages/GuidePage.jsx";
 import TutorialPage from "../pages/GuidePage.jsx";
+import SchedulerResourcesManagement from "../components/admin/SchedulerResources.jsx";
+import {InputResourcesManagement} from "../components/admin/InputComponent.jsx";
 
 export default function AppRoutes() {
   return (
@@ -30,7 +32,14 @@ export default function AppRoutes() {
         <Route path="/subject-management" element={<SubjectManagement />} />
         <Route path="/chatbot" element={<RAGApp />} />
           <Route path="/guide" element={<TutorialPage />} />
-
+        <Route
+            path={`/scheduler/inputs`}
+            element={<InputResourcesManagement />}
+        />
+        <Route
+            path={`/scheduler/schedule`}
+            element={<SchedulerResourcesManagement />}
+        />
 
 
       </Route>
