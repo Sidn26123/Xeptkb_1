@@ -1,0 +1,642 @@
+{
+  "utilization": {
+    "labels": [
+      "Room 101",
+      "Room 102",
+      "Room 103",
+      "Room 201"
+    ],
+    "datasets": [
+      {
+        "label": "Utilization Potential",
+        "data": [
+          100,
+          71.39999999999999,
+          28.599999999999998,
+          100
+        ],
+        "backgroundColor": [
+          "#10b981",
+          "#f59e0b",
+          "#ef4444",
+          "#10b981"
+        ]
+      }
+    ]
+  },
+  "workload": {
+    "labels": [
+      "Teacher A",
+      "Teacher B",
+      "Teacher C",
+      "Teacher D"
+    ],
+    "datasets": [
+      {
+        "label": "Weekly Teaching Hours",
+        "data": [
+          8,
+          14,
+          12,
+          10
+        ],
+        "backgroundColor": [
+          "#10b981",
+          "#10b981",
+          "#10b981",
+          "#10b981"
+        ]
+      }
+    ]
+  },
+  "heatmap": [
+    {
+      "day": 0,
+      "period": 1,
+      "pressure": 0.08,
+      "demand": 0.3,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 2,
+      "pressure": 0.02,
+      "demand": 0.08,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 3,
+      "pressure": 0.06,
+      "demand": 0.24,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 4,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 5,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 6,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 7,
+      "pressure": 0.02,
+      "demand": 0.08,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 8,
+      "pressure": 0.02,
+      "demand": 0.08,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 9,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 10,
+      "pressure": 0.02,
+      "demand": 0.08,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 11,
+      "pressure": 0.12,
+      "demand": 0.47,
+      "supply": 4
+    },
+    {
+      "day": 0,
+      "period": 12,
+      "pressure": 0.1,
+      "demand": 0.4,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 1,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 2,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 3,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 4,
+      "pressure": 0.06,
+      "demand": 0.25,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 5,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 6,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 7,
+      "pressure": 0.15,
+      "demand": 0.6,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 8,
+      "pressure": 0.06,
+      "demand": 0.24,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 9,
+      "pressure": 0.12,
+      "demand": 0.49,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 10,
+      "pressure": 0.09,
+      "demand": 0.36,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 11,
+      "pressure": 0.05,
+      "demand": 0.18,
+      "supply": 4
+    },
+    {
+      "day": 1,
+      "period": 12,
+      "pressure": 0.06,
+      "demand": 0.22,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 1,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 2,
+      "pressure": 0.1,
+      "demand": 0.39,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 3,
+      "pressure": 0.01,
+      "demand": 0.03,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 4,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 5,
+      "pressure": 0.05,
+      "demand": 0.2,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 6,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 7,
+      "pressure": 0.13,
+      "demand": 0.53,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 8,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 9,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 10,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 11,
+      "pressure": 0.17,
+      "demand": 0.66,
+      "supply": 4
+    },
+    {
+      "day": 2,
+      "period": 12,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 1,
+      "pressure": 0.08,
+      "demand": 0.3,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 2,
+      "pressure": 0.08,
+      "demand": 0.3,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 3,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 4,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 5,
+      "pressure": 0.09,
+      "demand": 0.37,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 6,
+      "pressure": 0.05,
+      "demand": 0.19,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 7,
+      "pressure": 0.1,
+      "demand": 0.4,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 8,
+      "pressure": 0.15,
+      "demand": 0.6,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 9,
+      "pressure": 0.14,
+      "demand": 0.54,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 10,
+      "pressure": 0.05,
+      "demand": 0.21,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 11,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 3,
+      "period": 12,
+      "pressure": 0.1,
+      "demand": 0.38,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 1,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 2,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 3,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 4,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 5,
+      "pressure": 0.03,
+      "demand": 0.11,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 6,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 7,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 8,
+      "pressure": 0.12,
+      "demand": 0.46,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 9,
+      "pressure": 0.1,
+      "demand": 0.38,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 10,
+      "pressure": 0.09,
+      "demand": 0.37,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 11,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 4,
+      "period": 12,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 1,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 2,
+      "pressure": 0.14,
+      "demand": 0.56,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 3,
+      "pressure": 0.05,
+      "demand": 0.2,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 4,
+      "pressure": 0.16,
+      "demand": 0.64,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 5,
+      "pressure": 0.13,
+      "demand": 0.5,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 6,
+      "pressure": 0.1,
+      "demand": 0.41,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 7,
+      "pressure": 0.1,
+      "demand": 0.38,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 8,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 9,
+      "pressure": 0.01,
+      "demand": 0.05,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 10,
+      "pressure": 0.05,
+      "demand": 0.2,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 11,
+      "pressure": 0.03,
+      "demand": 0.11,
+      "supply": 4
+    },
+    {
+      "day": 5,
+      "period": 12,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 1,
+      "pressure": 0.11,
+      "demand": 0.43,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 2,
+      "pressure": 0.04,
+      "demand": 0.17,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 3,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 4,
+      "pressure": 0.17,
+      "demand": 0.69,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 5,
+      "pressure": 0.16,
+      "demand": 0.65,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 6,
+      "pressure": 0.11,
+      "demand": 0.42,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 7,
+      "pressure": 0.12,
+      "demand": 0.48,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 8,
+      "pressure": 0,
+      "demand": 0,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 9,
+      "pressure": 0.01,
+      "demand": 0.04,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 10,
+      "pressure": 0.07,
+      "demand": 0.29,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 11,
+      "pressure": 0.01,
+      "demand": 0.05,
+      "supply": 4
+    },
+    {
+      "day": 6,
+      "period": 12,
+      "pressure": 0.05,
+      "demand": 0.2,
+      "supply": 4
+    }
+  ]
+}

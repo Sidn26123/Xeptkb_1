@@ -1,0 +1,960 @@
+{
+  "timestamp": "2025-10-25T17:12:13.429Z",
+  "overview": {
+    "totalCourses": 7,
+    "totalTeachers": 4,
+    "totalRooms": 4,
+    "totalDepartments": 2,
+    "totalClasses": 6,
+    "totalWeeklyHoursNeeded": 32,
+    "totalWeeklySessionsNeeded": 16,
+    "totalSlotsPerWeek": 84,
+    "utilizationRatio": 0.381,
+    "avgStudentsPerCourse": 47.9,
+    "semesterWeeks": 15,
+    "maxConcurrentCourses": 4
+  },
+  "byCourse": [
+    {
+      "id": 1,
+      "course_id": 101,
+      "student_count": 50,
+      "weeks_needed": 4,
+      "sessions_per_week": 2,
+      "duration_per_session": 2,
+      "weeklyHours": 4,
+      "totalHoursAcrossSemester": 16,
+      "possibleTeachers": [
+        {
+          "id": 1,
+          "name": "Teacher A"
+        }
+      ],
+      "teacherCoverage": 1,
+      "roomFitCount": 3,
+      "sessionSlotsNeeded": 2,
+      "feasibilityWarning": null
+    },
+    {
+      "id": 2,
+      "course_id": 102,
+      "student_count": 40,
+      "weeks_needed": 3,
+      "sessions_per_week": 2,
+      "duration_per_session": 2,
+      "weeklyHours": 4,
+      "totalHoursAcrossSemester": 12,
+      "possibleTeachers": [
+        {
+          "id": 1,
+          "name": "Teacher A"
+        },
+        {
+          "id": 2,
+          "name": "Teacher B"
+        }
+      ],
+      "teacherCoverage": 2,
+      "roomFitCount": 4,
+      "sessionSlotsNeeded": 2,
+      "feasibilityWarning": null
+    },
+    {
+      "id": 3,
+      "course_id": 103,
+      "student_count": 60,
+      "weeks_needed": 5,
+      "sessions_per_week": 3,
+      "duration_per_session": 2,
+      "weeklyHours": 6,
+      "totalHoursAcrossSemester": 30,
+      "possibleTeachers": [
+        {
+          "id": 2,
+          "name": "Teacher B"
+        }
+      ],
+      "teacherCoverage": 1,
+      "roomFitCount": 2,
+      "sessionSlotsNeeded": 3,
+      "feasibilityWarning": null
+    },
+    {
+      "id": 4,
+      "course_id": 104,
+      "student_count": 45,
+      "weeks_needed": 4,
+      "sessions_per_week": 2,
+      "duration_per_session": 2,
+      "weeklyHours": 4,
+      "totalHoursAcrossSemester": 16,
+      "possibleTeachers": [
+        {
+          "id": 2,
+          "name": "Teacher B"
+        },
+        {
+          "id": 3,
+          "name": "Teacher C"
+        }
+      ],
+      "teacherCoverage": 2,
+      "roomFitCount": 3,
+      "sessionSlotsNeeded": 2,
+      "feasibilityWarning": null
+    },
+    {
+      "id": 5,
+      "course_id": 105,
+      "student_count": 50,
+      "weeks_needed": 3,
+      "sessions_per_week": 2,
+      "duration_per_session": 2,
+      "weeklyHours": 4,
+      "totalHoursAcrossSemester": 12,
+      "possibleTeachers": [
+        {
+          "id": 3,
+          "name": "Teacher C"
+        }
+      ],
+      "teacherCoverage": 1,
+      "roomFitCount": 3,
+      "sessionSlotsNeeded": 2,
+      "feasibilityWarning": null
+    },
+    {
+      "id": 6,
+      "course_id": 106,
+      "student_count": 35,
+      "weeks_needed": 4,
+      "sessions_per_week": 2,
+      "duration_per_session": 2,
+      "weeklyHours": 4,
+      "totalHoursAcrossSemester": 16,
+      "possibleTeachers": [
+        {
+          "id": 3,
+          "name": "Teacher C"
+        },
+        {
+          "id": 4,
+          "name": "Teacher D"
+        }
+      ],
+      "teacherCoverage": 2,
+      "roomFitCount": 4,
+      "sessionSlotsNeeded": 2,
+      "feasibilityWarning": null
+    },
+    {
+      "id": 7,
+      "course_id": 107,
+      "student_count": 55,
+      "weeks_needed": 5,
+      "sessions_per_week": 3,
+      "duration_per_session": 2,
+      "weeklyHours": 6,
+      "totalHoursAcrossSemester": 30,
+      "possibleTeachers": [
+        {
+          "id": 4,
+          "name": "Teacher D"
+        }
+      ],
+      "teacherCoverage": 1,
+      "roomFitCount": 2,
+      "sessionSlotsNeeded": 3,
+      "feasibilityWarning": null
+    }
+  ],
+  "byTeacher": [
+    {
+      "id": 1,
+      "name": "Teacher A",
+      "canTeachCourses": [
+        101,
+        102
+      ],
+      "canTeachCoursesCount": 2,
+      "estimatedWeeklyTeachingHours": 8,
+      "estimatedWeeklySessions": 4,
+      "maxCapacity": 50.4,
+      "overloadRisk": false,
+      "utilizationRate": 0.09523809523809523
+    },
+    {
+      "id": 2,
+      "name": "Teacher B",
+      "canTeachCourses": [
+        102,
+        103,
+        104
+      ],
+      "canTeachCoursesCount": 3,
+      "estimatedWeeklyTeachingHours": 14,
+      "estimatedWeeklySessions": 7,
+      "maxCapacity": 50.4,
+      "overloadRisk": false,
+      "utilizationRate": 0.16666666666666666
+    },
+    {
+      "id": 3,
+      "name": "Teacher C",
+      "canTeachCourses": [
+        104,
+        105,
+        106
+      ],
+      "canTeachCoursesCount": 3,
+      "estimatedWeeklyTeachingHours": 12,
+      "estimatedWeeklySessions": 6,
+      "maxCapacity": 50.4,
+      "overloadRisk": false,
+      "utilizationRate": 0.14285714285714285
+    },
+    {
+      "id": 4,
+      "name": "Teacher D",
+      "canTeachCourses": [
+        106,
+        107
+      ],
+      "canTeachCoursesCount": 2,
+      "estimatedWeeklyTeachingHours": 10,
+      "estimatedWeeklySessions": 5,
+      "maxCapacity": 50.4,
+      "overloadRisk": false,
+      "utilizationRate": 0.11904761904761904
+    }
+  ],
+  "byRoom": [
+    {
+      "id": 1,
+      "name": "Room 101",
+      "capacity": 60,
+      "suitableForCoursesCount": 7,
+      "utilizationPotential": 1,
+      "percentageCoverage": 100
+    },
+    {
+      "id": 2,
+      "name": "Room 102",
+      "capacity": 50,
+      "suitableForCoursesCount": 5,
+      "utilizationPotential": 0.714,
+      "percentageCoverage": 71.4
+    },
+    {
+      "id": 3,
+      "name": "Room 103",
+      "capacity": 40,
+      "suitableForCoursesCount": 2,
+      "utilizationPotential": 0.286,
+      "percentageCoverage": 28.6
+    },
+    {
+      "id": 4,
+      "name": "Room 201",
+      "capacity": 70,
+      "suitableForCoursesCount": 7,
+      "utilizationPotential": 1,
+      "percentageCoverage": 100
+    }
+  ],
+  "byDepartment": [
+    {
+      "id": 1,
+      "name": "Khoa CNTT",
+      "totalClasses": 3,
+      "totalStudents": 120,
+      "avgSubjectsPerClass": 9,
+      "expectedWeeklyHoursPerClass": 45,
+      "classes": [
+        {
+          "id": 1,
+          "name": "T.Chang [10,11,12]",
+          "grades": [
+            10,
+            11,
+            12
+          ],
+          "info": "Lớp CNTT A"
+        },
+        {
+          "id": 2,
+          "name": "C.Hiền [10,11,12]",
+          "grades": [
+            10,
+            11,
+            12
+          ],
+          "info": "Lớp CNTT B"
+        },
+        {
+          "id": 3,
+          "name": "Cô Dịu [10,11,12]",
+          "grades": [
+            10,
+            11,
+            12
+          ],
+          "info": "Lớp CNTT C"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Khoa KHTN",
+      "totalClasses": 3,
+      "totalStudents": 120,
+      "avgSubjectsPerClass": 9,
+      "expectedWeeklyHoursPerClass": 45,
+      "classes": [
+        {
+          "id": 4,
+          "name": "C.Thủy [10,11,12]",
+          "grades": [
+            10,
+            11,
+            12
+          ],
+          "info": "Lớp KHTN A"
+        },
+        {
+          "id": 5,
+          "name": "C.Minh [11,12]",
+          "grades": [
+            11,
+            12
+          ],
+          "info": "Lớp KHTN B"
+        },
+        {
+          "id": 6,
+          "name": "C.Dung [10,11,12]",
+          "grades": [
+            10,
+            11,
+            12
+          ],
+          "info": "Lớp KHTN C"
+        }
+      ]
+    }
+  ],
+  "feasibility": {
+    "courseWithNoTeacher": {
+      "count": 0,
+      "list": []
+    },
+    "courseWithNoRoom": {
+      "count": 0,
+      "list": []
+    },
+    "hardFeasibilityRatio": 1,
+    "avgTeacherCoverage": 1.43,
+    "avgRoomFit": 3,
+    "estimatedMaxConcurrentSessions": 4,
+    "estimatedWeeksToComplete": 1,
+    "potentialBottlenecks": [
+      {
+        "type": "course-teacher",
+        "entity": "Course 101",
+        "issue": "Chỉ có 1 giáo viên có thể dạy",
+        "severity": "high"
+      },
+      {
+        "type": "course-teacher",
+        "entity": "Course 103",
+        "issue": "Chỉ có 1 giáo viên có thể dạy",
+        "severity": "high"
+      },
+      {
+        "type": "course-teacher",
+        "entity": "Course 105",
+        "issue": "Chỉ có 1 giáo viên có thể dạy",
+        "severity": "high"
+      },
+      {
+        "type": "course-teacher",
+        "entity": "Course 107",
+        "issue": "Chỉ có 1 giáo viên có thể dạy",
+        "severity": "high"
+      }
+    ],
+    "feasibilitySummary": {
+      "status": "good",
+      "criticalIssues": 0,
+      "highIssues": 4,
+      "mediumIssues": 0
+    }
+  },
+  "advancedMetrics": {
+    "entropyScore": {
+      "teacherCoverage": 0.985,
+      "roomFit": 1.557,
+      "interpretation": "Entropy cao = phân bố đều hơn; thấp = tập trung (có thể là bottleneck)"
+    },
+    "constraintTightness": {
+      "count": 4,
+      "ratio": 0.571,
+      "interpretation": "Tỷ lệ khóa học có ít lựa chọn (teacherCoverage ≤1 hoặc roomFit ≤1)"
+    },
+    "heatmapData": {
+      "Thứ 2": [
+        {
+          "period": 1,
+          "demand": 0.61,
+          "supply": 4,
+          "pressure": 0.15
+        },
+        {
+          "period": 2,
+          "demand": 0.6,
+          "supply": 4,
+          "pressure": 0.15
+        },
+        {
+          "period": 3,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 4,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 5,
+          "demand": 0.66,
+          "supply": 4,
+          "pressure": 0.17
+        },
+        {
+          "period": 6,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 7,
+          "demand": 0.04,
+          "supply": 4,
+          "pressure": 0.01
+        },
+        {
+          "period": 8,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 9,
+          "demand": 0.18,
+          "supply": 4,
+          "pressure": 0.05
+        },
+        {
+          "period": 10,
+          "demand": 0.11,
+          "supply": 4,
+          "pressure": 0.03
+        },
+        {
+          "period": 11,
+          "demand": 0.68,
+          "supply": 4,
+          "pressure": 0.17
+        },
+        {
+          "period": 12,
+          "demand": 0.18,
+          "supply": 4,
+          "pressure": 0.05
+        }
+      ],
+      "Thứ 3": [
+        {
+          "period": 1,
+          "demand": 0.24,
+          "supply": 4,
+          "pressure": 0.06
+        },
+        {
+          "period": 2,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 3,
+          "demand": 0.27,
+          "supply": 4,
+          "pressure": 0.07
+        },
+        {
+          "period": 4,
+          "demand": 0.34,
+          "supply": 4,
+          "pressure": 0.09
+        },
+        {
+          "period": 5,
+          "demand": 0.07,
+          "supply": 4,
+          "pressure": 0.02
+        },
+        {
+          "period": 6,
+          "demand": 0.26,
+          "supply": 4,
+          "pressure": 0.07
+        },
+        {
+          "period": 7,
+          "demand": 0.42,
+          "supply": 4,
+          "pressure": 0.11
+        },
+        {
+          "period": 8,
+          "demand": 0.23,
+          "supply": 4,
+          "pressure": 0.06
+        },
+        {
+          "period": 9,
+          "demand": 0.15,
+          "supply": 4,
+          "pressure": 0.04
+        },
+        {
+          "period": 10,
+          "demand": 0.1,
+          "supply": 4,
+          "pressure": 0.03
+        },
+        {
+          "period": 11,
+          "demand": 0.12,
+          "supply": 4,
+          "pressure": 0.03
+        },
+        {
+          "period": 12,
+          "demand": 0.04,
+          "supply": 4,
+          "pressure": 0.01
+        }
+      ],
+      "Thứ 4": [
+        {
+          "period": 1,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 2,
+          "demand": 0.29,
+          "supply": 4,
+          "pressure": 0.07
+        },
+        {
+          "period": 3,
+          "demand": 0.03,
+          "supply": 4,
+          "pressure": 0.01
+        },
+        {
+          "period": 4,
+          "demand": 0.49,
+          "supply": 4,
+          "pressure": 0.12
+        },
+        {
+          "period": 5,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 6,
+          "demand": 0.19,
+          "supply": 4,
+          "pressure": 0.05
+        },
+        {
+          "period": 7,
+          "demand": 0.46,
+          "supply": 4,
+          "pressure": 0.12
+        },
+        {
+          "period": 8,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 9,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 10,
+          "demand": 0.43,
+          "supply": 4,
+          "pressure": 0.11
+        },
+        {
+          "period": 11,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 12,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        }
+      ],
+      "Thứ 5": [
+        {
+          "period": 1,
+          "demand": 0.13,
+          "supply": 4,
+          "pressure": 0.03
+        },
+        {
+          "period": 2,
+          "demand": 0.2,
+          "supply": 4,
+          "pressure": 0.05
+        },
+        {
+          "period": 3,
+          "demand": 0.37,
+          "supply": 4,
+          "pressure": 0.09
+        },
+        {
+          "period": 4,
+          "demand": 0.62,
+          "supply": 4,
+          "pressure": 0.16
+        },
+        {
+          "period": 5,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 6,
+          "demand": 0.03,
+          "supply": 4,
+          "pressure": 0.01
+        },
+        {
+          "period": 7,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 8,
+          "demand": 0.32,
+          "supply": 4,
+          "pressure": 0.08
+        },
+        {
+          "period": 9,
+          "demand": 0.41,
+          "supply": 4,
+          "pressure": 0.1
+        },
+        {
+          "period": 10,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 11,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 12,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        }
+      ],
+      "Thứ 6": [
+        {
+          "period": 1,
+          "demand": 0.6,
+          "supply": 4,
+          "pressure": 0.15
+        },
+        {
+          "period": 2,
+          "demand": 0.69,
+          "supply": 4,
+          "pressure": 0.17
+        },
+        {
+          "period": 3,
+          "demand": 0.54,
+          "supply": 4,
+          "pressure": 0.14
+        },
+        {
+          "period": 4,
+          "demand": 0.35,
+          "supply": 4,
+          "pressure": 0.09
+        },
+        {
+          "period": 5,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 6,
+          "demand": 0.26,
+          "supply": 4,
+          "pressure": 0.07
+        },
+        {
+          "period": 7,
+          "demand": 0.12,
+          "supply": 4,
+          "pressure": 0.03
+        },
+        {
+          "period": 8,
+          "demand": 0.23,
+          "supply": 4,
+          "pressure": 0.06
+        },
+        {
+          "period": 9,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 10,
+          "demand": 0.55,
+          "supply": 4,
+          "pressure": 0.14
+        },
+        {
+          "period": 11,
+          "demand": 0.43,
+          "supply": 4,
+          "pressure": 0.11
+        },
+        {
+          "period": 12,
+          "demand": 0.65,
+          "supply": 4,
+          "pressure": 0.16
+        }
+      ],
+      "Thứ 7": [
+        {
+          "period": 1,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 2,
+          "demand": 0.07,
+          "supply": 4,
+          "pressure": 0.02
+        },
+        {
+          "period": 3,
+          "demand": 0.59,
+          "supply": 4,
+          "pressure": 0.15
+        },
+        {
+          "period": 4,
+          "demand": 0.49,
+          "supply": 4,
+          "pressure": 0.12
+        },
+        {
+          "period": 5,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 6,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 7,
+          "demand": 0.14,
+          "supply": 4,
+          "pressure": 0.04
+        },
+        {
+          "period": 8,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 9,
+          "demand": 0.07,
+          "supply": 4,
+          "pressure": 0.02
+        },
+        {
+          "period": 10,
+          "demand": 0.5,
+          "supply": 4,
+          "pressure": 0.13
+        },
+        {
+          "period": 11,
+          "demand": 0.05,
+          "supply": 4,
+          "pressure": 0.01
+        },
+        {
+          "period": 12,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        }
+      ],
+      "CN": [
+        {
+          "period": 1,
+          "demand": 0.48,
+          "supply": 4,
+          "pressure": 0.12
+        },
+        {
+          "period": 2,
+          "demand": 0.31,
+          "supply": 4,
+          "pressure": 0.08
+        },
+        {
+          "period": 3,
+          "demand": 0.42,
+          "supply": 4,
+          "pressure": 0.11
+        },
+        {
+          "period": 4,
+          "demand": 0.24,
+          "supply": 4,
+          "pressure": 0.06
+        },
+        {
+          "period": 5,
+          "demand": 0.66,
+          "supply": 4,
+          "pressure": 0.17
+        },
+        {
+          "period": 6,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 7,
+          "demand": 0.6,
+          "supply": 4,
+          "pressure": 0.15
+        },
+        {
+          "period": 8,
+          "demand": 0.35,
+          "supply": 4,
+          "pressure": 0.09
+        },
+        {
+          "period": 9,
+          "demand": 0.07,
+          "supply": 4,
+          "pressure": 0.02
+        },
+        {
+          "period": 10,
+          "demand": 0.5,
+          "supply": 4,
+          "pressure": 0.13
+        },
+        {
+          "period": 11,
+          "demand": 0,
+          "supply": 4,
+          "pressure": 0
+        },
+        {
+          "period": 12,
+          "demand": 0.42,
+          "supply": 4,
+          "pressure": 0.11
+        }
+      ]
+    },
+    "fragmentationIndex": {
+      "value": 0.327,
+      "interpretation": "Chỉ số 0-1; cao = lịch phân mảnh nhiều ngày; thấp = tập trung"
+    }
+  },
+  "warnings": [
+    {
+      "level": "high",
+      "category": "course-teacher",
+      "message": "⚠️ Course 101 chỉ có 1 giáo viên có thể dạy - rủi ro cao nếu giáo viên bận"
+    },
+    {
+      "level": "high",
+      "category": "course-teacher",
+      "message": "⚠️ Course 103 chỉ có 1 giáo viên có thể dạy - rủi ro cao nếu giáo viên bận"
+    },
+    {
+      "level": "high",
+      "category": "course-teacher",
+      "message": "⚠️ Course 105 chỉ có 1 giáo viên có thể dạy - rủi ro cao nếu giáo viên bận"
+    },
+    {
+      "level": "high",
+      "category": "course-teacher",
+      "message": "⚠️ Course 107 chỉ có 1 giáo viên có thể dạy - rủi ro cao nếu giáo viên bận"
+    }
+  ],
+  "metadata": {
+    "note": "Phân tích dựa trên dữ liệu tĩnh không có ràng buộc availability cụ thể",
+    "assumptions": [
+      "Giả định phân bố đều các sessions trong tuần",
+      "Không có ràng buộc cứng về thời gian cụ thể",
+      "Room capacity là ràng buộc duy nhất cho phòng học",
+      "Teacher availability giả định là toàn thời gian"
+    ]
+  }
+}
