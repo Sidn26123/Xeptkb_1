@@ -1,0 +1,5 @@
+ID,Name,Capacity,Suitable Courses,Utilization %
+1,"Room 101",60,7,100
+2,"Room 102",50,5,71.4
+3,"Room 103",40,2,28.6
+4,"Room 201",70,7,100

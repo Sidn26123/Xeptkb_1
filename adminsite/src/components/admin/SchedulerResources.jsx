@@ -15,6 +15,7 @@ import {
 import ScheduleAnalyzer from './SchedulerAnalyzer.jsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { CheckSquare, Square, RefreshCw, CheckCircle2, Users, BookOpen, Home } from 'lucide-react';
+import ScheduleMetricsDashboard from "../scheduler/PreScheduleMetricDashboard.jsx";
 
 
 const SchedulerResourcesManagement = () => {
@@ -181,6 +182,7 @@ const SchedulerResourcesManagement = () => {
                     {/*)}*/}
                 </>
             )}
+            <ScheduleMetricsDashboard />
         </div>
     );
 };
@@ -599,7 +601,7 @@ const ResourceManager = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 text-gray-200 gray:text-gray-600">
             <div className="max-w-7xl mx-auto">
 
                 {/* Tabs */}
