@@ -47,7 +47,7 @@ def generate_schedule():
         rooms = data['rooms']
         semester_config = data['semester_config']
         ga_config = data.get('ga_config', {})
-        
+        print("semester_config:", semester_config)
         # Run genetic algorithm
         print(f"🚀 Starting genetic algorithm with {len(courses)} courses...")
         
@@ -100,7 +100,7 @@ def generate_schedule():
                     ]
                 }
                 response_data['courses'].append(course_data)
-            
+            print(response_data['semester'])
             print(f"✅ Successfully generated schedule!")
             return jsonify(response_data), 200
         else:
@@ -125,6 +125,6 @@ def health_check():
 
 if __name__ == '__main__':
     print("🌐 Starting Flask API Server...")
-    print("📍 Server running at: http://localhost:5000")
-    print("📝 API endpoint: POST http://localhost:5000/api/schedule")
-    app.run(debug=True, port=5000)
+    print("📍 Server running at: http://localhost:5001")
+    print("📝 API endpoint: POST http://localhost:5001/api/schedule")
+    app.run(debug=True, port=5001)

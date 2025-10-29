@@ -686,7 +686,7 @@ if __name__ == "__main__":
     
     semester_config = {
         'start_week': 1,
-        'end_week': 15,
+        'end_week': 16,
         'max_concurrent_courses': 4  # Tối đa 4 môn đồng thời
     }
     
