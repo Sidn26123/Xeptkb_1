@@ -97,7 +97,6 @@ CREATE TABLE `equipments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `total` int(11) DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -243,7 +242,7 @@ CREATE TABLE `roomsequipments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `equipment_id` int(11) NOT NULL,
   `room_id` int(11) NOT NULL,
-  `quantity` int(11) DEFAULT 0,
+  `equipment_quantity` int(11) DEFAULT 0,
   `status` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `equipment_id` (`equipment_id`),
@@ -395,6 +394,39 @@ INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
 (2, 'student', '$2b$10$94GkiGkFFjME/I0jHt.BjOF6KhxB.TBHEiTlieFQXEmTrF2WbloTG', 'student'),
 (3, 'teacher', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'teacher');
 
+-- Sample data for table `campus`
+INSERT INTO `campus` (`id`, `name`, `code`, `status`, `address`, `location`) VALUES
+  (1, 'Trụ sở chính', 'TSCH', 'active', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'TP. Hồ Chí Minh'),
+  (2, 'Cơ sở đào tạo', 'CSDT', 'active', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'TP. Hồ Chí Minh');
+
+-- Sample data for table `buildings` (4 buildings A-D per campus)
+INSERT INTO `buildings` (`id`, `campus_id`, `name`, `floor_count`, `code`, `location`, `status`) VALUES
+  (1, 1, 'Tòa A1', 4, 'TSCH-A', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
+  (2, 1, 'Tòa B1', 4, 'TSCH-B', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
+  (3, 1, 'Tòa C1', 3, 'TSCH-C', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
+  (4, 1, 'Tòa D1', 2, 'TSCH-D', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
+  (5, 1, 'Sân E1', 2, 'TSCH-E', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
+  (5, 2, 'Tòa A2', 4, 'CSDT-A', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (6, 2, 'Tòa B2', 4, 'CSDT-B', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (7, 2, 'Tòa C2', 3, 'CSDT-C', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (8, 2, 'Tòa D2', 2, 'CSDT-D', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (9, 2, 'Sân E2', 2, 'CSDT-E', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active');
+
+-- Sample data for table `equipments`
+INSERT INTO `equipments` (`id`, `code`, `name`) VALUES
+  (1, 'EQ001', 'Máy chiếu'),
+  (2, 'EQ002', 'TV'),
+  (3, 'EQ003', 'Loa'),
+  (4, 'EQ004', 'Micro'),
+  (5, 'EQ005', 'Bảng thông minh'),
+  (6, 'EQ006', 'Máy tính'),
+  (7, 'EQ007', 'Bộ đồ điện'),
+  (8, 'EQ008', 'Đồng hồ vạn năng'),
+  (9, 'EQ009', 'Bộ thực hành điện'),
+  (10, 'EQ010', 'Nguồn DC'),
+  (11, 'EQ011', 'Biến áp thực hành'),
+  (12, 'EQ012', 'Đèn');
+
 -- Sample data for academic years (3 recent years)
 INSERT INTO `academicyears` (`id`, `year_code`, `start_date`, `end_date`, `status`) VALUES
   (1, '2025-2026', '2025-09-01', '2026-06-30', 'upcoming'),
@@ -403,21 +435,23 @@ INSERT INTO `academicyears` (`id`, `year_code`, `start_date`, `end_date`, `statu
 
 -- Sample data for semesters (HK1 and HK2 for each academic year)
 INSERT INTO `semesters` (`id`, `AcademicYearsid`, `code`, `name`, `start`, `end`, `status`) VALUES
-  (1, 1, '2025-HK1', 'Học kỳ 1 2025-2026', '2025-09-01', '2026-01-15', 'upcoming'),
-  (2, 1, '2026-HK2', 'Học kỳ 2 2025-2026', '2026-02-01', '2026-06-30', 'upcoming'),
-  (3, 2, '2024-HK1', 'Học kỳ 1 2024-2025', '2024-09-01', '2025-01-15', 'finished'),
-  (4, 2, '2025-HK2', 'Học kỳ 2 2024-2025', '2025-02-01', '2025-06-30', 'finished'),
-  (5, 3, '2023-HK1', 'Học kỳ 1 2023-2024', '2023-09-01', '2024-01-15', 'finished'),
-  (6, 3, '2024-HK2', 'Học kỳ 2 2023-2024', '2024-02-01', '2024-06-30', 'finished');
+  (1, 1, 'HK1 2025-2026', 'Học kỳ 1 2025-2026', '2025-09-01', '2026-01-15', 'upcoming'),
+  (2, 1, 'HK2 2025-2026', 'Học kỳ 2 2025-2026', '2026-02-01', '2026-06-30', 'upcoming'),
+  (3, 2, 'HK1 2024-2025', 'Học kỳ 1 2024-2025', '2024-09-01', '2025-01-15', 'finished'),
+  (4, 2, 'HK2 2024-2025', 'Học kỳ 2 2024-2025', '2025-02-01', '2025-06-30', 'finished'),
+  (5, 3, 'HK1 2023-2024', 'Học kỳ 1 2023-2024', '2023-09-01', '2024-01-15', 'finished'),
+  (6, 3, 'HK2 2023-2024', 'Học kỳ 2 2023-2024', '2024-02-01', '2024-06-30', 'finished');
 
 -- Sample holiday rules (recurring holidays within a year)
+-- Format: day_start/day_end dạng 'dd-mm' (VD: '01-01' = ngày 1 tháng 1)
+-- is_lunar: 0 = dương lịch, 1 = âm lịch
 INSERT INTO `holidayrule` (`id`, `name`, `description`, `day_start`, `day_end`, `is_lunar`, `recurring`) VALUES
-  (1, 'Tết Nguyên Đán', 'Nghỉ Tết âm lịch', '01-01', '01-03', 1, 1),
-  (2, 'Giỗ Tổ Hùng Vương', 'Giỗ Tổ - nghỉ lễ', '04-10', '04-10', 0, 1),
-  (3, 'Ngày Giải phóng miền Nam', '30/4 - thống nhất đất nước', '30-04', '30-04', 0, 1),
-  (4, 'Quốc tế Lao động', 'Ngày Quốc tế Lao động', '01-05', '01-05', 0, 1),
-  (5, 'Quốc khánh', 'Ngày Quốc khánh 2/9', '02-09', '02-09', 0, 1),
-  (6, 'Ngày Quốc tế Thiếu nhi', 'Nghỉ lễ thiếu nhi (tùy chính sách trường)', '01-06', '01-06', 0, 1);
+  (1, 'Tết Dương lịch', 'Nghỉ Tết Dương lịch', '01-01', '01-01', 0, 1),
+  (2, 'Tết Nguyên Đán', 'Nghỉ Tết Nguyên đán (Mùng 1 - Mùng 5 tháng Giêng âm lịch)', '01-01', '05-01', 1, 1),
+  (3, 'Giỗ Tổ Hùng Vương', 'Giỗ Tổ Hùng Vương (10/3 âm lịch)', '10-03', '10-03', 1, 1),
+  (4, 'Ngày Giải phóng miền Nam', 'Ngày giải phóng miền Nam 30/4', '30-04', '30-04', 0, 1),
+  (5, 'Quốc tế Lao động', 'Ngày Quốc tế Lao động 1/5', '01-05', '01-05', 0, 1),
+  (6, 'Quốc khánh Việt Nam', 'Ngày Quốc khánh 2/9 (nghỉ 2 ngày)', '02-09', '03-09', 0, 1);
 
 -- Dữ liệu mẫu cho bảng faculty (các ngành CNTT)
 INSERT INTO `faculty` (`faculty_id`, `name`) VALUES

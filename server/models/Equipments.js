@@ -16,10 +16,6 @@ const Equipment = sequelize.define('Equipment', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  total: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
 }, {
   tableName: 'equipments',
   timestamps: false,

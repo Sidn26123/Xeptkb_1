@@ -7,28 +7,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import axios from 'axios';
 import { showSuccess, showError } from '../utils/ToastUtils.js'; // 👈 import helper
-
-
-const tableData = [
-  {
-    id: 1,
-    name: "Nguyễn Văn Hùng",
-    teacher_identifier: "GV001",
-    faculty_id: "CNTT",
-  },
-  {
-    id: 2,
-    name: "Trần Thị Lan",
-    teacher_identifier: "GV002",
-    faculty_id: "Kinh tế",
-  },
-  {
-    id: 3,
-    name: "Lê Văn Minh",
-    teacher_identifier: "GV003",
-    faculty_id: "CNTT",
-  },
-];
 import { getAllFaculties } from '../services/facultyService.js';
 import { getAllTeachers, createTeacher, updateTeacher, deleteTeacher } from '../services/teacherService.js';
 
@@ -39,7 +17,8 @@ export default function TeacherManagement() {
   const [faculties, setFaculties] = useState([]);
   const [form, setForm] = useState({ name: '', teacher_identifier: '', faculty_id: '' });
   const [teachers, setTeachers] = useState([]);
-
+  const [search, setSearch] = useState('');
+  
 
   // clear form when opening add
   const openAdd = () => { setForm({ name: '', teacher_identifier: '', faculty_id: '' }); setIsAddOpen(true); };
@@ -108,14 +87,31 @@ export default function TeacherManagement() {
     } catch (err) { console.error('Failed to load faculties', err); }
   };
 
+  // Search filter
+  const filtered = teachers.filter(teacher =>
+    (teacher.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (teacher.teacher_identifier || '').toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
       <PageMeta title="Quản lý giáo viên" description="Trang quản lý danh sách giáo viên trong hệ thống." />
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="flex justify-end items-center p-4">
-          <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-purple-600 hover:bg-purple-700" onClick={openAdd}>
-            Thêm giáo viên
-          </Button>
+        <div className="flex justify-between items-center p-4">
+          <div className="flex items-center gap-3">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm theo tên hoặc mã giáo viên"
+              className="border rounded px-3 py-2"
+            />
+            <Button size="sm" variant="outline" onClick={() => fetchTeachers()}>Làm mới</Button>
+          </div>
+          <div>
+            <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-purple-600 hover:bg-purple-700" onClick={openAdd}>
+              Thêm giáo viên
+            </Button>
+          </div>
         </div>
         <div className="max-w-full overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -129,7 +125,7 @@ export default function TeacherManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {teachers.map((teacher, idx) => (
+              {filtered.map((teacher, idx) => (
                 <tr key={teacher.id}>
                   <td className="px-5 py-4 sm:px-6 text-start">{idx + 1}</td>
                   <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{teacher.name}</td>

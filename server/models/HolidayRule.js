@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const HolidayRule = sequelize.define('HolidayRule', {
+const HolidayRule = sequelize.define('Holidayrule', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,

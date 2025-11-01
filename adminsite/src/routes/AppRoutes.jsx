@@ -16,6 +16,11 @@ import GuidePage from "../pages/GuidePage.jsx";
 import TutorialPage from "../pages/GuidePage.jsx";
 import SchedulerResourcesManagement from "../components/admin/SchedulerResources.jsx";
 import {InputResourcesManagement} from "../components/admin/InputComponent.jsx";
+import HolidayManagement from "../pages/HolidayManagement";
+import EquipmentManagement from "../pages/EquipmentManagement.jsx";
+import RoomManagement from "../pages/RoomManagement.jsx";
+import ResearchScheduleManagement from "../pages/ResearchScheduleManagement";
+// research schedule is a single management page; child views are rendered inside it
 
 export default function AppRoutes() {
   return (
@@ -42,6 +47,10 @@ export default function AppRoutes() {
         />
 
 
+        <Route path="/holiday-management" element={<HolidayManagement />} />
+        <Route path="/equipment-management" element={<EquipmentManagement />} />
+        <Route path="/room-management" element={<RoomManagement />} />
+        <Route path="/research-schedule" element={<ResearchScheduleManagement />} />
       </Route>
     </Routes>
   );

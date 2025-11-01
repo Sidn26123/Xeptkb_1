@@ -15,7 +15,7 @@ const RoomEquipment = sequelize.define('RoomEquipment', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  quantity: {
+  equipment_quantity: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },

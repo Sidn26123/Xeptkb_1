@@ -16,30 +16,46 @@ const Icon = ({ color = "gray" }) => (
 const navItems = [
   {
     name: "School Management",
-    icon: <Icon color="teal" />,
+    icon: <Icon color="#14b8a6" />, // teal-500
     subItems: [
       { name: "Student Management", path: "/student-management", pro: false },
       { name: "Class Management", path: "/class-management", pro: false },
       { name: "Teacher Management", path: "/teacher-management", pro: false },
       { name: "Faculty Management", path: "/faculty-management", pro: false },
+      { name: "Subject Management", path: "/Subject-management", pro: false },
+    ],
+  },
+  {
+    name: "Academic Calendar Management",
+    icon: <Icon color="#ef4444" />, // red-500
+    subItems: [
       { name: "Semester Management", path: "/semester-management", pro: false },
       { name: "AcademicYears Management", path: "/academicyear-management", pro: false },
-      { name: "Subject Management", path: "/Subject-management", pro: false },
+      { name: "Holiday Management", path: "/holiday-management", pro: false },
+    ],
+  },
+  {
+    name: "Facility Management",
+    icon: <Icon color="#64748b" />, // slate-500
+    subItems: [
+      { name: "Room Management", path: "/room-management", pro: false },
+      { name: "Equipments", path: "/equipment-management", pro: false },
     ],
   },
    {
     name: "Scheduling",
-    icon: <Icon color="green" />,
+    icon: <Icon color="#22c55e" />, // green-500
     subItems: [
       { name: "Homeroom Teachers", path: "/homeroom-teachers", pro: false },
       { name: "Teaching Assignment", path: "/teaching-assignment", pro: false },
       { name: "Grade - Subject - Period", path: "/grade-subject-period", pro: false },
       { name: "Timetable Arrangement", path: "/timetable-arrangement", pro: false },
+      { name: "Research Schedule", path: "/research-schedule", pro: false },
     ],
   },
     {
     name: "Configuration",
-    icon: <Icon color="purple" />,
+    icon: <Icon color="#a855f7" />, // purple-500
     subItems: [
       { name: "Set School Days", path: "/set-school-days", pro: false },
       { name: "Set Break Periods", path: "/set-break-periods", pro: false },
@@ -48,7 +64,7 @@ const navItems = [
   },
   {
     name: "Merge Classes",
-    icon: <Icon color="blue" />,
+    icon: <Icon color="#3b82f6" />, // blue-500
     subItems: [
       { name: "Select Class", path: "/select-merge-class", pro: false },
       { name: "Merged Timetable", path: "/merged-timetable", pro: false },
@@ -56,7 +72,7 @@ const navItems = [
   },
   {
     name: "Split Classes",
-    icon: <Icon color="orange" />,
+    icon: <Icon color="#f59e42" />, // orange-400
     subItems: [
       { name: "Select Class", path: "/select-split-class", pro: false },
       { name: "Split Timetable", path: "/split-timetable", pro: false },
@@ -64,7 +80,7 @@ const navItems = [
   },
   {
     name: "Print Timetable",
-    icon: <Icon color="cyan" />, // light blue tone for print
+    icon: <Icon color="#06b6d4" />, // cyan-500
     subItems: [
       { name: "Students", path: "/print-timetable/students", pro: false },
       { name: "Teachers", path: "/print-timetable/teachers", pro: false },
@@ -72,7 +88,7 @@ const navItems = [
   },
   {
     name: "Publish Timetable",
-    icon: <Icon color="lime" />, // bright green for public visibility
+    icon: <Icon color="#84cc16" />, // lime-500
     subItems: [
       { name: "Students", path: "/publish-timetable/students", pro: false },
       { name: "Teachers", path: "/publish-timetable/teachers", pro: false },
@@ -82,7 +98,7 @@ const navItems = [
   },
   {
     name: "Timetable Backup",
-    icon: <Icon color="amber" />, // yellow/orange for backup/restore
+    icon: <Icon color="#f59e42" />, // amber-400
     subItems: [
       { name: "Backup", path: "/timetable-backup/backup", pro: false },
       { name: "Restore", path: "/timetable-backup/restore", pro: false },
@@ -91,7 +107,7 @@ const navItems = [
   },
   {
     name: "Room Arrangement",
-    icon: <Icon color="indigo" />, // deep blue-purple for organization
+    icon: <Icon color="#6366f1" />, // indigo-500
     subItems: [
       { name: "Rooms", path: "/room-arrangement/rooms", pro: false },
       { name: "Arrange", path: "/room-arrangement/arrange", pro: false },

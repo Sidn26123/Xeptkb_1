@@ -6,7 +6,18 @@ const AUTH_ENABLED = process.env.AUTH_ENABLED !== 'false';
 
 // Middleware xác thực token
 function verifyToken(req, res, next) {
-  if (!AUTH_ENABLED) return next();
+
+  // Bypass auth cho môi trường phát triển nếu DEV_AUTH_BYPASS = 'true'
+  if (process.env.DEV_AUTH_BYPASS) {
+    console.log('[DEV AUTH BYPASS] Authentication bypassed for:', req.method, req.originalUrl);
+    // Tạo user giả lập cho dev, có thể thay đổi tuỳ ý
+    req.user = {
+      username: 'admin',
+      password:'123',
+    };
+    return next();
+  }
+
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'Thiếu token' });
   const user = jwtVerifyToken(token);
