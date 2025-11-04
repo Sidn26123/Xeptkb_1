@@ -96,7 +96,7 @@ export default function TeacherManagement() {
   return (
     <>
       <PageMeta title="Quản lý giáo viên" description="Trang quản lý danh sách giáo viên trong hệ thống." />
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
         <div className="flex justify-between items-center p-4">
           <div className="flex items-center gap-3">
             <input
@@ -124,7 +124,7 @@ export default function TeacherManagement() {
                 <th className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
               {filtered.map((teacher, idx) => (
                 <tr key={teacher.id}>
                   <td className="px-5 py-4 sm:px-6 text-start">{idx + 1}</td>

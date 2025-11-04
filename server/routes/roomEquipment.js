@@ -4,6 +4,7 @@ const roomEquipmentController = require('../controller/roomEquipmentController')
 const { verifyToken, authorize } = require('../middleware/auth');
 
 router.get('/', verifyToken, authorize('admin'), roomEquipmentController.getAllRoomEquipments);
+router.get('/room/:roomId', verifyToken, authorize('admin'), roomEquipmentController.getRoomEquipmentsByRoomId);
 router.get('/:id', verifyToken, authorize('admin'), roomEquipmentController.getRoomEquipmentById);
 router.post('/', verifyToken, authorize('admin'), roomEquipmentController.createRoomEquipment);
 router.put('/:id', verifyToken, authorize('admin'), roomEquipmentController.updateRoomEquipment);

@@ -10,7 +10,42 @@ import { getAllFaculties } from '../services/facultyService.js';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
-import {showError, showSuccess} from "../utils/ToastUtilsdelete.js";
+import {showError, showSuccess} from "../utils/toastUtils.js";
+
+// Schema cho Lớp học
+const classSchema = yup.object({
+  name: yup
+      .string()
+      .trim()
+      .required('Tên lớp không được để trống')
+      .min(3, 'Tên lớp phải có ít nhất 3 ký tự')
+      .max(255, 'Tên lớp không được vượt quá 255 ký tự'),
+  training_type_id: yup
+      .string()
+      .required('Vui lòng chọn loại hình đào tạo'),
+  faculty_id: yup
+      .string()
+      .trim()
+      .required('Khoa không được để trống')
+      .max(100, 'Khoa không được vượt quá 100 ký tự'),
+});
+
+// Schema cho Loại đào tạo
+const trainingTypeSchema = yup.object({
+  name: yup
+      .string()
+      .trim()
+      .required('Tên không được để trống')
+      .min(3, 'Tên phải có ít nhất 3 ký tự')
+      .max(255, 'Tên không được vượt quá 255 ký tự'),
+  code: yup
+      .string()
+      .trim()
+      .required('Mã không được để trống')
+      .matches(/^[A-Za-z0-9_-]+$/, 'Mã chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang'),
+  description: yup.string().trim().optional(),
+});
+
 
 export default function ClassManagement() {
   const [classes, setClasses] = useState([]);
@@ -23,6 +58,11 @@ export default function ClassManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editClass, setEditClass] = useState(null);
+  // form state used by add/edit modals
+  const [form, setForm] = useState({ name: '', training_type_id: '', faculty_id: '' });
+  const [errors, setErrors] = useState(null);
+  // training type form state
+  const [ttForm, setTtForm] = useState({ name: '', code: '', description: '' });
 
   // Form cho Thêm Lớp
   const classAddForm = useForm({
@@ -55,18 +95,19 @@ export default function ClassManagement() {
 
   const handleEditOpen = (cls) => {
     setEditClass(cls);
-    classEditForm.reset({
+    setForm({
       name: cls.name || '',
       training_type_id: cls.training_type_id || '',
       faculty_id: cls.faculty_id || '',
     });
-    classEditForm.clearErrors();
+    setErrors(null);
     setIsEditOpen(true);
   };
   const handleEditClose = () => {
     setEditClass(null);
     setIsEditOpen(false);
-    classEditForm.reset();
+    setForm({ name: '', training_type_id: '', faculty_id: '' });
+    setErrors(null);
   };
 
   const handleCreateClass = async (data) => {
@@ -90,7 +131,7 @@ export default function ClassManagement() {
       fetchList();
     } catch (err) {
       showError('Cập nhật lớp học thất bại.');
-      handleBackendErrors(err, classEditForm);
+      handleBackendErrors(err);
     }
   };
 
@@ -105,6 +146,39 @@ export default function ClassManagement() {
     }
   };
 
+  // Add/close handlers for add modal
+  const handleAddOpen = () => {
+    setForm({ name: '', training_type_id: '', faculty_id: '' });
+    setErrors(null);
+    setIsAddOpen(true);
+  };
+  const handleAddClose = () => {
+    setIsAddOpen(false);
+    setForm({ name: '', training_type_id: '', faculty_id: '' });
+    setErrors(null);
+  };
+
+  // Generic backend error mapper: supports react-hook-form instances or plain component errors
+  const handleBackendErrors = (err, formInstance) => {
+    const payload = err?.response?.data;
+    const list = payload?.errors;
+    if (formInstance && typeof formInstance.setError === 'function') {
+      if (Array.isArray(list)) {
+        list.forEach(e => { if (e.field) formInstance.setError(e.field, { type: 'server', message: e.message }); });
+      } else {
+        formInstance.setError('root.serverError', { type: 'server', message: payload?.message || err.message });
+      }
+    } else {
+      if (Array.isArray(list)) {
+        const map = {};
+        list.forEach(e => { if (e.field) map[e.field] = e.message; });
+        setErrors(map);
+      } else {
+        setErrors(payload?.message || err.message || 'Lỗi từ server');
+      }
+    }
+  };
+
 
   // --- Handlers cho Loại Đào Tạo (TT) ---
 
@@ -115,68 +189,44 @@ export default function ClassManagement() {
 
   const openAddTT = () => {
     setEditingTT(null);
-    ttFormInstance.reset({ name: '', code: '', description: '' });
-    ttFormInstance.clearErrors();
+    setTtForm({ name: '', code: '', description: '' });
     setIsTTModalOpen(true);
   };
 
   // Note: Mặc dù UI không có nút Sửa TT, logic vẫn hỗ trợ
   const openEditTT = (tt) => {
     setEditingTT(tt);
-    ttFormInstance.reset({
+    setTtForm({
       name: tt.name || '',
       code: tt.code || '',
       description: tt.description || ''
     });
-    ttFormInstance.clearErrors();
     setIsTTModalOpen(true);
   };
 
   const closeTTModal = () => {
     setIsTTModalOpen(false);
     setEditingTT(null);
-    ttFormInstance.reset();
+    setTtForm({ name: '', code: '', description: '' });
   };
 
-  const handleSaveTTSubmit = async (data) => {
+  const handleSaveTT = async (e) => {
+    e.preventDefault();
     try {
       if (editingTT) {
-        await updateTrainingType(editingTT.id, data);
+        await updateTrainingType(editingTT.id, ttForm);
       } else {
-        await createTrainingType(data);
+        await createTrainingType(ttForm);
       }
       closeTTModal();
       fetchTrainingTypes();
     } catch (err) {
       console.error('Save TT failed:', err);
-      handleBackendErrors(err, ttFormInstance);
+      handleBackendErrors(err);
     }
   };
 
-  // Lọc danh sách lớp học
-  const filteredClasses = classes.filter(
-      (cls) =>
-          selectedCategory === 'all' ||
-          String(cls.training_type_id) === String(selectedCategory)
-  );
-
-  // Combined search + category filter (include faculty name)
-  const filtered = classes.filter(cls => {
-    const trainingType = (trainingTypes.find(t => String(t.id) === String(cls.training_type_id)) || {});
-    const trainingTypeName = (trainingType.name) || '';
-    const faculty = (faculties.find(f => String(f.id) === String(cls.faculty_id)) || {});
-    const facultyName = (faculty.name) || '';
-
-    const q = (search || '').toLowerCase();
-    const matchesSearch = (cls.name || '').toLowerCase().includes(q)
-      || facultyName.toLowerCase().includes(q)
-      || (cls.code || '').toLowerCase().includes(q)
-      || trainingTypeName.toLowerCase().includes(q);
-
-    const matchesCategory = selectedCategory === 'all' || String(cls.training_type_id) === String(selectedCategory);
-
-    return matchesSearch && matchesCategory;
-  });
+  // (removed unused filteredClasses) — using combined `filtered` below for search + category
 
   // Combined search + category filter (include faculty name)
   const filtered = classes.filter(cls => {
@@ -199,7 +249,7 @@ export default function ClassManagement() {
   return (
     <>
       <PageMeta title="Quản lý lớp học" description="Trang quản lý danh sách các lớp học trong hệ thống." />
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
         <div className="flex justify-between items-center p-4">
           <div className="flex items-center gap-3">
             <input
@@ -222,24 +272,15 @@ export default function ClassManagement() {
             </Button>
             {trainingTypes && trainingTypes.length > 0 && trainingTypes.map((tt) => (
               <Button
-                  onClick={() => handleCategoryChange('all')}
+                  key={tt.id}
+                  onClick={() => handleCategoryChange(tt.id)}
                   size="sm"
-                  variant={selectedCategory === 'all' ? 'primary' : 'outline'}
+                  variant={String(selectedCategory) === String(tt.id) ? 'primary' : 'outline'}
               >
-                Tất cả
+                {tt.name || tt.code || `#${tt.id}`}
               </Button>
             ))}
           </div>
-          <div className="flex justify-end items-center gap-3 p-4">
-            <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700" onClick={handleAddOpen}>
-              Thêm lớp học
-            </Button>
-            <Button size="md" variant="secondary" className="!px-6 !py-2 font-semibold bg-gray-200 hover:bg-gray-300" onClick={openAddTT}>
-              Thêm loại đào tạo
-            </Button>
-          </div>
-        </div>
-        <div>
           <div className="flex justify-end items-center gap-3 p-4">
             <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700" onClick={handleAddOpen}>
               Thêm lớp học
@@ -260,7 +301,7 @@ export default function ClassManagement() {
                 <th className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
               {filtered.map((cls, idx) => (
                 <tr key={cls.id}>
                   <td className="px-5 py-4 sm:px-6 text-start">{idx + 1}</td>
@@ -315,6 +356,16 @@ export default function ClassManagement() {
               </select>
             </div>
             {errors && <div className="text-sm text-red-500">{typeof errors === 'string' ? errors : JSON.stringify(errors)}</div>}
+            {classAddForm.formState.errors.root?.serverError && (
+              <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                {classAddForm.formState.errors.root.serverError.message}
+              </div>
+            )}
+            {classAddForm.formState.errors.error && (
+              <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                {classAddForm.formState.errors.error.message}
+              </div>
+            )}
             <div className="flex justify-end mt-6 gap-3">
               <Button size="md" variant="primary" className="bg-blue-600 hover:bg-blue-700 font-semibold px-6 py-2 rounded-lg shadow" type="submit">Lưu</Button>
               <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={handleAddClose}>Hủy</Button>
@@ -359,6 +410,16 @@ export default function ClassManagement() {
               </select>
             </div>
             {errors && <div className="text-sm text-red-500">{typeof errors === 'string' ? errors : JSON.stringify(errors)}</div>}
+            {classAddForm.formState.errors.root?.serverError && (
+              <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                {classAddForm.formState.errors.root.serverError.message}
+              </div>
+            )}
+            {classAddForm.formState.errors.error && (
+              <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                {classAddForm.formState.errors.error.message}
+              </div>
+            )}
             <div className="flex justify-end mt-6 gap-3">
               <Button size="md" variant="primary" className="bg-yellow-500 hover:bg-yellow-600 font-semibold px-6 py-2 rounded-lg shadow" type="submit">Lưu</Button>
               <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={handleEditClose}>Hủy</Button>

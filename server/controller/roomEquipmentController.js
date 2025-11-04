@@ -22,6 +22,17 @@ exports.getRoomEquipmentById = async (req, res) => {
   }
 };
 
+// Lấy danh sách thiết bị theo room_id
+exports.getRoomEquipmentsByRoomId = async (req, res) => {
+  try {
+    const roomId = req.params.roomId;
+    const roomEquipments = await RoomEquipment.findAll({ where: { room_id: roomId } });
+    res.status(200).json(new SuccessResponse(roomEquipments, 'Lấy danh sách thiết bị của phòng thành công'));
+  } catch (err) {
+    res.status(500).json(new ErrorResponse(err.message, 500));
+  }
+};
+
 // Tạo thiết bị phòng học mới
 exports.createRoomEquipment = async (req, res) => {
   try {

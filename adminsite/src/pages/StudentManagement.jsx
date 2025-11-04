@@ -18,7 +18,27 @@ export default function StudentManagement() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState({ name: '', student_identifier: '', class_id: '' });
+  // modal and editing state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editStudent, setEditStudent] = useState(null);
+
+
+  // 🧩 Yup schema
+  const studentSchema = yup.object({
+    name: yup
+        .string()
+        .required("Tên sinh viên không được để trống")
+        .min(2, "Tên sinh viên phải có ít nhất 2 ký tự")
+        .max(255, "Tên sinh viên không được vượt quá 255 ký tự"),
+    student_identifier: yup
+        .string()
+        .required("Mã sinh viên không được để trống")
+        .matches(/^[A-Za-z0-9_-]+$/, "Mã sinh viên chỉ được chứa chữ, số, dấu gạch ngang hoặc gạch dưới")
+        .max(50, "Mã sinh viên không được vượt quá 50 ký tự"),
+    class_id: yup
+        .string()
+        .required("Vui lòng chọn lớp"),
+  });
 
   // ✅ React Hook Form setup
   const formInstance = useForm({
@@ -53,24 +73,48 @@ export default function StudentManagement() {
     }
   };
 
-  // ✅ Map lỗi backend vào form
   const handleBackendErrors = (err) => {
-    const errors = err?.response?.data?.errors;
-    if (Array.isArray(errors)) {
-      errors.forEach((error) => {
-        if (error.field) {
-          formInstance.setError(error.field, {
-            type: "server",
-            message: error.message,
-          });
+    const data = err?.response?.data || {};
+    const errors = data.errors;
+
+    // helper to set a field error
+    const setField = (field, message) => {
+      try {
+        if (!field) {
+          formInstance.setError("root.serverError", { type: "server", message });
+        } else {
+          formInstance.setError(String(field), { type: "server", message });
         }
+      } catch {
+        // ignore
+      }
+    };
+
+    if (Array.isArray(errors) && errors.length > 0) {
+      // normalize common properties: path, param, field
+      errors.forEach((it) => {
+        if (!it) return;
+        const field = it.path || it.param || it.field || it.fieldName || it.key;
+        const msg = it.msg || it.message || it.error || String(it);
+        setField(field, msg);
       });
-    } else {
-      const message = err?.response?.data?.message || err.message;
-      formInstance.setError("root.serverError", {
-        type: "server",
-        message: message,
-      });
+      // set a global error flag so UI can detect a validation failure
+      try {
+        formInstance.setError("error", { type: "server", message: "Validation failed" });
+      } catch {
+        // ignore if cannot set
+      }
+      return;
+    }
+
+    // Some handlers return { message } or { error }
+    const message = data.message || data.error || err?.message || 'Lỗi từ server';
+    formInstance.setError("root.serverError", { type: "server", message });
+    // also set a simple global `error` key for generic server errors
+    try {
+      formInstance.setError("error", { type: "server", message });
+    } catch {
+      // ignore
     }
   };
 
@@ -128,7 +172,7 @@ export default function StudentManagement() {
   return (
     <>
       <PageMeta title="Quản lý sinh viên" description="Trang quản lý danh sách sinh viên trong hệ thống." />
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
         <div className="flex justify-between items-center p-4">
           <div className="flex items-center gap-3">
             <input
@@ -140,7 +184,7 @@ export default function StudentManagement() {
             <Button size="sm" variant="outline" onClick={() => fetchStudents()}>Làm mới</Button>
           </div>
           <div>
-            <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-green-600 hover:bg-green-700" onClick={openAdd}>
+            <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-green-600 hover:bg-green-700" onClick={handleOpenAdd}>
               Thêm sinh viên
             </Button>
           </div>
@@ -156,7 +200,7 @@ export default function StudentManagement() {
                 <th className="px-5 py-3 text-center font-medium text-gray-500">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
               {filtered.map((student, idx) => (
                 <tr key={student.id}>
                   <td className="px-5 py-4 sm:px-6 text-start">{idx + 1}</td>
@@ -168,7 +212,7 @@ export default function StudentManagement() {
                       size="sm"
                       variant="outline"
                       className="mr-2 font-semibold bg-yellow-400 hover:bg-yellow-500 text-white"
-                      onClick={() => handleEditOpen(student)}
+                      onClick={() => handleOpenEdit(student)}
                     >
                       Sửa
                     </Button>
@@ -254,6 +298,12 @@ export default function StudentManagement() {
               {formInstance.formState.errors.root?.serverError && (
                   <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
                     {formInstance.formState.errors.root.serverError.message}
+                  </div>
+              )}
+
+              {formInstance.formState.errors.error && (
+                  <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                    {formInstance.formState.errors.error.message}
                   </div>
               )}
 

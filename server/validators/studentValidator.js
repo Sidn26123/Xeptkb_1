@@ -1,4 +1,6 @@
 const { body } = require('express-validator');
+const Student = require('../models/Students');
+const { Op } = require('sequelize');
 
 // ✅ Validator khi tạo mới sinh viên
 exports.createStudentValidator = [
@@ -14,7 +16,16 @@ exports.createStudentValidator = [
         .notEmpty().withMessage('Mã sinh viên không được để trống')
         .isString().withMessage('Mã sinh viên phải là chuỗi')
         .isLength({ max: 50 }).withMessage('Mã sinh viên tối đa 50 ký tự')
-        .matches(/^[A-Za-z0-9_-]+$/).withMessage('Mã sinh viên chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang'),
+        .matches(/^[A-Za-z0-9_-]+$/).withMessage('Mã sinh viên chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang')
+        .trim()
+        .custom(async (value, { req }) => {
+            if (!value) return true;
+            const where = { student_identifier: String(value).trim() };
+            if (req.params && req.params.id) where.id = { [Op.ne]: req.params.id };
+            const exists = await Student.findOne({ where });
+            if (exists) throw new Error('Mã sinh viên đã tồn tại');
+            return true;
+        }),
 ];
 
 // ✅ Validator khi cập nhật sinh viên (optional fields)
@@ -31,5 +42,14 @@ exports.updateStudentValidator = [
         .optional()
         .isString().withMessage('Mã sinh viên phải là chuỗi')
         .isLength({ max: 50 }).withMessage('Mã sinh viên tối đa 50 ký tự')
-        .matches(/^[A-Za-z0-9_-]+$/).withMessage('Mã sinh viên chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang'),
+        .matches(/^[A-Za-z0-9_-]+$/).withMessage('Mã sinh viên chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang')
+        .trim()
+        .custom(async (value, { req }) => {
+            if (!value) return true;
+            const where = { student_identifier: String(value).trim() };
+            if (req.params && req.params.id) where.id = { [Op.ne]: req.params.id };
+            const exists = await Student.findOne({ where });
+            if (exists) throw new Error('Mã sinh viên đã tồn tại');
+            return true;
+        }),
 ];

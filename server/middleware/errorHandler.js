@@ -53,11 +53,16 @@ const sendErrorProd = (err, res) => {
     else {
         // 1) Log lỗi
         console.error('ERROR 💥', err);
+        if (err.stack) {
+            console.error('STACK TRACE:', err.stack);
+        }
 
         // 2) Gửi message chung chung
         res.status(500).json({
             status: 'error',
-            message: 'Something went wrong!'
+            message: err.message || 'Something went wrong!',
+            error: err,
+            stack: err.stack
         });
     }
 };

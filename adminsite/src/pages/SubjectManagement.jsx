@@ -16,6 +16,53 @@ import * as yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
+// 🧩 Schema validate cho Môn học
+const subjectSchema = yup.object({
+  name: yup
+      .string()
+      .trim()
+      .required('Tên môn không được để trống')
+      .min(3, 'Tên môn phải có ít nhất 3 ký tự')
+      .max(255, 'Tên môn không được vượt quá 255 ký tự'),
+  code: yup
+      .string()
+      .trim()
+      .required('Mã môn không được để trống')
+      .matches(/^[A-Za-z0-9_-]+$/, 'Mã chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang'),
+  training_type_id: yup
+      .string()
+      .required('Vui lòng nhập hoặc chọn loại hình đào tạo'),
+  theory_hours: yup
+      .number()
+      .min(0, 'Số giờ lý thuyết không hợp lệ')
+      .required('Vui lòng nhập số giờ lý thuyết'),
+  practice_hours: yup
+      .number()
+      .min(0, 'Số giờ thực hành không hợp lệ')
+      .required('Vui lòng nhập số giờ thực hành'),
+  self_study_hours: yup
+      .number()
+      .min(0, 'Số giờ tự học không hợp lệ')
+      .required('Vui lòng nhập số giờ tự học'),
+  requires_lab: yup.boolean().default(false)
+});
+
+// Schema cho Loại đào tạo
+const trainingTypeSchema = yup.object({
+  name: yup
+      .string()
+      .trim()
+      .required('Tên không được để trống')
+      .min(3, 'Tên phải có ít nhất 3 ký tự')
+      .max(255, 'Tên không được vượt quá 255 ký tự'),
+  code: yup
+      .string()
+      .trim()
+      .required('Mã không được để trống')
+      .matches(/^[A-Za-z0-9_-]+$/, 'Mã chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang'),
+  description: yup.string().trim().optional(),
+});
+
 export default function SubjectManagement() {
   const [subjects, setSubjects] = useState([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -26,6 +73,9 @@ export default function SubjectManagement() {
   const [isLoadingEquipments, setIsLoadingEquipments] = useState(false);
   const [selectedEquipments, setSelectedEquipments] = useState([]); // { equipment_id, quantity }
   const [search, setSearch] = useState('');
+  // form and error state (missing before)
+  const [form, setForm] = useState({ name: '', training_type_id: '', code: '', theory_hours: 0, self_study_hours: 0, practice_hours: 0, requires_lab: false });
+  const [errors, setErrors] = useState(null);
 
   useEffect(() => { fetchList(); fetchTrainingTypes(); }, []);
 
@@ -96,23 +146,24 @@ export default function SubjectManagement() {
     }
   };
 
-  // 🧩 Hàm xử lý lỗi từ backend
-  const handleBackendErrors = (err, formInstance) => {
-    const errors = err?.response?.data?.errors;
-    if (Array.isArray(errors)) {
-      errors.forEach((e) => {
-        if (e.field) {
-          formInstance.setError(e.field, { type: 'server', message: e.message });
-        }
+  // Map backend errors into component-level `errors` state
+  const handleBackendErrors = (err) => {
+    const payload = err?.response?.data;
+    const list = payload?.errors;
+    if (Array.isArray(list)) {
+      // convert [{field, message}] into { field: message }
+      const map = {};
+      list.forEach((e) => {
+        if (e.field) map[e.field] = e.message;
       });
+      setErrors(map);
     } else {
-      const msg = err?.response?.data?.message || err.message;
-      formInstance.setError('root.serverError', { type: 'server', message: msg });
+      setErrors(payload?.message || err.message || 'Lỗi từ server');
     }
   };
 
 
-  const handleUpdate = async (data) => {
+  const handleUpdate = async () => {
     try {
       await updateSubject(editSubject.id, form);
       // sync subject requires equipments: delete existing relations and recreate
@@ -128,7 +179,7 @@ export default function SubjectManagement() {
       fetchList();
     } catch (err) {
       console.error('Update failed:', err);
-      handleBackendErrors(err, editForm);
+      handleBackendErrors(err);
     }
   };
 
@@ -311,17 +362,17 @@ export default function SubjectManagement() {
                 <label className="block mb-1 text-sm">Thực hành</label>
                 <input type="number" className="w-full border rounded px-3 py-2" value={form.practice_hours} onChange={(e) => setForm({ ...form, practice_hours: Number(e.target.value) })} />
               </div>
-              <div className="flex-1">
-                <label className="block mb-1 text-sm">Tự học</label>
-                <input type="number" className="w-full border rounded px-3 py-2" value={form.self_study_hours} onChange={(e) => setForm({ ...form, theory_hours: Number(e.target.value) })} />
-              </div>
+                <div className="flex-1">
+                  <label className="block mb-1 text-sm">Tự học</label>
+                  <input type="number" className="w-full border rounded px-3 py-2" value={form.self_study_hours} onChange={(e) => setForm({ ...form, self_study_hours: Number(e.target.value) })} />
+                </div>
             </div>
             <div className="flex items-center gap-3">
               <input id="requires_lab_edit" type="checkbox" checked={form.requires_lab} onChange={(e) => setForm({ ...form, requires_lab: e.target.checked })} />
               <label htmlFor="requires_lab_edit" className="text-sm">Yêu cầu phòng lab</label>
             </div>
-            ={/* Field training_type_id */}
-            <div>
+            {/* Field training_type_id */}
+            {/* <div>
               <label className="block mb-1 text-sm">Kiểu đào tạo (ID)</label>
               <input {...addForm.register('training_type_id')} className="w-full border rounded px-3 py-2" />
               {addForm.formState.errors.training_type_id && (
@@ -329,7 +380,7 @@ export default function SubjectManagement() {
                     {addForm.formState.errors.training_type_id.message}
                   </p>
               )}
-            </div>
+            </div> */}
             {/* Equipments required for subject (edit) */}
             <div className="bg-white rounded-lg p-3 border border-gray-200">
               <label className="block mb-2 text-sm font-semibold text-gray-700">Thiết bị cần cho môn</label>

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { getAllSemesters } from '../../services/semesterService';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import './ModernTimeTable.blue.css';
@@ -40,36 +39,15 @@ const SUBJECT_COLORS = {
   'INT2204': 'event-datastructure',
 };
 
-export default function ModernTimeTable({ events = [], onEventClick }) {
+export default function ModernTimeTable({ events = [], onEventClick, semesters = [], selectedSemester = null, onSelectSemester = () => {} }) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [semesters, setSemesters] = useState([]);
-  const [selectedSemester, setSelectedSemester] = useState(null);
-
-  useEffect(() => {
-    async function fetchSemesters() {
-      try {
-        const data = await getAllSemesters();
-        setSemesters(data);
-        if (data.length > 0) {
-          const currentSemester = data[0];
-          setSelectedSemester(currentSemester);
-          // Set current week to semester start date
-          const semesterStart = new Date(currentSemester.start);
-          setCurrentWeek(semesterStart);
-        }
-      } catch (error) {
-        console.error('Error fetching semesters:', error);
-      }
-    }
-    fetchSemesters();
-  }, []);
 
   // Update current week when semester changes
   useEffect(() => {
     if (selectedSemester) {
       const semesterStart = new Date(selectedSemester.start);
       const semesterEnd = new Date(selectedSemester.end);
-      
+
       // Check if currentWeek is within semester range
       if (currentWeek < semesterStart || currentWeek > semesterEnd) {
         setCurrentWeek(semesterStart);
@@ -186,23 +164,23 @@ export default function ModernTimeTable({ events = [], onEventClick }) {
         <div className="filter-group">
           <label className="filter-label">Học kỳ</label>
           <select
-            className="filter-select"
-            value={selectedSemester?.id || ''}
-            onChange={(e) => {
-              const found = semesters.find(s => s.id === e.target.value);
-              setSelectedSemester(found || null);
-            }}
-          >
-            {semesters.length > 0 ? (
-              semesters.map(s => (
-                <option key={s.id} value={s.id}>
-                  Học kỳ {s.name} - Năm học {s.year}
-                </option>
-              ))
-            ) : (
-              <option>Đang tải...</option>
-            )}
-          </select>
+              className="filter-select"
+              value={selectedSemester?.id || ''}
+              onChange={(e) => {
+                const found = semesters.find(s => s.id === e.target.value);
+                onSelectSemester(found || null);
+              }}
+            >
+              {semesters.length > 0 ? (
+                semesters.map(s => (
+                  <option key={s.id} value={s.id}>
+                    Học kỳ {s.name} - Năm học {s.year}
+                  </option>
+                ))
+              ) : (
+                <option>Đang tải...</option>
+              )}
+            </select>
         </div>
 
         <div className="filter-group">
@@ -269,12 +247,12 @@ export default function ModernTimeTable({ events = [], onEventClick }) {
 
       {/* Timetable Grid */}
       <div className="timetable-table-container">
-        <table className="timetable-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+        <table className="timetable-table border-collapse border border-blue-200" style={{ tableLayout: 'fixed', width: '100%' }}>
           <thead>
             <tr>
-              <th style={{ width: '80px' }}>Tiết</th>
+              <th className="border border-blue-200" style={{ width: '80px' }}>Tiết</th>
               {weekDays.map((day) => (
-                <th key={day.id} style={{ width: `${100 / weekDays.length}%`, minWidth: '80px' }}>
+                <th key={day.id} className="border border-blue-200" style={{ width: `${100 / weekDays.length}%`, minWidth: '80px' }}>
                   {day.label}
                 </th>
               ))}
@@ -283,7 +261,7 @@ export default function ModernTimeTable({ events = [], onEventClick }) {
           <tbody>
             {TIME_SLOTS.map((slot) => (
               <tr key={slot.id}>
-                <td className="time-slot-cell">{slot.label}</td>
+                <td className="time-slot-cell border border-blue-200">{slot.label}</td>
                 {weekDays.map((day, dayIndex) => {
                   const cellEvents = getEventsForCell(dayIndex);
                   const isTodayCol = isToday(day.date);
@@ -291,7 +269,7 @@ export default function ModernTimeTable({ events = [], onEventClick }) {
                   return (
                     <td
                       key={day.id}
-                      className={`schedule-table-cell ${isTodayCol ? 'today-col' : ''}`}
+                      className={`schedule-table-cell border border-blue-200 ${isTodayCol ? 'today-col' : ''}`}
                     >
                       {cellEvents.map((event) => (
                         <div

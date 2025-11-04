@@ -1,4 +1,4 @@
-const Equipment = require('../models/Equipment');
+const Equipment = require('../models/Equipments');
 
 async function getEquipmentById(id) {
   return await Equipment.findByPk(id);

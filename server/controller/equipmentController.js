@@ -25,8 +25,11 @@ exports.getEquipmentById = async (req, res) => {
 // Tạo thiết bị mới
 exports.createEquipment = async (req, res) => {
   try {
-    const { name, description } = req.body;
-    const newEquipment = await Equipment.create({ name, description });
+    const { code, name, description, total } = req.body;
+    // ensure code and name are provided (basic guard). Validator should normally handle this.
+    const payload = { code, name, description };
+    if (typeof total !== 'undefined') payload.total = total;
+    const newEquipment = await Equipment.create(payload);
     res.status(201).json(new SuccessResponse(newEquipment, 'Tạo thiết bị thành công', 201));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));
@@ -36,10 +39,15 @@ exports.createEquipment = async (req, res) => {
 // Cập nhật thiết bị
 exports.updateEquipment = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { code, name, description, total } = req.body;
     const equipment = await Equipment.findByPk(req.params.id);
     if (!equipment) return res.status(404).json(new ErrorResponse('Không tìm thấy thiết bị', 404));
-    await equipment.update({ name, description });
+    const update = { };
+    if (typeof code !== 'undefined') update.code = code;
+    if (typeof name !== 'undefined') update.name = name;
+    if (typeof description !== 'undefined') update.description = description;
+    if (typeof total !== 'undefined') update.total = total;
+    await equipment.update(update);
     res.status(200).json(new SuccessResponse(equipment, 'Cập nhật thiết bị thành công'));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));

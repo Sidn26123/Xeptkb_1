@@ -97,6 +97,8 @@ CREATE TABLE `equipments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `total` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -406,11 +408,11 @@ INSERT INTO `buildings` (`id`, `campus_id`, `name`, `floor_count`, `code`, `loca
   (3, 1, 'Tòa C1', 3, 'TSCH-C', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
   (4, 1, 'Tòa D1', 2, 'TSCH-D', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
   (5, 1, 'Sân E1', 2, 'TSCH-E', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active'),
-  (5, 2, 'Tòa A2', 4, 'CSDT-A', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
-  (6, 2, 'Tòa B2', 4, 'CSDT-B', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
-  (7, 2, 'Tòa C2', 3, 'CSDT-C', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
-  (8, 2, 'Tòa D2', 2, 'CSDT-D', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
-  (9, 2, 'Sân E2', 2, 'CSDT-E', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active');
+  (6, 2, 'Tòa A2', 4, 'CSDT-A', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (7, 2, 'Tòa B2', 4, 'CSDT-B', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (8, 2, 'Tòa C2', 3, 'CSDT-C', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (9, 2, 'Tòa D2', 2, 'CSDT-D', '97 Man Thiện, phường Tăng Nhơn Phú, TP. Hồ Chí Minh', 'active'),
+  (10, 2, 'Sân E2', 2, 'CSDT-E', '11 Nguyễn Đình Chiểu, phường Sài Gòn, TP. Hồ Chí Minh', 'active');
 
 -- Sample data for table `equipments`
 INSERT INTO `equipments` (`id`, `code`, `name`) VALUES
@@ -490,6 +492,125 @@ INSERT INTO `students` (`class_id`, `name`, `student_identifier`) VALUES
   (1, 'Trần Thị Bình', 'B21DCCN002'),
   (2, 'Lê Văn Cường', 'B21DCAT001');
 
+-- TSCH campus (campus id 1)
+-- TSCH-A (building id 1) floors 0..3
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('1A01','Phòng TSCH-A - Tầng trệt - 01','Lý thuyết',60,40,0,'active',1,NULL,NOW(),NOW()),
+('1A02','Phòng TSCH-A - Tầng trệt - 02','Thực hành',30,25,0,'active',1,NULL,NOW(),NOW()),
+('1A03','Phòng TSCH-A - Tầng trệt - 03','Lý thuyết',60,40,0,'active',1,NULL,NOW(),NOW()),
+('1A04','Phòng TSCH-A - Tầng trệt - 04','Thực hành',30,25,0,'active',1,NULL,NOW(),NOW()),
+('1A11','Phòng TSCH-A - Tầng 1 - 01','Lý thuyết',60,40,1,'active',1,NULL,NOW(),NOW()),
+('1A12','Phòng TSCH-A - Tầng 1 - 02','Thực hành',30,25,1,'active',1,NULL,NOW(),NOW()),
+('1A13','Phòng TSCH-A - Tầng 1 - 03','Lý thuyết',60,40,1,'active',1,NULL,NOW(),NOW()),
+('1A21','Phòng TSCH-A - Tầng 2 - 01','Lý thuyết',60,40,2,'active',1,NULL,NOW(),NOW()),
+('1A22','Phòng TSCH-A - Tầng 2 - 02','Thực hành',30,25,2,'active',1,NULL,NOW(),NOW()),
+('1A23','Phòng TSCH-A - Tầng 2 - 03','Lý thuyết',60,40,2,'active',1,NULL,NOW(),NOW()),
+('1A24','Phòng TSCH-A - Tầng 2 - 04','Thực hành',30,25,2,'active',1,NULL,NOW(),NOW()),
+('1A31','Phòng TSCH-A - Tầng 3 - 01','Lý thuyết',60,40,3,'active',1,NULL,NOW(),NOW()),
+('1A32','Phòng TSCH-A - Tầng 3 - 02','Thực hành',30,25,3,'active',1,NULL,NOW(),NOW()),
+('1A33','Phòng TSCH-A - Tầng 3 - 03','Lý thuyết',60,40,3,'active',1,NULL,NOW(),NOW());
+
+-- TSCH-B (building id 2)
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('1B01','Phòng TSCH-B - Tầng trệt - 01','Lý thuyết',60,40,0,'active',2,NULL,NOW(),NOW()),
+('1B02','Phòng TSCH-B - Tầng trệt - 02','Thực hành',30,25,0,'active',2,NULL,NOW(),NOW()),
+('1B03','Phòng TSCH-B - Tầng trệt - 03','Lý thuyết',60,40,0,'active',2,NULL,NOW(),NOW()),
+('1B04','Phòng TSCH-B - Tầng trệt - 04','Thực hành',30,25,0,'active',2,NULL,NOW(),NOW()),
+('1B11','Phòng TSCH-B - Tầng 1 - 01','Lý thuyết',60,40,1,'active',2,NULL,NOW(),NOW()),
+('1B12','Phòng TSCH-B - Tầng 1 - 02','Thực hành',30,25,1,'active',2,NULL,NOW(),NOW()),
+('1B13','Phòng TSCH-B - Tầng 1 - 03','Lý thuyết',60,40,1,'active',2,NULL,NOW(),NOW()),
+('1B21','Phòng TSCH-B - Tầng 2 - 01','Lý thuyết',60,40,2,'active',2,NULL,NOW(),NOW()),
+('1B22','Phòng TSCH-B - Tầng 2 - 02','Thực hành',30,25,2,'active',2,NULL,NOW(),NOW()),
+('1B23','Phòng TSCH-B - Tầng 2 - 03','Lý thuyết',60,40,2,'active',2,NULL,NOW(),NOW()),
+('1B24','Phòng TSCH-B - Tầng 2 - 04','Thực hành',30,25,2,'active',2,NULL,NOW(),NOW()),
+('1B31','Phòng TSCH-B - Tầng 3 - 01','Lý thuyết',60,40,3,'active',2,NULL,NOW(),NOW()),
+('1B32','Phòng TSCH-B - Tầng 3 - 02','Thực hành',30,25,3,'active',2,NULL,NOW(),NOW()),
+('1B33','Phòng TSCH-B - Tầng 3 - 03','Lý thuyết',60,40,3,'active',2,NULL,NOW(),NOW());
+
+-- TSCH-C (building id 3) - 3 floors (0..2)
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('1C01','Phòng TSCH-C - Tầng trệt - 01','Lý thuyết',60,40,0,'active',3,NULL,NOW(),NOW()),
+('1C02','Phòng TSCH-C - Tầng trệt - 02','Thực hành',30,25,0,'active',3,NULL,NOW(),NOW()),
+('1C03','Phòng TSCH-C - Tầng trệt - 03','Lý thuyết',60,40,0,'active',3,NULL,NOW(),NOW()),
+('1C11','Phòng TSCH-C - Tầng 1 - 01','Lý thuyết',60,40,1,'active',3,NULL,NOW(),NOW()),
+('1C12','Phòng TSCH-C - Tầng 1 - 02','Thực hành',30,25,1,'active',3,NULL,NOW(),NOW()),
+('1C13','Phòng TSCH-C - Tầng 1 - 03','Lý thuyết',60,40,1,'active',3,NULL,NOW(),NOW()),
+('1C21','Phòng TSCH-C - Tầng 2 - 01','Lý thuyết',60,40,2,'active',3,NULL,NOW(),NOW()),
+('1C22','Phòng TSCH-C - Tầng 2 - 02','Thực hành',30,25,2,'active',3,NULL,NOW(),NOW()),
+('1C23','Phòng TSCH-C - Tầng 2 - 03','Lý thuyết',60,40,2,'active',3,NULL,NOW(),NOW());
+
+-- TSCH-D (building id 4) - 2 floors (0..1)
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('1D01','Phòng TSCH-D - Tầng trệt - 01','Lý thuyết',60,40,0,'active',4,NULL,NOW(),NOW()),
+('1D02','Phòng TSCH-D - Tầng trệt - 02','Thực hành',30,25,0,'active',4,NULL,NOW(),NOW()),
+('1D03','Phòng TSCH-D - Tầng trệt - 03','Lý thuyết',60,40,0,'active',4,NULL,NOW(),NOW()),
+('1D11','Phòng TSCH-D - Tầng 1 - 01','Lý thuyết',60,40,1,'active',4,NULL,NOW(),NOW()),
+('1D12','Phòng TSCH-D - Tầng 1 - 02','Thực hành',30,25,1,'active',4,NULL,NOW(),NOW());
+
+-- TSCH-E (Sân) building id 5 - only ground floor with 2 rooms
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('1E01','Sân TSCH-E - Tầng trệt - 01','Sân',0,0,0,'active',5,NULL,NOW(),NOW()),
+('1E02','Sân TSCH-E - Tầng trệt - 02','Sân',0,0,0,'active',5,NULL,NOW(),NOW());
+
+-- CSDT campus (campus id 2)
+-- CSDT-A (building id 6)
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('2A01','Phòng CSDT-A - Tầng trệt - 01','Lý thuyết',60,40,0,'active',6,NULL,NOW(),NOW()),
+('2A02','Phòng CSDT-A - Tầng trệt - 02','Thực hành',30,25,0,'active',6,NULL,NOW(),NOW()),
+('2A03','Phòng CSDT-A - Tầng trệt - 03','Lý thuyết',60,40,0,'active',6,NULL,NOW(),NOW()),
+('2A04','Phòng CSDT-A - Tầng trệt - 04','Thực hành',30,25,0,'active',6,NULL,NOW(),NOW()),
+('2A11','Phòng CSDT-A - Tầng 1 - 01','Lý thuyết',60,40,1,'active',6,NULL,NOW(),NOW()),
+('2A12','Phòng CSDT-A - Tầng 1 - 02','Thực hành',30,25,1,'active',6,NULL,NOW(),NOW()),
+('2A13','Phòng CSDT-A - Tầng 1 - 03','Lý thuyết',60,40,1,'active',6,NULL,NOW(),NOW()),
+('2A21','Phòng CSDT-A - Tầng 2 - 01','Lý thuyết',60,40,2,'active',6,NULL,NOW(),NOW()),
+('2A22','Phòng CSDT-A - Tầng 2 - 02','Thực hành',30,25,2,'active',6,NULL,NOW(),NOW()),
+('2A23','Phòng CSDT-A - Tầng 2 - 03','Lý thuyết',60,40,2,'active',6,NULL,NOW(),NOW()),
+('2A24','Phòng CSDT-A - Tầng 2 - 04','Thực hành',30,25,2,'active',6,NULL,NOW(),NOW()),
+('2A31','Phòng CSDT-A - Tầng 3 - 01','Lý thuyết',60,40,3,'active',6,NULL,NOW(),NOW()),
+('2A32','Phòng CSDT-A - Tầng 3 - 02','Thực hành',30,25,3,'active',6,NULL,NOW(),NOW()),
+('2A33','Phòng CSDT-A - Tầng 3 - 03','Lý thuyết',60,40,3,'active',6,NULL,NOW(),NOW());
+
+-- CSDT-B (building id 7)
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('2B01','Phòng CSDT-B - Tầng trệt - 01','Lý thuyết',60,40,0,'active',7,NULL,NOW(),NOW()),
+('2B02','Phòng CSDT-B - Tầng trệt - 02','Thực hành',30,25,0,'active',7,NULL,NOW(),NOW()),
+('2B03','Phòng CSDT-B - Tầng trệt - 03','Lý thuyết',60,40,0,'active',7,NULL,NOW(),NOW()),
+('2B04','Phòng CSDT-B - Tầng trệt - 04','Thực hành',30,25,0,'active',7,NULL,NOW(),NOW()),
+('2B11','Phòng CSDT-B - Tầng 1 - 01','Lý thuyết',60,40,1,'active',7,NULL,NOW(),NOW()),
+('2B12','Phòng CSDT-B - Tầng 1 - 02','Thực hành',30,25,1,'active',7,NULL,NOW(),NOW()),
+('2B13','Phòng CSDT-B - Tầng 1 - 03','Lý thuyết',60,40,1,'active',7,NULL,NOW(),NOW()),
+('2B21','Phòng CSDT-B - Tầng 2 - 01','Lý thuyết',60,40,2,'active',7,NULL,NOW(),NOW()),
+('2B22','Phòng CSDT-B - Tầng 2 - 02','Thực hành',30,25,2,'active',7,NULL,NOW(),NOW()),
+('2B23','Phòng CSDT-B - Tầng 2 - 03','Lý thuyết',60,40,2,'active',7,NULL,NOW(),NOW()),
+('2B24','Phòng CSDT-B - Tầng 2 - 04','Thực hành',30,25,2,'active',7,NULL,NOW(),NOW()),
+('2B31','Phòng CSDT-B - Tầng 3 - 01','Lý thuyết',60,40,3,'active',7,NULL,NOW(),NOW()),
+('2B32','Phòng CSDT-B - Tầng 3 - 02','Thực hành',30,25,3,'active',7,NULL,NOW(),NOW()),
+('2B33','Phòng CSDT-B - Tầng 3 - 03','Lý thuyết',60,40,3,'active',7,NULL,NOW(),NOW());
+
+-- CSDT-C (building id 8)
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('2C01','Phòng CSDT-C - Tầng trệt - 01','Lý thuyết',60,40,0,'active',8,NULL,NOW(),NOW()),
+('2C02','Phòng CSDT-C - Tầng trệt - 02','Thực hành',30,25,0,'active',8,NULL,NOW(),NOW()),
+('2C03','Phòng CSDT-C - Tầng trệt - 03','Lý thuyết',60,40,0,'active',8,NULL,NOW(),NOW()),
+('2C11','Phòng CSDT-C - Tầng 1 - 01','Lý thuyết',60,40,1,'active',8,NULL,NOW(),NOW()),
+('2C12','Phòng CSDT-C - Tầng 1 - 02','Thực hành',30,25,1,'active',8,NULL,NOW(),NOW()),
+('2C13','Phòng CSDT-C - Tầng 1 - 03','Lý thuyết',60,40,1,'active',8,NULL,NOW(),NOW()),
+('2C21','Phòng CSDT-C - Tầng 2 - 01','Lý thuyết',60,40,2,'active',8,NULL,NOW(),NOW()),
+('2C22','Phòng CSDT-C - Tầng 2 - 02','Thực hành',30,25,2,'active',8,NULL,NOW(),NOW()),
+('2C23','Phòng CSDT-C - Tầng 2 - 03','Lý thuyết',60,40,2,'active',8,NULL,NOW(),NOW());
+
+-- CSDT-D (building id 9)
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('2D01','Phòng CSDT-D - Tầng trệt - 01','Lý thuyết',60,40,0,'active',9,NULL,NOW(),NOW()),
+('2D02','Phòng CSDT-D - Tầng trệt - 02','Thực hành',30,25,0,'active',9,NULL,NOW(),NOW()),
+('2D03','Phòng CSDT-D - Tầng trệt - 03','Lý thuyết',60,40,0,'active',9,NULL,NOW(),NOW()),
+('2D11','Phòng CSDT-D - Tầng 1 - 01','Lý thuyết',60,40,1,'active',9,NULL,NOW(),NOW()),
+('2D12','Phòng CSDT-D - Tầng 1 - 02','Thực hành',30,25,1,'active',9,NULL,NOW(),NOW());
+
+-- CSDT-E (Sân) building id 10 - only ground floor with 2 rooms
+INSERT INTO `rooms` (`code`,`name`,`type`,`capacity_max`,`capacity_optimal`,`floor_number`,`status`,`buildings_id`,`metadata`,`created_at`,`updated_at`) VALUES
+('2E01','Sân CSDT-E - Tầng trệt - 01','Sân',0,0,0,'active',10,NULL,NOW(),NOW()),
+('2E02','Sân CSDT-E - Tầng trệt - 02','Sân',0,0,0,'active',10,NULL,NOW(),NOW());
 --
 -- Indexes for dumped tables
 --
@@ -881,3 +1002,5 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- End of assistant-updated explicit room seeds

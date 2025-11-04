@@ -14,7 +14,8 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <ThemeProvider>
+        <App />
         <Toaster
             position="top-right"
             richColors
@@ -27,6 +28,7 @@ if (rootElement) {
                 },
             }}
         />
+      </ThemeProvider>
     </StrictMode>
   );
 }

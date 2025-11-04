@@ -1,7 +1,7 @@
 import React from "react";
 import PageMeta from "../components/common/PageMeta.jsx";
 import ResearchScheduleHub from "../components/researchSchedule/ResearchScheduleHub.jsx";
-import StudentSchedule from "../components/researchSchedule/StudentSchedule.jsx";
+import StudentSchedule from "../components/researchSchedule/ClassSchedule.jsx";
 import ClassSchedule from "../components/researchSchedule/ClassSchedule.jsx";
 import RoomSchedule from "../components/researchSchedule/RoomSchedule.jsx";
 import CampusSchedule from "../components/researchSchedule/CampusSchedule.jsx";
@@ -11,8 +11,6 @@ export default function ResearchScheduleManagement() {
 
   const renderView = () => {
     switch (viewType) {
-      case 'student':
-        return <StudentSchedule />;
       case 'class':
         return <ClassSchedule />;
       case 'room':

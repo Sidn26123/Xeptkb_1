@@ -12,6 +12,11 @@ export const getRoomEquipmentById = async (id) => {
   return res?.data?.data ?? null;
 };
 
+export const getRoomEquipmentsByRoomId = async (roomId) => {
+  const res = await api.get(`/room-equipments/room/${roomId}`);
+  return res?.data?.data ?? [];
+};
+
 export const createRoomEquipment = async (data) => {
   const res = await api.post('/room-equipments', data);
   return res?.data?.data ?? null;
@@ -30,6 +35,7 @@ export const deleteRoomEquipment = async (id) => {
 export default {
   getAllRoomEquipments,
   getRoomEquipmentById,
+  getRoomEquipmentsByRoomId,
   createRoomEquipment,
   updateRoomEquipment,
   deleteRoomEquipment,

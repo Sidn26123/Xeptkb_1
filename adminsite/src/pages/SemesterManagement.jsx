@@ -18,8 +18,6 @@ import {
 import authService from "../services/authService.js";
 import { formatDateDisplay, toISODate } from "../utils/dateUtils.js";
 
-import { formatDateDisplay, toISODate } from "../utils/formatdate.js";
-
 const initialForm = {
   code: "",
   term: "HK1",
@@ -30,6 +28,51 @@ const initialForm = {
   status: "",
 };
 
+  // 🧩 Schema Yup Validation
+  const semesterSchema = yup.object({
+    code: yup
+        .string()
+        .trim()
+        .required("Mã học kỳ không được để trống")
+        .min(2, "Mã học kỳ phải có ít nhất 2 ký tự")
+        .max(50, "Mã học kỳ không được vượt quá 50 ký tự"),
+    name: yup
+        .string()
+        .trim()
+        .required("Tên học kỳ không được để trống")
+        .min(3, "Tên học kỳ phải có ít nhất 3 ký tự")
+        .max(255, "Tên học kỳ không được vượt quá 255 ký tự"),
+    AcademicYearsid: yup
+        .string()
+        .required("Vui lòng chọn năm học"),
+    start: yup
+        .date()
+        .required("Vui lòng chọn ngày bắt đầu"),
+    end: yup
+        .date()
+        .required("Vui lòng chọn ngày kết thúc")
+        .min(yup.ref("start"), "Ngày kết thúc phải sau ngày bắt đầu"),
+    status: yup
+        .string()
+        .required("Vui lòng chọn trạng thái"),
+  });
+
+  // Schema cho Loại đào tạo
+  const trainingTypeSchema = yup.object({
+    name: yup
+        .string()
+        .trim()
+        .required('Tên không được để trống')
+        .min(3, 'Tên phải có ít nhất 3 ký tự')
+        .max(255, 'Tên không được vượt quá 255 ký tự'),
+    code: yup
+        .string()
+        .trim()
+        .required('Mã không được để trống')
+        .matches(/^[A-Za-z0-9_-]+$/, 'Mã chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang'),
+    description: yup.string().trim().optional(),
+  });
+
 export default function SemesterManagement() {
   const [semesters, setSemesters] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
@@ -37,6 +80,12 @@ export default function SemesterManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  // form / modal / filter state (missing previously)
+  const [form, setForm] = useState(initialForm);
+  const [editId, setEditId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
   
   
   useEffect(() => {
@@ -84,59 +133,59 @@ export default function SemesterManagement() {
     }
   };
 
-  // ✅ Handlers
-  const handleOpenAdd = () => {
-    setEditSemester(null);
-    formInstance.reset({
-      code: "",
-      name: "",
-      AcademicYearsid: "",
-      start: "",
-      end: "",
-      status: "",
-    });
-    formInstance.clearErrors();
-    setIsModalOpen(true);
-  };
+  // // ✅ Handlers
+  // const handleOpenAdd = () => {
+  //   setEditSemester(null);
+  //   formInstance.reset({
+  //     code: "",
+  //     name: "",
+  //     AcademicYearsid: "",
+  //     start: "",
+  //     end: "",
+  //     status: "",
+  //   });
+  //   formInstance.clearErrors();
+  //   setIsModalOpen(true);
+  // };
 
-  const handleOpenEdit = (semester) => {
-    setEditSemester(semester);
-    formInstance.reset({
-      code: semester.code || "",
-      name: semester.name || "",
-      AcademicYearsid: semester.AcademicYearsid || semester.year_id || "",
-      start: toISODate(semester.start || semester.startDate || ""),
-      end: toISODate(semester.end || semester.endDate || ""),
-      status: semester.status || "",
-    });
-    formInstance.clearErrors();
-    setIsModalOpen(true);
-  };
+  // const handleOpenEdit = (semester) => {
+  //   setEditSemester(semester);
+  //   formInstance.reset({
+  //     code: semester.code || "",
+  //     name: semester.name || "",
+  //     AcademicYearsid: semester.AcademicYearsid || semester.year_id || "",
+  //     start: toISODate(semester.start || semester.startDate || ""),
+  //     end: toISODate(semester.end || semester.endDate || ""),
+  //     status: semester.status || "",
+  //   });
+  //   formInstance.clearErrors();
+  //   setIsModalOpen(true);
+  // };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa học kỳ này?")) return;
-    try {
-      await deleteSemester(id);
-      fetchSemesters();
-    } catch (err) {
-      alert(err?.response?.data?.message || "Lỗi khi xóa học kỳ");
-    }
-  };
+  // const handleDelete = async (id) => {
+  //   if (!window.confirm("Bạn có chắc muốn xóa học kỳ này?")) return;
+  //   try {
+  //     await deleteSemester(id);
+  //     fetchSemesters();
+  //   } catch (err) {
+  //     alert(err?.response?.data?.message || "Lỗi khi xóa học kỳ");
+  //   }
+  // };
 
-  const handleSubmit = async (data) => {
-    try {
-      if (editSemester) {
-        await updateSemester(editSemester.id, data);
-      } else {
-        await createSemester(data);
-      }
-      setIsModalOpen(false);
-      fetchSemesters();
-    } catch (err) {
-      console.error("Failed to save semester:", err);
-      handleBackendErrors(err);
-    }
-  };
+  // const handleSubmit = async (data) => {
+  //   try {
+  //     if (editSemester) {
+  //       await updateSemester(editSemester.id, data);
+  //     } else {
+  //       await createSemester(data);
+  //     }
+  //     setIsModalOpen(false);
+  //     fetchSemesters();
+  //   } catch (err) {
+  //     console.error("Failed to save semester:", err);
+  //     handleBackendErrors(err);
+  //   }
+  // };
 
   const filteredSemesters = useMemo(() => {
     const q = (query || "").trim().toLowerCase();
