@@ -27,6 +27,14 @@ const Schedule = sequelize.define('Schedule', {
     type: DataTypes.INTEGER,
     defaultValue: 1,
   },
+  generation_id: {   // <-- thêm dòng này
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: "schedule_generations",
+      key: "id",
+    }
+  }
 }, {
   tableName: 'schedules',
   timestamps: false,
