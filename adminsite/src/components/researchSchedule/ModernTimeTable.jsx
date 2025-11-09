@@ -165,33 +165,32 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
           <label className="filter-label">Học kỳ</label>
           <select
               className="filter-select"
-              value={selectedSemester?.id || ''}
+              value={selectedSemester?.id ?? ""}
               onChange={(e) => {
-                const found = semesters.find(s => s.id === e.target.value);
+                const value = Number(e.target.value); // ⬅ ép kiểu
+                const found = semesters.find(s => s.id === value);
                 onSelectSemester(found || null);
               }}
-            >
-              {semesters.length > 0 ? (
-                semesters.map(s => (
-                  <option key={s.id} value={s.id}>
-                    Học kỳ {s.name} - Năm học {s.year}
-                  </option>
-                ))
-              ) : (
-                <option>Đang tải...</option>
-              )}
-            </select>
+          >
+            <option value="">-- Chọn học kỳ --</option>
+            {semesters.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+            ))}
+          </select>
+
         </div>
 
         <div className="filter-group">
           <label className="filter-label">Tuần học</label>
-          <select 
-            className="filter-select" 
-            value={weekNumber} 
-            onChange={(e) => {
-              const selectedWeekNum = parseInt(e.target.value);
-              const selectedWeek = semesterWeeks.find(w => w.number === selectedWeekNum);
-              if (selectedWeek) {
+          <select
+              className="filter-select"
+              value={weekNumber}
+              onChange={(e) => {
+                const selectedWeekNum = parseInt(e.target.value);
+                const selectedWeek = semesterWeeks.find(w => w.number === selectedWeekNum);
+                if (selectedWeek) {
                 setCurrentWeek(selectedWeek.start);
               }
             }}
