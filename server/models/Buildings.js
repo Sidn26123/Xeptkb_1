@@ -10,6 +10,10 @@ const Building = sequelize.define('Building', {
   campus_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'campus',
+        key: 'id',
+    }
   },
   name: {
     type: DataTypes.STRING(255),

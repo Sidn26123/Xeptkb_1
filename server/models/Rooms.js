@@ -39,6 +39,10 @@ const Room = sequelize.define('Room', {
   buildings_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'buildings',
+        key: 'id',
+    }
   },
   metadata: {
     type: DataTypes.JSON,

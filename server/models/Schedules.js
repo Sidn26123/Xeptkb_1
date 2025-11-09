@@ -11,7 +11,7 @@ const Schedule = sequelize.define('Schedule', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-        model: "course_classes",
+        model: "courseclasses",
         key: "id",
     }
   },
@@ -35,7 +35,7 @@ const Schedule = sequelize.define('Schedule', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-        model: "time_slots",
+        model: "timeslots",
         key: "id",
     }
   },

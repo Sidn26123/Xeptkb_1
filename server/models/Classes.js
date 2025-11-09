@@ -14,6 +14,10 @@ const Class = sequelize.define('Class', {
   training_type_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'trainingtypes',
+        key: 'id',
+    }
   },
   faculty_id: {
     type: DataTypes.INTEGER,

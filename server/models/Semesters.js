@@ -10,6 +10,10 @@ const Semester = sequelize.define('Semester', {
   AcademicYearsid: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'academicyears',
+        key: 'id',
+    }
   },
   code: {
     type: DataTypes.STRING(50),
