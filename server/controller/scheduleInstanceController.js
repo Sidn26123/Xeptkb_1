@@ -5,7 +5,7 @@ const Semester = require('../models/Semesters');
 const HolidayActual = require('../models/HolidayActual');
 const InstructorUnavailableTime = require('../models/InstructorUnavailableTime');
 const TimeSlot = require('../models/TimeSlot');
-const ScheduleInstance = require('../models/ScheduleInstances');
+const ScheduleGeneration = require('../models/ScheduleGenerations');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
 
 // Helper: convert Date (YYYY-MM-DD) string to Date object (local)
@@ -261,5 +261,71 @@ exports.getInstances = async (req, res) => {
   } catch (error) {
     console.error('getInstances error', error);
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const dayMap = {
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+};
+
+/**
+ * Hàm lưu JSON kết quả vào database
+ * @param {Object} resultJson - JSON như bạn gửi ở trên
+ */
+exports.saveGeneratedSchedule = async (req, res) => {
+  try {
+    // 1. Tạo record tổng quan
+    //log resultJson
+    const resultJson = req.body;
+    console.log("📌 Input resultJson:", JSON.stringify(resultJson, null, 2));
+    const generation = await ScheduleGeneration.create({
+      semester: resultJson.metadata.semester,
+      total_weeks: resultJson.metadata.total_weeks,
+      days_per_week: resultJson.metadata.days_per_week,
+      sessions_per_day: resultJson.metadata.sessions_per_day,
+      session_duration: resultJson.metadata.session_duration,
+
+      generated_at: resultJson.generated_at,
+      fitness_score: resultJson.fitness_score,
+      penalty_breakdown: resultJson.penalty_breakdown,
+
+      // lưu toàn bộ json để trace lại khi cần
+      raw_json: resultJson,
+    });
+
+    // 2. Lưu từng slot của từng course
+    for (const course of resultJson.courses) {
+      for (const slot of course.time_slots) {
+        await Schedule.create({
+          course_class_id: course.class_id,
+          day_id: dayMap[slot.day],
+          time_slot_id: slot.session_number,
+          room_id: course.room_id,
+          num_of_period: 1,
+          scheduler: "system",
+          generation_id: generation.id,
+        });
+      }
+    }
+
+    console.log("✅ Saved schedule successfully");
+    return res.status(201).json({
+      message: "Schedule saved successfully",
+      generation_id: generation.id,
+      data: generation
+    });
+
+  } catch (error) {
+    console.error("❌ Error saving schedule:", error);
+
+    return res.status(500).json({
+      message: "Failed to save generated schedule",
+      error: error.message || error
+    });
   }
 };

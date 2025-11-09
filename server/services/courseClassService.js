@@ -1,4 +1,4 @@
-const CourseClass = require('../models/CourseClass');
+const CourseClass = require('../models/CourseClasses');
 
 async function getCourseClassById(id) {
   return await CourseClass.findByPk(id);

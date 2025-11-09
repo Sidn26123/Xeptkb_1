@@ -1,5 +1,6 @@
 const Schedule = require('../models/Schedules');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
+const {getSchedulesFiltered} = require("../services/scheduleService");
 
 // Lấy tất cả lịch học
 exports.getAllSchedules = async (req, res) => {
@@ -57,3 +58,14 @@ exports.deleteSchedule = async (req, res) => {
     res.status(500).json(new ErrorResponse(err.message, 500));
   }
 };
+
+exports.getSchedulesByFilter = async (req, res) => {
+    try {
+        const filters = req.body;
+        const schedules = await getSchedulesFiltered(filters);
+        res.status(200).json(new SuccessResponse(schedules, 'Lấy danh sách lịch học theo bộ lọc thành công'));
+
+    } catch (err) {
+        res.status(500).json(new ErrorResponse(err.message, 500));
+    }
+}
