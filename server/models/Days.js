@@ -25,5 +25,12 @@ Day.associate = (models) => {
     foreignKey: 'day_id',
     as: 'schedules'
   });
+  Day.hasMany(models.InstructorUnavailableTime, {
+    foreignKey: 'day_id',
+    as: 'unavailableTimes' // Tên alias mới để truy vấn
+  });
 };
+
+
+
 module.exports = Day;

@@ -29,6 +29,9 @@ const subjectRoutes = require('./routes/subject');
 const teacherRoutes = require('./routes/teacher');
 const teachingRoutes = require('./routes/teaching');
 const trainingTypeRoutes = require('./routes/trainingType');
+const timeSlotRoutes = require('./routes/timeSlot');
+const dayRoutes = require('./routes/day');
+const reportRoutes = require('./routes/report');
 const mailRoutes = require('./routes/mail');
 const app = express();
 app.use(express.json());
@@ -60,6 +63,9 @@ app.use(API_PREFIX + '/subject-requires-equipments', subjectRequiresEquipmentRou
 app.use(API_PREFIX + '/subjects', subjectRoutes);
 app.use(API_PREFIX + '/teachings', teachingRoutes);
 app.use(API_PREFIX + '/training-types', trainingTypeRoutes);
+app.use(API_PREFIX + '/time-slots', timeSlotRoutes);
+app.use(API_PREFIX + '/days', dayRoutes);
+app.use(API_PREFIX + '/reports', reportRoutes);
 // 404 handler for unknown routes
 const ErrorResponse = require('./utils/responseUtils').ErrorResponse;
 const errorHandler = require("./middleware/errorHandler");
