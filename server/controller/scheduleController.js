@@ -1,7 +1,8 @@
-const Schedule = require('../models/Schedules');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
 const {getSchedulesFiltered} = require("../services/scheduleService");
-
+// controller/scheduleController.js
+const { Schedule, CourseClass, Room, Day, TimeSlot, Teacher, Subject, Semester, Class } = require('../models');
+const { addDays, setHours, setMinutes, startOfWeek } = require('date-fns');
 // Lấy tất cả lịch học
 exports.getAllSchedules = async (req, res) => {
   try {
@@ -69,3 +70,71 @@ exports.getSchedulesByFilter = async (req, res) => {
         res.status(500).json(new ErrorResponse(err.message, 500));
     }
 }
+
+
+
+exports.getFormattedSchedules = async (req, res) => {
+  try {
+    const schedules = await Schedule.findAll({
+      include: [
+        {
+          model: CourseClass,
+          as: 'courseClass', // ✅ phải trùng 'as' trong belongsTo
+          include: [
+            { model: Teacher, as: 'teacher', attributes: ['name', 'name'] },
+            { model: Subject, as: 'subject', attributes: ['name', 'code'] },
+            { model: Semester, as: 'semester', attributes: ['name', 'code'] },
+            { model: Class, as: 'class', attributes: ['name'] }
+          ]
+        },
+        { model: Room, as: 'room', attributes: ['name', 'buildings_id'] },
+        { model: TimeSlot, as: 'timeSlot', attributes: ['start_hour', 'start_min', 'end_hour', 'end_min'] },
+        { model: Day, as: 'day', attributes: ['idx'] } // thứ 2 = 0
+      ]
+    });
+
+
+    // Lấy thứ 2 của tuần hiện tại
+    const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+    const formatted = schedules.map(s => {
+      const dayOffset = s.Day.idx; // 0 = Monday
+      const start = setMinutes(
+          setHours(
+              addDays(monday, dayOffset),
+              s.TimeSlot.start_hour
+          ),
+          s.TimeSlot.start_min
+      );
+
+      const end = setMinutes(
+          setHours(
+              addDays(monday, dayOffset),
+              s.TimeSlot.end_hour
+          ),
+          s.TimeSlot.end_min
+      );
+
+      return {
+        id: s.id,
+        title: s.CourseClass.Subject.name,
+        start,
+        end,
+        teacher: `${s.CourseClass.Teacher.title}. ${s.CourseClass.Teacher.name}`,
+        room: `${s.Room.name} - ${s.Room.building}`,
+        type: s.CourseClass.type ?? 'lecture',
+        subject: s.CourseClass.Subject.code
+      };
+    });
+
+    return res.json({
+      success: true,
+      message: "Formatted schedules",
+      data: formatted
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
