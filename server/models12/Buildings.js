@@ -26,7 +26,7 @@ const Building = sequelize.define('Building', {
   code: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: false, // Changed to false to not create index when alter = true
+    unique: true,
   },
   location: {
     type: DataTypes.STRING(255),

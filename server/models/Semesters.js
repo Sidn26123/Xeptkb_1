@@ -40,5 +40,10 @@ const Semester = sequelize.define('Semester', {
   tableName: 'semesters',
   timestamps: false,
 });
-
+Semester.associate = (models) => {
+  Semester.hasMany(models.CourseClass, {
+    foreignKey: 'semester_id',
+    as: 'courseclasses'
+  });
+};
 module.exports = Semester;

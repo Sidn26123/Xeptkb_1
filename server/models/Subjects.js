@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
-
 const Subject = sequelize.define('Subject', {
   id: {
     type: DataTypes.INTEGER,
@@ -40,5 +39,12 @@ const Subject = sequelize.define('Subject', {
   tableName: 'subjects',
   timestamps: false,
 });
+
+Subject.associate = (models) => {
+  Subject.hasMany(models.CourseClass, {
+    foreignKey: 'subject_id',
+    as: 'courseclasses'
+  });
+};
 
 module.exports = Subject;

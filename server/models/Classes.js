@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
-
 const Class = sequelize.define('Class', {
   id: {
     type: DataTypes.INTEGER,
@@ -28,4 +27,10 @@ const Class = sequelize.define('Class', {
   timestamps: false,
 });
 
+Class.associate = (models) => {
+  Class.hasMany(models.CourseClass, {
+    foreignKey: 'class_id',
+    as: 'courseclasses'
+  });
+};
 module.exports = Class;

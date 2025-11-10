@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const Teacher = sequelize.define('Teacher', {
+const Class = sequelize.define('Class', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -11,23 +11,21 @@ const Teacher = sequelize.define('Teacher', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  teacher_identifier: {
-    type: DataTypes.STRING(50),
+  training_type_id: {
+    type: DataTypes.INTEGER,
     allowNull: false,
-    unique: true,
+    references: {
+        model: 'trainingtypes',
+        key: 'id',
+    }
   },
   faculty_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
 }, {
-  tableName: 'teachers',
+  tableName: 'classes',
   timestamps: false,
 });
-Teacher.associate = (models) => {
-  Teacher.hasMany(models.CourseClass, {
-    foreignKey: 'teacher_id',
-    as: 'courseclasses'
-  });
-};
-module.exports = Teacher;
+
+module.exports = Class;

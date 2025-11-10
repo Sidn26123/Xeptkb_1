@@ -62,10 +62,5 @@ const Room = sequelize.define('Room', {
   tableName: 'rooms',
   timestamps: false,
 });
-Room.associate = (models) => {
-  Room.hasMany(models.Schedule, {
-    foreignKey: 'room_id',
-    as: 'schedules'
-  });
-};
+
 module.exports = Room;

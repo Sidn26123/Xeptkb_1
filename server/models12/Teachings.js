@@ -1,24 +1,23 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const Faculty = sequelize.define('Faculty', {
+const Teaching = sequelize.define('Teaching', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  name: {
-    type: DataTypes.STRING(255),
+  course_class_id: {
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
-  faculty_id: {
-    type: DataTypes.STRING(50),
+  teacher_id: {
+    type: DataTypes.INTEGER,
     allowNull: false,
-    unique: false,
   },
 }, {
-  tableName: 'faculty',
+  tableName: 'teachings',
   timestamps: false,
 });
 
-module.exports = Faculty;
+module.exports = Teaching;

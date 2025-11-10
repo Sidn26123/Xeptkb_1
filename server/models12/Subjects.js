@@ -1,49 +1,44 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const TimeSlot = sequelize.define('TimeSlot', {
+const Subject = sequelize.define('Subject', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
   name: {
-    type: DataTypes.STRING(100),
+    type: DataTypes.STRING(255),
     allowNull: false,
   },
-  idx: {
+  training_type_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-    start_hour: {
-    type: DataTypes.INTEGER,
+  code: {
+    type: DataTypes.STRING(50),
     allowNull: false,
+    unique: true,
   },
-  start_min: {
+  theory_hours: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    defaultValue: 0,
   },
-  end_hour: {
+  self_study_hours: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    defaultValue: 0,
   },
-  end_min: {
+  practice_hours: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    defaultValue: 0,
   },
-  is_break: {
+  requires_lab: {
     type: DataTypes.BOOLEAN,
-    allowNull: false,
     defaultValue: false,
-  }
+  },
 }, {
-  tableName: 'timeslots',
+  tableName: 'subjects',
   timestamps: false,
 });
-TimeSlot.associate = (models) => {
-  TimeSlot.hasMany(models.Schedule, {
-    foreignKey: 'time_slot_id',
-    as: 'schedules'
-  });
-};
-module.exports = TimeSlot;
+
+module.exports = Subject;

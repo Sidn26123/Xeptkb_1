@@ -52,14 +52,5 @@ const ScheduleGeneration = sequelize.define("ScheduleGeneration", {
   tableName: "schedule_generations",
   timestamps: false,
 });
-ScheduleGeneration.associate = (models) => {
-  ScheduleGeneration.hasMany(models.Schedule, {
-    foreignKey: 'generation_id',
-    as: 'schedules'
-  });
-  ScheduleGeneration.belongsTo(models.Semester, {
-    foreignKey: 'semester_id',
-    as: 'semesterInfo'
-  });
-};
+
 module.exports = ScheduleGeneration;

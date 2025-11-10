@@ -55,15 +55,5 @@ const CourseClass = sequelize.define('CourseClass', {
     tableName: 'courseclasses',
     timestamps: false,
 });
-// Associations
-CourseClass.associate = (models) => {
-    CourseClass.belongsTo(models.Subject, { foreignKey: 'subject_id', as: 'subject' });
-    CourseClass.belongsTo(models.Class, { foreignKey: 'class_id', as: 'class' });
-    CourseClass.belongsTo(models.Semester, { foreignKey: 'semester_id', as: 'semester' });
-    CourseClass.belongsTo(models.Teacher, { foreignKey: 'teacher_id', as: 'teacher' });
-    CourseClass.hasMany(models.Schedule, {
-        foreignKey: 'course_class_id',
-        as: 'schedules'
-    });
-};
+
 module.exports = CourseClass;

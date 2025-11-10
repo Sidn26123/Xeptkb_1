@@ -1,17 +1,17 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const Building = sequelize.define('Building', {
+const Student = sequelize.define('Student', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  campus_id: {
+  class_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-        model: 'campus',
+        model: 'classes',
         key: 'id',
     }
   },
@@ -19,26 +19,14 @@ const Building = sequelize.define('Building', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  floor_count: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },
-  code: {
+  student_identifier: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: false, // Changed to false to not create index when alter = true
-  },
-  location: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
-  },
-  status: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
+    unique: true,
   },
 }, {
-  tableName: 'buildings',
+  tableName: 'students',
   timestamps: false,
 });
 
-module.exports = Building;
+module.exports = Student;

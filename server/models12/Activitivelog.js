@@ -1,16 +1,15 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const Equipment = sequelize.define('Equipment', {
+const Activitivelog = sequelize.define('Activitivelog', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  code: {
-    type: DataTypes.STRING(50),
+  account_id: {
+    type: DataTypes.STRING(100),
     allowNull: false,
-    unique: false,
   },
   name: {
     type: DataTypes.STRING(255),
@@ -20,14 +19,14 @@ const Equipment = sequelize.define('Equipment', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  total: {
-    type: DataTypes.INTEGER,
+  created_at: {
+    type: DataTypes.DATE,
     allowNull: false,
-    defaultValue: 0,
+    defaultValue: DataTypes.NOW,
   },
 }, {
-  tableName: 'equipments',
+  tableName: 'activitivelog',
   timestamps: false,
 });
 
-module.exports = Equipment;
+module.exports = Activitivelog;

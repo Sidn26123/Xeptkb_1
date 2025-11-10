@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const Faculty = sequelize.define('Faculty', {
+const SoftContraist = sequelize.define('SoftContraist', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -11,14 +11,13 @@ const Faculty = sequelize.define('Faculty', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  faculty_id: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
-    unique: false,
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
 }, {
-  tableName: 'faculty',
+  tableName: 'softcontraist',
   timestamps: false,
 });
 
-module.exports = Faculty;
+module.exports = SoftContraist;

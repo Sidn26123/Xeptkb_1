@@ -60,27 +60,4 @@ const Schedule = sequelize.define('Schedule', {
   timestamps: false,
 });
 
-Schedule.associate = (models) => {
-  Schedule.belongsTo(models.CourseClass, {
-    foreignKey: 'course_class_id',
-    as: 'courseClass'
-  });
-  Schedule.belongsTo(models.Day, {
-    foreignKey: 'day_id',
-    as: 'day'
-  });
-  Schedule.belongsTo(models.Room, {
-    foreignKey: 'room_id',
-    as: 'room'
-  });
-  Schedule.belongsTo(models.TimeSlot, {
-    foreignKey: 'time_slot_id',
-    as: 'timeSlot'
-  });
-  Schedule.belongsTo(models.ScheduleGeneration, {
-    foreignKey: 'generation_id',
-    as: 'generation'
-  });
-};
-
 module.exports = Schedule;
