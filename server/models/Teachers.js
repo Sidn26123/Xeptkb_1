@@ -30,4 +30,25 @@ Teacher.associate = (models) => {
     as: 'courseclasses'
   });
 };
+Teacher.associate = (models) => {
+  // Quan hệ 1:N thông qua bảng trung gian Teaching
+  Teacher.hasMany(models.Teaching, {
+    foreignKey: 'teacher_id',
+    as: 'teachings'
+  });
+
+  // **Quan hệ Many-to-Many với CourseClass thông qua bảng Teaching**
+  Teacher.belongsToMany(models.CourseClass, {
+    through: models.Teaching,
+    foreignKey: 'teacher_id',
+    otherKey: 'course_class_id',
+    as: 'courseclassesTaught' // Đổi tên alias để phân biệt với hasMany nếu cần
+  });
+
+  Teacher.belongsTo(models.Faculty, {
+    foreignKey: 'faculty_id',
+    as: 'faculty'
+  });
+};
+
 module.exports = Teacher;

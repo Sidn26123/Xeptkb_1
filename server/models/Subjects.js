@@ -45,6 +45,10 @@ Subject.associate = (models) => {
     foreignKey: 'subject_id',
     as: 'courseclasses'
   });
+  Subject.belongsTo(models.TrainingType, {
+    foreignKey: 'training_type_id',
+    as: 'trainingType'
+  });
 };
 
 module.exports = Subject;
