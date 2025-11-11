@@ -20,6 +20,9 @@ import HolidayManagement from "../pages/HolidayManagement";
 import EquipmentManagement from "../pages/EquipmentManagement.jsx";
 import RoomManagement from "../pages/RoomManagement.jsx";
 import ResearchScheduleManagement from "../pages/ResearchScheduleManagement";
+import TimeSlotManagement from "../pages/TimeSlotManagement.jsx";
+import DayManagement from "../pages/DayManagement.jsx";
+import CourseClassManagement from "../pages/CourseClassManagement.jsx";
 // research schedule is a single management page; child views are rendered inside it
 
 export default function AppRoutes() {
@@ -35,6 +38,9 @@ export default function AppRoutes() {
         <Route path="/academicyear-management" element={<AcademicYearManagement />} />
         <Route path="/faculty-management" element={<FacultyManagement />} />
         <Route path="/subject-management" element={<SubjectManagement />} />
+        <Route path={"/time-slot-management"} element={<TimeSlotManagement />} />
+        <Route path={"/day-management"} element={<DayManagement />} />
+        <Route path={"/course-class-management"} element={<CourseClassManagement />} />
         <Route path="/chatbot" element={<RAGApp />} />
           <Route path="/guide" element={<TutorialPage />} />
         <Route
