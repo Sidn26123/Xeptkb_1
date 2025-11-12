@@ -32,6 +32,7 @@ const trainingTypeRoutes = require('./routes/trainingType');
 const timeSlotRoutes = require('./routes/timeSlot');
 const dayRoutes = require('./routes/day');
 const reportRoutes = require('./routes/report');
+const scheduleInstanceRoutes = require('./routes/scheduleInstance');
 const mailRoutes = require('./routes/mail');
 const app = express();
 app.use(express.json());
@@ -43,6 +44,8 @@ const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 // API routes
 app.use(API_PREFIX + '/', authRoutes);
 app.use(API_PREFIX + '/admin', adminRoutes);
+app.use(API_PREFIX + '/schedule-instances', scheduleInstanceRoutes);
+
 app.use(API_PREFIX + '/students', studentRoutes);
 app.use(API_PREFIX + '/teachers', teacherRoutes);
 app.use(API_PREFIX + '/classes', classRoutes);

@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
-
+// Biểu diễn mẫu thời khóa biểu (TKB)
 const Schedule = sequelize.define('Schedule', {
   id: {
     type: DataTypes.INTEGER,
@@ -13,6 +13,14 @@ const Schedule = sequelize.define('Schedule', {
     references: {
         model: "courseclasses",
         key: "id",
+    }
+  },
+  teacher_id: {
+    type: DataTypes.INTEGER,
+    allowNull: null,
+    references: {
+      model: "teachers", // (Giả sử bạn có bảng teachers)
+      key: "id",
     }
   },
   day_id: {
@@ -58,6 +66,10 @@ const Schedule = sequelize.define('Schedule', {
 }, {
   tableName: 'schedules',
   timestamps: false,
+  indexes: [{
+    unique: true,
+    fields: ['generation_id', 'course_class_id', 'day_id', 'time_slot_id']
+  }]
 });
 
 Schedule.associate = (models) => {
@@ -81,6 +93,7 @@ Schedule.associate = (models) => {
     foreignKey: 'generation_id',
     as: 'generation'
   });
+
 };
 
 module.exports = Schedule;

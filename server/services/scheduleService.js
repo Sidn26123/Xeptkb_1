@@ -187,33 +187,218 @@ async function getSchedulingDataFromDB() {
 
 
 
+// /**
+//  * Lưu kết quả lập lịch từ API vào các bảng ScheduleGeneration và Schedule.
+//  * * @param {object} apiResult - JSON phản hồi từ API lập lịch.
+//  * @param {string} semesterName - Tên/Mã học kỳ hiện tại (ví dụ: "2024-2025-1").
+//  * @param {number} daysPerWeek - Tổng số ngày hoạt động trong tuần (ví dụ: 7).
+//  * @param {number} sessionsPerDay - Tổng số tiết học/slot mỗi ngày (ví dụ: 10).
+//  * @param {number} sessionDuration - Thời lượng mỗi tiết học/slot (ví dụ: 45 phút).
+//  */
+// async function saveScheduleToDB(apiResult, semesterName, daysPerWeek, sessionsPerDay, sessionDuration) {
+//     // Trích xuất dữ liệu cốt lõi
+//     const scheduleData = apiResult;
+//
+//     // Kiểm tra tính hợp lệ cơ bản
+//     if (!scheduleData) {
+//         throw new Error("API result does not contain a successful schedule.");
+//     }
+//
+//     let transaction;
+//
+//     try {
+//         transaction = await sequelize.transaction();
+//
+//         // 1. LƯU VÀO SCHEDULE GENERATION
+//         // Dữ liệu cần thiết cho ScheduleGeneration
+//         const generationData = {
+//             semester: semesterName,
+//             total_weeks: scheduleData.semester.end_week - scheduleData.semester.start_week + 1,
+//             days_per_week: daysPerWeek,
+//             sessions_per_day: sessionsPerDay,
+//             session_duration: sessionDuration,
+//
+//             // Dữ liệu từ kết quả GA
+//             fitness_score: scheduleData.fitness || null,
+//             penalty_breakdown: scheduleData.penalty_breakdown || {},
+//             raw_json: apiResult, // Lưu toàn bộ JSON để tra cứu
+//         };
+//
+//         const newGeneration = await ScheduleGeneration.create(generationData, { transaction });
+//         const generationId = newGeneration.id;
+//
+//         const scheduleRecords = [];
+//
+//         // 2. CHUYỂN ĐỔI VÀ LƯU VÀO SCHEDULE
+//         for (const course of scheduleData.courses) {
+//
+//             // Giả định: course_class_id cần được mapping từ class_id và course_id
+//             // TẠM THỜI SỬ DỤNG course.id CỦA INPUT, nhưng nên mapping thực tế
+//             const courseClassId = course.course_id;
+//
+//             for (const slot of course.weekly_slots) {
+//                 // Tạo một bản ghi Schedule cho mỗi weekly_slot
+//                 const scheduleEntry = {
+//                     generation_id: generationId,
+//                     course_class_id: courseClassId,
+//                     day_id: slot.day,
+//                     room_id: course.room_id,
+//                     time_slot_id: slot.period,
+//                     num_of_period: slot.duration,
+//                     scheduler: "Genetic Algorithm", // Có thể thay bằng tên scheduler
+//                     // Các trường khác như semester, teacher_id,... được lấy thông qua CourseClass và Generation
+//                 };
+//                 scheduleRecords.push(scheduleEntry);
+//             }
+//         }
+//
+//         // Thực hiện bulk create
+//         await Schedule.bulkCreate(scheduleRecords, { transaction });
+//
+//         // Cam kết giao dịch
+//         await transaction.commit();
+//
+//         console.log(`Successfully saved ${scheduleRecords.length} schedule entries under Generation ID: ${generationId}`);
+//         return newGeneration;
+//
+//     } catch (error) {
+//         // Hoàn tác giao dịch nếu có lỗi
+//         if (transaction) await transaction.rollback();
+//         console.error("Error saving schedule to database:", error);
+//         throw new Error("Failed to save schedule due to database error.");
+//     }
+// }
+
+// /**
+//  * Lưu kết quả lập lịch từ API vào các bảng ScheduleGeneration và Schedule (pattern).
+//  *
+//  * @param {object} apiResult - JSON phản hồi từ API lập lịch.
+//  * @param {number} semesterId - ID của học kỳ (ví dụ: 1).
+//  * @param {string} semesterName - Tên/Mã học kỳ (ví dụ: "2024-2025-1").
+//  * @param {number} daysPerWeek - Config: Tổng số ngày hoạt động trong tuần (ví dụ: 7).
+//  * @param {number} sessionsPerDay - Config: Tổng số tiết học/slot mỗi ngày (ví dụ: 10).
+//  * @param {number} sessionDuration - Config: Thời lượng mỗi tiết học/slot (ví dụ: 45 phút).
+//  */
+// async function saveScheduleToDB(apiResult, semesterId, semesterName, daysPerWeek, sessionsPerDay, sessionDuration) {
+//     // Trích xuất dữ liệu cốt lõi
+//     const scheduleData = apiResult;
+//
+//     // Kiểm tra tính hợp lệ cơ bản
+//     if (!scheduleData || !scheduleData.courses || !scheduleData.semester) {
+//         throw new Error("API result is missing key data (courses, semester).");
+//     }
+//
+//     let transaction;
+//
+//     try {
+//         transaction = await sequelize.transaction();
+//
+//         // 1. LƯU VÀO SCHEDULE GENERATION
+//         // Tính toán tổng số tuần của học kỳ (dựa trên config của GA run)
+//         const totalSemesterWeeks = scheduleData.semester.end_week - scheduleData.semester.start_week + 1;
+//
+//         const generationData = {
+//             semester_id: semesterId, // <-- [CẬP NHẬT] Thêm ID học kỳ
+//             semester: semesterName,
+//             total_weeks: totalSemesterWeeks, // Tổng tuần của học kỳ
+//             days_per_week: daysPerWeek,
+//             sessions_per_day: sessionsPerDay,
+//             session_duration: sessionDuration,
+//
+//             // Dữ liệu từ kết quả GA
+//             fitness_score: scheduleData.fitness || null,
+//             penalty_breakdown: scheduleData.penalty_breakdown || {},
+//             raw_json: apiResult, // Lưu toàn bộ JSON để tra cứu
+//         };
+//
+//         const newGeneration = await ScheduleGeneration.create(generationData, { transaction });
+//         const generationId = newGeneration.id;
+//
+//         const scheduleRecords = [];
+//
+//         // 2. CHUYỂN ĐỔI VÀ LƯU VÀO SCHEDULE (Bảng mẫu TKB)
+//         for (const course of scheduleData.courses) {
+//
+//             // [QUAN TRỌNG]
+//             // Dữ liệu API của bạn có `class_id` và `course_id`.
+//             // Bảng `Schedule` cần `course_class_id` (khóa ngoại đến `courseclasses`).
+//             // `course.class_id` từ API chính là `course_class_id` chúng ta cần.
+//             const courseClassId = course.class_id; // <-- [CẬP NHẬT]
+//
+//             if (!courseClassId) {
+//                 console.warn("Skipping course block with missing class_id:", course);
+//                 continue;
+//             }
+//
+//             for (const slot of course.weekly_slots) {
+//                 // Tạo một bản ghi Schedule (pattern) cho mỗi weekly_slot
+//                 const scheduleEntry = {
+//                     generation_id: generationId,
+//                     course_class_id: courseClassId,
+//                     teacher_id: course.teacher_id, // <-- [CẬP NHẬT] Thêm teacher_id
+//                     day_id: slot.day,
+//                     room_id: course.room_id,
+//                     time_slot_id: slot.period,     // <-- [CẬP NHẬT] "period" map với time_slot_id
+//                     num_of_period: slot.duration,
+//                     scheduler: "Genetic Algorithm",
+//
+//                     // Các trường start_week, end_week không thuộc về bảng Schedule (pattern)
+//                     // Chúng sẽ được dùng ở bước sau (sinh instance)
+//                 };
+//                 scheduleRecords.push(scheduleEntry);
+//             }
+//         }
+//
+//         // Thực hiện bulk create
+//         await Schedule.bulkCreate(scheduleRecords, { transaction });
+//
+//         // Cam kết giao dịch
+//         await transaction.commit();
+//
+//         console.log(`Successfully saved ${scheduleRecords.length} schedule patterns under Generation ID: ${generationId}`);
+//         return newGeneration;
+//
+//     } catch (error) {
+//         // Hoàn tác giao dịch nếu có lỗi
+//         if (transaction) await transaction.rollback();
+//         console.error("Error saving schedule to database:", error);
+//         throw new Error("Failed to save schedule due to database error.");
+//     }
+// }
+
 /**
- * Lưu kết quả lập lịch từ API vào các bảng ScheduleGeneration và Schedule.
- * * @param {object} apiResult - JSON phản hồi từ API lập lịch.
- * @param {string} semesterName - Tên/Mã học kỳ hiện tại (ví dụ: "2024-2025-1").
- * @param {number} daysPerWeek - Tổng số ngày hoạt động trong tuần (ví dụ: 7).
- * @param {number} sessionsPerDay - Tổng số tiết học/slot mỗi ngày (ví dụ: 10).
- * @param {number} sessionDuration - Thời lượng mỗi tiết học/slot (ví dụ: 45 phút).
+ * [ĐÃ CẬP NHẬT]
+ * Lưu kết quả lập lịch (pattern) vào DB, SỬ DỤNG MỘT TRANSACTION CÓ SẴN.
+ *
+ * @param {object} apiResult - JSON phản hồi từ API lập lịch.
+ * @param {number} semesterId - ID của học kỳ.
+ * @param {string} semesterName - Tên/Mã học kỳ.
+ * @param {number} daysPerWeek - Config: Tổng số ngày hoạt động.
+ * @param {number} sessionsPerDay - Config: Tổng số tiết học.
+ * @param {number} sessionDuration - Config: Thời lượng mỗi tiết.
+ * @param {import('sequelize').Transaction} transaction - Giao dịch Sequelize TỪ BÊN NGOÀI.
  */
-async function saveScheduleToDB(apiResult, semesterName, daysPerWeek, sessionsPerDay, sessionDuration) {
+async function saveScheduleToDB(apiResult, semesterId, semesterName, daysPerWeek, sessionsPerDay, sessionDuration, transaction) {
     // Trích xuất dữ liệu cốt lõi
     const scheduleData = apiResult;
 
     // Kiểm tra tính hợp lệ cơ bản
-    if (!scheduleData) {
-        throw new Error("API result does not contain a successful schedule.");
+    if (!scheduleData || !scheduleData.courses || !scheduleData.semester) {
+        throw new Error("API result is missing key data (courses, semester).");
     }
 
-    let transaction;
+    // [CẬP NHẬT] Hàm này sẽ KHÔNG tự tạo hay commit/rollback transaction.
+    // Nó sẽ ném lỗi nếu thất bại, để hàm GỌI nó (controller) tự rollback.
 
     try {
-        transaction = await sequelize.transaction();
-
         // 1. LƯU VÀO SCHEDULE GENERATION
-        // Dữ liệu cần thiết cho ScheduleGeneration
+        // Tính toán tổng số tuần của học kỳ (dựa trên config của GA run)
+        const totalSemesterWeeks = scheduleData.semester.end_week - scheduleData.semester.start_week + 1;
+
         const generationData = {
-            semester: semesterName,
-            total_weeks: scheduleData.semester.end_week - scheduleData.semester.start_week + 1,
+            semester_id: semesterId,
+            semester: "HK1",
+            total_weeks: totalSemesterWeeks, // Tổng tuần của học kỳ
             days_per_week: daysPerWeek,
             sessions_per_day: sessionsPerDay,
             session_duration: sessionDuration,
@@ -224,51 +409,53 @@ async function saveScheduleToDB(apiResult, semesterName, daysPerWeek, sessionsPe
             raw_json: apiResult, // Lưu toàn bộ JSON để tra cứu
         };
 
+        // [CẬP NHẬT] Sử dụng transaction được truyền vào
         const newGeneration = await ScheduleGeneration.create(generationData, { transaction });
         const generationId = newGeneration.id;
 
         const scheduleRecords = [];
 
-        // 2. CHUYỂN ĐỔI VÀ LƯU VÀO SCHEDULE
+        // 2. CHUYỂN ĐỔI VÀ LƯU VÀO SCHEDULE (Bảng mẫu TKB)
         for (const course of scheduleData.courses) {
 
-            // Giả định: course_class_id cần được mapping từ class_id và course_id
-            // TẠM THỜI SỬ DỤNG course.id CỦA INPUT, nhưng nên mapping thực tế
-            const courseClassId = course.course_id;
+            const courseClassId = course.class_id; // class_id từ API chính là course_class_id
+
+            if (!courseClassId) {
+                console.warn("Skipping course block with missing class_id:", course);
+                continue;
+            }
 
             for (const slot of course.weekly_slots) {
-                // Tạo một bản ghi Schedule cho mỗi weekly_slot
+                // Tạo một bản ghi Schedule (pattern) cho mỗi weekly_slot
                 const scheduleEntry = {
                     generation_id: generationId,
                     course_class_id: courseClassId,
+                    teacher_id: course.teacher_id, // Schema mới đã có teacher_id
                     day_id: slot.day,
                     room_id: course.room_id,
-                    time_slot_id: slot.period,
-                    num_of_period: slot.duration,
-                    scheduler: "Genetic Algorithm", // Có thể thay bằng tên scheduler
-                    // Các trường khác như semester, teacher_id,... được lấy thông qua CourseClass và Generation
+                    time_slot_id: slot.period,     // "period" map với time_slot_id
+                    num_of_period: slot.duration,  // "duration" map với num_of_period
+                    scheduler: "Genetic Algorithm",
                 };
                 scheduleRecords.push(scheduleEntry);
             }
         }
 
-        // Thực hiện bulk create
+        // [CẬP NHẬT] Sử dụng transaction được truyền vào
         await Schedule.bulkCreate(scheduleRecords, { transaction });
 
-        // Cam kết giao dịch
-        await transaction.commit();
+        console.log(`Successfully saved ${scheduleRecords.length} schedule patterns under Generation ID: ${generationId}`);
 
-        console.log(`Successfully saved ${scheduleRecords.length} schedule entries under Generation ID: ${generationId}`);
+        // [CẬP NHẬT] Trả về, KHÔNG commit
         return newGeneration;
 
     } catch (error) {
-        // Hoàn tác giao dịch nếu có lỗi
-        if (transaction) await transaction.rollback();
-        console.error("Error saving schedule to database:", error);
-        throw new Error("Failed to save schedule due to database error.");
+        // [CẬP NHẬT] KHÔNG rollback. Chỉ ném lỗi để controller xử lý.
+        console.error("Error during saveScheduleToDB (will be rolled back by caller):", error);
+        // Ném lỗi gốc để controller bên ngoài bắt được và rollback
+        throw error;
     }
 }
-
 
 // exports.getFormattedSchedules = async (req, res) => {
 //   try {

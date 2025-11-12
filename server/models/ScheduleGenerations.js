@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
-
+//metadata về lần generate lịch
 const ScheduleGeneration = sequelize.define("ScheduleGeneration", {
   id: {
     type: DataTypes.INTEGER,
@@ -11,7 +11,15 @@ const ScheduleGeneration = sequelize.define("ScheduleGeneration", {
   // lưu metadata
   semester: {
     type: DataTypes.STRING(50), // "2024-2025-1"
-    allowNull: false,
+    allowNull: true,
+  },
+  semester_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'semesters',
+      key: 'id',
+    }
   },
   total_weeks: {
     type: DataTypes.INTEGER,
