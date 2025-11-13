@@ -47,7 +47,78 @@ exports.generateInstancesForSchedule = async (req, res) => {
         res.status(500).json(new ErrorResponse(err.message, 500));
     }
 };
+/**
+ * @desc    Tạo tất cả ScheduleInstances cho một Generation cụ thể
+ * @route   POST /api/v1/schedule-generations/:generationId/generate-instances
+ * @access  Private (Admin)
+ */
+exports.generateInstancesForGeneration = async (req, res) => {
+    try {
+        const { generationId } = req.params;
+        const { startDate, endDate } = req.body;
 
+        // 1. (Optional) Validate startDate/endDate nếu service của bạn cần
+        // Bạn đã comment phần này ra, nhưng nếu hàm service
+        // generateScheduleInstances CẦN ngày, bạn nên bật nó lên.
+        if (!startDate || !endDate) {
+            // return res.status(400).json(
+            //     new ErrorResponse('Thiếu startDate hoặc endDate', 400)
+            // );
+        }
+
+        // 2. Tìm tất cả các scheduleId thuộc generation này
+        const schedulesInGeneration = await Schedule.findAll({
+            where: { generation_id: generationId },
+            attributes: ['id'], // Chỉ cần lấy ID
+            raw: true,
+        });
+
+        if (!schedulesInGeneration || schedulesInGeneration.length === 0) {
+            return res.status(404).json(
+                new ErrorResponse('Không tìm thấy schedule nào cho generation này', 404)
+            );
+        }
+
+        // Lấy mảng các ID
+        const scheduleIds = schedulesInGeneration.map(s => s.id);
+
+        // 3. Tạo một mảng các "promises" để gọi hàm service cho từng ID
+        //    Sử dụng Promise.all để chạy song song, giúp tăng tốc độ
+        const generationPromises = scheduleIds.map(scheduleId => {
+            // GỌI HÀM SERVICE CỦA BẠN:
+            //
+            // **LỰA CHỌN 1 (Dùng ngày từ body):**
+            // Nếu hàm service của bạn cần startDate/endDate từ body:
+            // return generateScheduleInstances(scheduleId, startDate, endDate);
+            //
+            // **LỰA CHỌN 2 (Như code gốc của bạn):**
+            // Nếu hàm service của bạn tự suy ra ngày tháng (dựa vào scheduleId):
+            return generateScheduleInstances(scheduleId, null, null);
+        });
+
+        // 4. Thực thi tất cả các promises
+        const allResults = await Promise.all(generationPromises);
+
+        // allResults bây giờ là một mảng của các kết quả (ví dụ: [[instance1, instance2], [instance3]])
+        // Làm phẳng (flatten) mảng này nếu cần
+        const flattenedResults = allResults.flat();
+
+        res.status(201).json(
+            new SuccessResponse(
+                {
+                    totalSchedulesProcessed: scheduleIds.length,
+                    totalInstancesGenerated: flattenedResults.length,
+                    // data: flattenedResults // Gửi data về nếu client cần
+                },
+                'Tạo instances cho toàn bộ generation thành công',
+                201
+            )
+        );
+    } catch (err) {
+        console.error('Lỗi tạo instances cho generation:', err);
+        res.status(500).json(new ErrorResponse(err.message, 500));
+    }
+};
 /**
  * Tạo tất cả instances cho một generation
  * POST /api/schedules/generations/:generationId/instances/generate-all

@@ -1,7 +1,7 @@
 import React, {useState, useMemo} from 'react';
 import {Plus, X, BarChart3, Calendar} from 'lucide-react';
 import ScheduleAnalyzer from "./SchedulerAnalyzer.jsx";
-import {saveSchedule} from "../../services/scheduleService.js";
+import {generateScheduleInstance, saveSchedule} from "../../services/scheduleService.js";
 import {showError, showSuccess} from "../../utils/toastUtils.js";
 import {useSelectedSemester, useSemesterConfig} from "../../stores/ScheduleDataStore.js";
 
@@ -279,8 +279,11 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData}) => {
         result.semester.semester_id = selectedSemester.id;
         console.log("Saving schedule data:", result);
         var a = {"schedule": result};
-        saveSchedule(a).then(() => {
-            console.log('Lưu thời khóa biểu thành công');
+        saveSchedule(a).then((r) => {
+            console.log('Lưu thời khóa biểu thành công', r);
+            generateScheduleInstance(r.generation_id).then(r => {
+                console.log('Tạo các instance thời khóa biểu thành công', r);
+            })
             showSuccess('Lưu thời khóa biểu thành công!');
         }).catch(
             (err) => {

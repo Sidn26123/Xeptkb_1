@@ -24,6 +24,7 @@ export const callGenerateSchedule = async (data) => {
 }
 
 export const saveSchedule = async (scheduleData) => {
+    console.log("Saving schedule data:", scheduleData);
     const res = await api.post('/schedules/save', scheduleData);
     return res?.data?.data ?? null;
 }
@@ -54,4 +55,9 @@ export async function fetchScheduleEvents(classId, semesterId) {
         console.error('Error fetching schedule events:', error);
         return []; // Trả về mảng rỗng nếu lỗi
     }
+}
+
+export const generateScheduleInstance = async (generationId, options) => {
+    const res = await api.post(`/schedule-instances/${generationId}/instances/generate-all`, options);
+    return res?.data ?? null;
 }

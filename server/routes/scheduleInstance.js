@@ -10,6 +10,8 @@ const {getScheduleInstancesByQuery} = require("../controller/scheduleInstanceCon
 * @access  Admin only
 */
 router.post('/:scheduleId/instances/generate', verifyToken, authorize('admin'), scheduleInstanceController.generateInstancesForSchedule);
+router.post('/:generationId/instances/generate-all', verifyToken, authorize('admin'), scheduleInstanceController.generateInstancesForGeneration);
+
 router.get('/query', getScheduleInstancesByQuery);
 
 /**
