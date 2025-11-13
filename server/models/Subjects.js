@@ -13,21 +13,25 @@ const Subject = sequelize.define('Subject', {
   training_type_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'trainingtypes',
+      key: 'id',
+    }
   },
   code: {
     type: DataTypes.STRING(50),
     allowNull: false,
     unique: true,
   },
-  theory_period: {
+  theory_hours: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  self_study_period: {
+  self_study_hours: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  practice_period: {
+  practice_hours: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
@@ -42,6 +46,9 @@ const Subject = sequelize.define('Subject', {
 }, {
   tableName: 'subjects',
   timestamps: false,
+  indexes: [
+    { fields: ['training_type_id'] }
+  ],
 });
 
 Subject.associate = (models) => {

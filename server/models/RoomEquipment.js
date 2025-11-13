@@ -18,21 +18,27 @@ const RoomEquipment = sequelize.define('RoomEquipment', {
         onDelete: 'RESTRICT'
 
     },
-    room_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    equipment_quantity: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-    },
-    status: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-    },
+  room_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'rooms',
+      key: 'id',
+    }
+  },
+  equipment_quantity: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  status: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+  },
 }, {
-    tableName: 'roomsequipments',
-    timestamps: false,
-});
-
-module.exports = RoomEquipment;
+  tableName: 'roomsequipments',
+  timestamps: false,
+  indexes: [
+    { fields: ['equipment_id'] },
+    { fields: ['room_id'] }
+  ],
+});module.exports = RoomEquipment;

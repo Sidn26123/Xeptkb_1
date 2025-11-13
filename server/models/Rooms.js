@@ -61,6 +61,9 @@ const Room = sequelize.define('Room', {
 }, {
   tableName: 'rooms',
   timestamps: false,
+  indexes: [
+    { fields: ['buildings_id'] }
+  ],
 });
 Room.associate = (models) => {
   Room.hasMany(models.Schedule, {

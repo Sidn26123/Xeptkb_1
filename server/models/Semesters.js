@@ -39,6 +39,9 @@ const Semester = sequelize.define('Semester', {
 }, {
   tableName: 'semesters',
   timestamps: false,
+  indexes: [
+    { fields: ['AcademicYearsid'] }
+  ],
 });
 Semester.associate = (models) => {
   Semester.hasMany(models.CourseClass, {

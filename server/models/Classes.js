@@ -21,10 +21,18 @@ const Class = sequelize.define('Class', {
   faculty_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'faculty',
+      key: 'id',
+    }
   },
 }, {
   tableName: 'classes',
   timestamps: false,
+  indexes: [
+    { fields: ['training_type_id'] },
+    { fields: ['faculty_id'] }
+  ],
 });
 
 // Associations: Class -> Faculty

@@ -77,52 +77,77 @@ const Teacher = sequelize.define('Teacher', {
   faculty_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'faculty',
+      key: 'id',
+    }
   },
 }, {
   tableName: 'teachers',
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
+  indexes: [
+    { fields: ['faculty_id'] }
+  ],
 });
+
 Teacher.associate = (models) => {
-  Teacher.hasMany(models.CourseClass, {
-    foreignKey: 'teacher_id',
-    as: 'courseclasses'
-  });
-};
-Teacher.associate = (models) => {
+  if (!models) return;
+
+  // Quan hệ với CourseClass
+  if (models.CourseClass) {
+    Teacher.hasMany(models.CourseClass, {
+      foreignKey: 'teacher_id',
+      as: 'courseclasses'
+    });
+  }
+
   // Quan hệ 1:N thông qua bảng trung gian Teaching
-  Teacher.hasMany(models.Teaching, {
-    foreignKey: 'teacher_id',
-    as: 'teachings'
-  });
+  if (models.Teaching) {
+    Teacher.hasMany(models.Teaching, {
+      foreignKey: 'teacher_id',
+      as: 'teachings'
+    });
 
-  // **Quan hệ Many-to-Many với CourseClass thông qua bảng Teaching**
-  Teacher.belongsToMany(models.CourseClass, {
-    through: models.Teaching,
-    foreignKey: 'teacher_id',
-    otherKey: 'course_class_id',
-    as: 'courseclassesTaught' // Đổi tên alias để phân biệt với hasMany nếu cần
-  });
+    // Quan hệ Many-to-Many với CourseClass thông qua bảng Teaching
+    if (models.CourseClass) {
+      Teacher.belongsToMany(models.CourseClass, {
+        through: models.Teaching,
+        foreignKey: 'teacher_id',
+        otherKey: 'course_class_id',
+        as: 'courseclassesTaught'
+      });
+    }
+  }
 
-  Teacher.belongsTo(models.Faculty, {
-    foreignKey: 'faculty_id',
-    as: 'faculty'
-  });
-  Teacher.hasMany(models.Schedule, {
-    foreignKey: 'teacher_id',
-    as: 'schedules',
-  });
+  // Quan hệ với Faculty
+  if (models.Faculty) {
+    Teacher.belongsTo(models.Faculty, {
+      foreignKey: 'faculty_id',
+      as: 'faculty'
+    });
+  }
 
-  Teacher.hasMany(models.ScheduleInstance, {
-    foreignKey: 'teacher_id',
-    as: 'instances',
-  });
-};
+  // Quan hệ với Schedule
+  if (models.Schedule) {
+    Teacher.hasMany(models.Schedule, {
+      foreignKey: 'teacher_id',
+      as: 'schedules',
+    });
+  }
 
-Teacher.associate = (db) => {
-  if (db.User) {
-    Teacher.belongsTo(db.User, { foreignKey: 'user_id', as: 'user' });
+  // Quan hệ với ScheduleInstance
+  if (models.ScheduleInstance) {
+    Teacher.hasMany(models.ScheduleInstance, {
+      foreignKey: 'teacher_id',
+      as: 'instances',
+    });
+  }
+
+  // Quan hệ với User
+  if (models.User) {
+    Teacher.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
   }
 };
 

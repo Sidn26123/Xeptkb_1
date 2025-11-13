@@ -83,6 +83,9 @@ const Student = sequelize.define('Student', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
+  indexes: [
+    { fields: ['class_id'] }
+  ],
 });
 
 // Associations (will be called from models/index.js)

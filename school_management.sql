@@ -306,6 +306,7 @@ CREATE TABLE `subjects` (
   `theory_hours` int(11) DEFAULT 0,
   `self_study_hours` int(11) DEFAULT 0,
   `practice_hours` int(11) DEFAULT 0,
+  `credits` int(11) DEFAULT 0,
   `requires_lab` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`),

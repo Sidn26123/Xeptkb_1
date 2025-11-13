@@ -52,6 +52,10 @@ const HolidayActual = sequelize.define('HolidayActual', {
 }, {
   tableName: 'holidayactual',
   timestamps: false,
+  indexes: [
+    { fields: ['rule_id'] },
+    { fields: ['semester_id'] }
+  ],
 });
 
 module.exports = HolidayActual;
