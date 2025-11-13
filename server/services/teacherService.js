@@ -1,4 +1,4 @@
-const Teacher = require('../models/Teachers');
+const { Teacher } = require('../models');
 
 async function getTeacherById(id) {
   return await Teacher.findByPk(id);

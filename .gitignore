@@ -5,6 +5,9 @@
 /adminsite/node_modules
 /studentsite/node_modules
 /teachersite/node_modules
-
+backend/tkb_venv/
+backend/venv/
+backend/__pycache__/
+backend/soft_constraint/
 # environment variables
 .env

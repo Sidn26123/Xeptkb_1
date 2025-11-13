@@ -190,7 +190,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Table structure for table `semesters`
+-- Table structure for table `semest
 --
 
 CREATE TABLE `semesters` (
@@ -257,10 +257,28 @@ CREATE TABLE `roomsequipments` (
 CREATE TABLE `teachers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
+  `academic_title` varchar(255) DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `gender` varchar(20) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `id_number` varchar(100) DEFAULT NULL,
+  `ethnicity` varchar(100) DEFAULT NULL,
+  `religion` varchar(100) DEFAULT NULL,
+  `place_of_birth` varchar(255) DEFAULT NULL,
+  `nationality` varchar(100) DEFAULT 'Việt Nam',
+  `email_school` varchar(255) DEFAULT NULL,
+  `email_personal` varchar(255) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `teacher_identifier` varchar(50) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
   `faculty_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `teacher_identifier` (`teacher_identifier`),
+  UNIQUE KEY `teachers_user_id` (`user_id`),
+  UNIQUE KEY `teachers_email_school` (`email_school`),
   KEY `faculty_id` (`faculty_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -320,10 +338,27 @@ CREATE TABLE `holidayactual` (
 CREATE TABLE `students` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `class_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `student_identifier` varchar(50) NOT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `gender` varchar(20) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `id_number` varchar(100) DEFAULT NULL,
+  `ethnicity` varchar(100) DEFAULT NULL,
+  `religion` varchar(100) DEFAULT NULL,
+  `place_of_birth` varchar(255) DEFAULT NULL,
+  `nationality` varchar(100) DEFAULT 'Việt Nam',
+  `email_school` varchar(255) DEFAULT NULL,
+  `email_personal` varchar(255) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `student_identifier` (`student_identifier`),
+  UNIQUE KEY `students_user_id` (`user_id`),
+  UNIQUE KEY `students_email_school` (`email_school`),
   KEY `class_id` (`class_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -393,8 +428,12 @@ CREATE TABLE `teachings` (
 
 INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
 (1, 'admin', '$2b$10$UeuaTxM8s3BvisLYv1FrPOvTgLWq9agcyCw3wx9BoSRfVQbM74mv2', 'admin'),
-(2, 'student', '$2b$10$94GkiGkFFjME/I0jHt.BjOF6KhxB.TBHEiTlieFQXEmTrF2WbloTG', 'student'),
-(3, 'teacher', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'teacher');
+(4, 'b21dccn001@student.example.edu.vn', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'student'),
+(5, 'b21dccn002@student.example.edu.vn', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'student'),
+(6, 'b21dcat001@student.example.edu.vn', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'student'),
+(7, 'gv001@teacher.example.edu.vn', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'teacher'),
+(8, 'gv002@teacher.example.edu.vn', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'teacher'),
+(9, 'gv003@teacher.example.edu.vn', '$2b$10$.UTu/1KReX2/sCoAcQE/KeHO4jWmI7XsyT.rZvQCw1uQyoALYsGf2', 'teacher');
 
 -- Sample data for table `campus`
 INSERT INTO `campus` (`id`, `name`, `code`, `status`, `address`, `location`) VALUES
@@ -481,16 +520,16 @@ INSERT INTO `classes` (`name`, `training_type_id`, `faculty_id`) VALUES
   ('D21CQHT01-N', 1, 2);
 
 -- Dữ liệu mẫu cho bảng teachers
-INSERT INTO `teachers` (`id`, `name`, `teacher_identifier`, `faculty_id`) VALUES
-  (1, 'Nguyễn Văn A', 'GV001', 1),
-  (2, 'Trần Thị B', 'GV002', 2),
-  (3, 'Lê Văn C', 'GV003', 3);
+INSERT INTO `teachers` (`id`, `name`, `teacher_identifier`, `faculty_id`, `user_id`, `email_school`) VALUES
+  (1, 'Nguyễn Văn A', 'GV001', 1, 7, 'gv001@teacher.example.edu.vn'),
+  (2, 'Trần Thị B', 'GV002', 2, 8, 'gv002@teacher.example.edu.vn'),
+  (3, 'Lê Văn C', 'GV003', 3, 9, 'gv003@teacher.example.edu.vn');
 
 -- Dữ liệu mẫu cho bảng students
-INSERT INTO `students` (`class_id`, `name`, `student_identifier`) VALUES
-  (1, 'Nguyễn Văn An', 'B21DCCN001'),
-  (1, 'Trần Thị Bình', 'B21DCCN002'),
-  (2, 'Lê Văn Cường', 'B21DCAT001');
+INSERT INTO `students` (`class_id`, `name`, `student_identifier`, `user_id`, `email_school`) VALUES
+  (1, 'Nguyễn Văn An', 'B21DCCN001', 4, 'b21dccn001@student.example.edu.vn'),
+  (1, 'Trần Thị Bình', 'B21DCCN002', 5, 'b21dccn002@student.example.edu.vn'),
+  (2, 'Lê Văn Cường', 'B21DCAT001', 6, 'b21dcat001@student.example.edu.vn');
 
 -- TSCH campus (campus id 1)
 -- TSCH-A (building id 1) floors 0..3
@@ -972,6 +1011,9 @@ ALTER TABLE `schedules`
 ALTER TABLE `students`
   ADD CONSTRAINT `students_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE;
 
+ALTER TABLE `students`
+  ADD CONSTRAINT `students_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
 --
 -- Constraints for table `subjectrequiresequipment`
 --
@@ -990,6 +1032,9 @@ ALTER TABLE `subjects`
 --
 ALTER TABLE `teachers`
   ADD CONSTRAINT `teachers_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `faculty` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `teachers`
+  ADD CONSTRAINT `teachers_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `teachings`

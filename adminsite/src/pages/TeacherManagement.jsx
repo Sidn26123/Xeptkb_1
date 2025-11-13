@@ -5,8 +5,7 @@ import Modal from "../components/ui/modal/index.jsx";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import axios from 'axios';
-import { showSuccess, showError } from '../utils/ToastUtils.js'; // 👈 import helper
+import { showSuccess, showError } from '../utils/toastUtils.js'; // 👈 import helper (use correct casing)
 import { getAllFaculties } from '../services/facultyService.js';
 import { getAllTeachers, createTeacher, updateTeacher, deleteTeacher } from '../services/teacherService.js';
 
@@ -15,55 +14,131 @@ export default function TeacherManagement() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editTeacher, setEditTeacher] = useState(null);
   const [faculties, setFaculties] = useState([]);
-  const [form, setForm] = useState({ name: '', teacher_identifier: '', faculty_id: '' });
   const [teachers, setTeachers] = useState([]);
   const [search, setSearch] = useState('');
   
+  // react-hook-form for add/edit (same pattern as students)
+  const { register, handleSubmit, reset, watch, setValue, setError, formState: { errors } } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      name: '',
+      teacher_identifier: '',
+      faculty_id: '',
+      academic_title: '',
+      email_school: '',
+      phone: '',
+      date_of_birth: '',
+      gender: '',
+      status: 'active',
+      id_number: '',
+      ethnicity: '',
+      religion: '',
+      place_of_birth: '',
+      nationality: 'Việt Nam',
+      address: '',
+    }
+  });
+
+  // auto-generate email from identifier
+  const watchedIdentifier = watch('teacher_identifier');
+  useEffect(() => {
+    const id = watchedIdentifier || '';
+    if (id) setValue('email_school', `${String(id).toLowerCase()}@teacher.example.edu.vn`);
+    else setValue('email_school', '');
+  }, [watchedIdentifier, setValue]);
 
   // clear form when opening add
-  const openAdd = () => { setForm({ name: '', teacher_identifier: '', faculty_id: '' }); setIsAddOpen(true); };
-  const closeAdd = () => { setIsAddOpen(false); };
+  const emptyDefaults = {
+    name: '',
+    teacher_identifier: '',
+    faculty_id: '',
+    academic_title: '',
+    email_school: '',
+    phone: '',
+    date_of_birth: '',
+    gender: '',
+    status: 'active',
+    id_number: '',
+    ethnicity: '',
+    religion: '',
+    place_of_birth: '',
+    nationality: 'Việt Nam',
+    address: '',
+  };
+
+  const openAdd = () => {
+    // explicitly reset to known empty defaults and clear any server errors
+    reset(emptyDefaults);
+    setServerErrors([]);
+    setIsAddOpen(true);
+  };
+
+  const closeAdd = () => {
+    setIsAddOpen(false);
+    setServerErrors([]);
+    // also reset form to empty to avoid values showing when reopened
+    reset(emptyDefaults);
+  };
+
+  const handleBackendErrors = (err) => {
+    const data = err?.response?.data || {};
+    const errorsArr = data.errors;
+    if (Array.isArray(errorsArr) && errorsArr.length > 0) {
+      errorsArr.forEach((it) => {
+        if (!it) return;
+        const field = it.path || it.param || it.field || it.fieldName || it.key;
+        const msg = it.msg || it.message || it.error || String(it);
+        setError(String(field), { type: 'server', message: msg });
+      });
+      setError('error', { type: 'server', message: 'Validation failed' });
+      return;
+    }
+    const message = data.message || data.error || err?.message || 'Lỗi từ server';
+    setError('root.serverError', { type: 'server', message });
+  };
 
   const handleEditOpen = (teacher) => {
     setEditTeacher(teacher);
     // populate form with teacher values
-    setForm({ name: teacher.name || '', teacher_identifier: teacher.teacher_identifier || '', faculty_id: teacher.faculty_id || '' });
+    reset({
+      name: teacher.name || '',
+      teacher_identifier: teacher.teacher_identifier || '',
+      faculty_id: teacher.faculty_id || '',
+      academic_title: teacher.academic_title || teacher.hoc_ham || '',
+      email_school: teacher.email_school || (teacher.teacher_identifier ? `${String(teacher.teacher_identifier).toLowerCase()}@teacher.example.edu.vn` : ''),
+      phone: teacher.phone || '',
+      date_of_birth: teacher.date_of_birth || '',
+      gender: teacher.gender || '',
+      status: teacher.status || 'active',
+      id_number: teacher.id_number || '',
+      ethnicity: teacher.ethnicity || '',
+      religion: teacher.religion || '',
+      place_of_birth: teacher.place_of_birth || '',
+      nationality: teacher.nationality || 'Việt Nam',
+      address: teacher.address || '',
+    });
     setIsEditOpen(true);
   };
   const handleEditClose = () => {
     setEditTeacher(null);
     setIsEditOpen(false);
+    // clear form values after closing edit to avoid leaking into Add modal
+    reset(emptyDefaults);
+    setServerErrors([]);
   };
   const [serverErrors, setServerErrors] = useState([]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm({ resolver: yupResolver(schema) });
-
-  const onSubmit = async (data) => {
-    try {
-      const res = await axios.post('/api/teachers', data);
-      reset();
-      handleAddClose();
-    } catch (err) {
-      showError(err.response?.data?.message);
-
-      if (err.response?.data?.errors) {
-        // Lỗi validate từ backend
-        showError('Dữ liệu không hợp lệ — vui lòng kiểm tra lại');
-        setServerErrors(err.response.data.errors);
-      } else {
-
-        // alert(err.response?.data?.message || 'Có lỗi xảy ra');
-      }
-    }
-  };
   useEffect(() => { fetchFaculties(); }, []);
 
   useEffect(() => { fetchTeachers(); }, []);
+
+  // listen for global creation events so other places using AddTeacherModal without
+  // providing a callback still trigger a refresh
+  useEffect(() => {
+    const handler = () => { fetchTeachers(); };
+    window.addEventListener('teachers:created', handler);
+    return () => window.removeEventListener('teachers:created', handler);
+  }, []);
 
   const fetchTeachers = async () => {
     try {
@@ -97,7 +172,7 @@ export default function TeacherManagement() {
     <>
       <PageMeta title="Quản lý giáo viên" description="Trang quản lý danh sách giáo viên trong hệ thống." />
   <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/5 dark:bg-white/3">
-        <div className="flex justify-between items-center p-4">
+          <div className="flex justify-between items-center p-4">
           <div className="flex items-center gap-3">
             <input
               value={search}
@@ -108,7 +183,7 @@ export default function TeacherManagement() {
             <Button size="sm" variant="outline" onClick={() => fetchTeachers()}>Làm mới</Button>
           </div>
           <div>
-            <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-purple-600 hover:bg-purple-700" onClick={openAdd}>
+            <Button size="md" variant="primary" className="px-6 py-2 font-semibold bg-purple-600 hover:bg-purple-700" onClick={openAdd}>
               Thêm giáo viên
             </Button>
           </div>
@@ -153,66 +228,244 @@ export default function TeacherManagement() {
 
       {/* Modal Thêm giáo viên */}
   <Modal isOpen={isAddOpen} onClose={closeAdd} className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
-        <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
+        <div className="p-8 bg-white rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-center text-purple-700">Thêm giáo viên</h2>
-          <form className="space-y-5" onSubmit={async (e) => { e.preventDefault(); try { await createTeacher(form); closeAdd(); fetchTeachers(); } catch (err) { console.error(err); } }}>
+          <form className="space-y-5" onSubmit={handleSubmit(async (data) => {
+            setServerErrors([]);
+            try {
+              await createTeacher(data);
+              showSuccess('Tạo giáo viên thành công');
+              closeAdd(); // Đóng modal trước
+              await fetchTeachers(); // Đảm bảo luôn refresh dữ liệu mới nhất
+              reset();
+            } catch (err) {
+              console.error(err);
+              showError(err.response?.data?.message || 'Lỗi khi tạo giáo viên');
+              // map backend validation errors to form fields
+              handleBackendErrors(err);
+              if (err.response?.data?.errors) setServerErrors(err.response.data.errors);
+            }
+          })}>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Tên giáo viên</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nhập tên giáo viên" required />
+              <input {...register('name')} className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập tên giáo viên" />
+              <p className="text-red-500 text-sm">{errors.name?.message}</p>
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Mã giáo viên</label>
-              <input className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" value={form.teacher_identifier} onChange={(e) => setForm({ ...form, teacher_identifier: e.target.value })} placeholder="Nhập mã giáo viên" required />
+              <input {...register('teacher_identifier')} className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Nhập mã giáo viên" />
+              <p className="text-red-500 text-sm">{errors.teacher_identifier?.message}</p>
             </div>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Khoa</label>
-              <select className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" value={form.faculty_id} onChange={(e) => setForm({ ...form, faculty_id: e.target.value })} required>
+              <select {...register('faculty_id')} className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition">
                 <option value="">-- Chọn khoa --</option>
                 {faculties.map(f => (<option key={f.id} value={f.id}>{f.name || f.id}</option>))}
               </select>
+              <p className="text-red-500 text-sm">{errors.faculty_id?.message}</p>
+            </div>
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Academic title</label>
+              <input {...register('academic_title')} className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="e.g. Associate Professor" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Ngày sinh</label>
+                <input {...register('date_of_birth')} type="date" className="w-full border border-purple-300 rounded-lg px-3 py-2" />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Giới tính</label>
+                <select {...register('gender')} className="w-full border border-purple-300 rounded-lg px-3 py-2">
+                  <option value="">-- Chọn --</option>
+                  <option value="male">Nam</option>
+                  <option value="female">Nữ</option>
+                  <option value="other">Khác</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Số CMND/CCCD</label>
+                <input {...register('id_number')} className="w-full border border-purple-300 rounded-lg px-4 py-2" placeholder="Số CMND/CCCD" />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Dân tộc</label>
+                <input {...register('ethnicity')} className="w-full border border-purple-300 rounded-lg px-4 py-2" placeholder="Dân tộc" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Tôn giáo</label>
+                <input {...register('religion')} className="w-full border border-purple-300 rounded-lg px-4 py-2" placeholder="Tôn giáo" />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Nơi sinh</label>
+                <input {...register('place_of_birth')} className="w-full border border-purple-300 rounded-lg px-4 py-2" placeholder="Nơi sinh" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Quốc tịch</label>
+              <input {...register('nationality')} className="w-full border border-purple-300 rounded-lg px-4 py-2" placeholder="Quốc tịch" />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Địa chỉ</label>
+              <textarea {...register('address')} className="w-full border border-purple-300 rounded-lg px-4 py-2" rows={3} placeholder="Địa chỉ liên hệ" />
+            </div>
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Email trường</label>
+              <input {...register('email_school')} readOnly className="w-full border border-purple-300 rounded-lg px-4 py-2 bg-gray-50" type="email" placeholder="Email trường (tự sinh từ mã giáo viên)" />
+              <p className="text-xs text-gray-500 mt-1">Được tạo tự động từ Mã giáo viên; không thể chỉnh sửa.</p>
+            </div>
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Số điện thoại</label>
+              <input {...register('phone')} className="w-full border border-purple-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 transition" type="text" placeholder="Số điện thoại" />
             </div>
             <div className="flex justify-end mt-6 gap-3">
-              <Button size="md" variant="primary" className="bg-purple-600 hover:bg-purple-700 font-semibold px-6 py-2 rounded-lg shadow">
+              <Button type="submit" size="md" variant="primary" className="bg-purple-600 hover:bg-purple-700 font-semibold px-6 py-2 rounded-lg shadow">
                 Lưu
               </Button>
-              <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={closeAdd}>
+              <Button type="button" size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={closeAdd}>
                 Hủy
               </Button>
             </div>
+
+            {serverErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                {serverErrors.map((err, idx) => (
+                  <p key={idx}>⚠️ {err.field || err.path || err.param || 'error'}: {err.message || err.msg || JSON.stringify(err)}</p>
+                ))}
+              </div>
+            )}
           </form>
         </div>
       </Modal>
       {/* Modal Sửa giáo viên */}
       <Modal isOpen={isEditOpen} onClose={handleEditClose} className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
-        <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
+        <div className="p-8 bg-white rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-center text-yellow-700">Sửa thông tin giáo viên</h2>
-          <form className="space-y-5" onSubmit={async (e) => { e.preventDefault(); try { await updateTeacher(editTeacher.id, form); setIsEditOpen(false); fetchTeachers(); } catch (err) { console.error(err); } }}>
+          <form className="space-y-5" onSubmit={handleSubmit(async (data) => {
+            try {
+              await updateTeacher(editTeacher.id, data);
+              showSuccess('Cập nhật giáo viên thành công');
+              handleEditClose();
+              fetchTeachers();
+            } catch (err) {
+              console.error(err);
+              showError(err.response?.data?.message || 'Lỗi khi cập nhật giáo viên');
+              // map backend validation errors to form fields
+              handleBackendErrors(err);
+              if (err.response?.data?.errors) setServerErrors(err.response.data.errors);
+            }
+          })}>
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Tên giáo viên</label>
-              <input className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <input {...register('name')} className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" />
+              <p className="text-red-500 text-sm">{errors.name?.message}</p>
             </div>
+
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Mã giáo viên</label>
-              <input className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" value={form.teacher_identifier} onChange={(e) => setForm({ ...form, teacher_identifier: e.target.value })} required />
+              <input {...register('teacher_identifier')} className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" />
+              <p className="text-red-500 text-sm">{errors.teacher_identifier?.message}</p>
             </div>
+
             <div>
               <label className="block mb-2 text-sm font-semibold text-gray-700">Khoa</label>
-              <select className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" value={form.faculty_id || ''} onChange={(e) => setForm({ ...form, faculty_id: e.target.value })} required>
+              <select {...register('faculty_id')} className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition">
                 <option value="">-- Chọn khoa --</option>
                 {faculties.map(f => (<option key={f.id} value={f.id}>{f.name || f.id}</option>))}
               </select>
+              <p className="text-red-500 text-sm">{errors.faculty_id?.message}</p>
             </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Academic title</label>
+              <input {...register('academic_title')} className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" placeholder="e.g. Associate Professor" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Ngày sinh</label>
+                <input {...register('date_of_birth')} type="date" className="w-full border border-yellow-300 rounded-lg px-3 py-2" />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Giới tính</label>
+                <select {...register('gender')} className="w-full border border-yellow-300 rounded-lg px-3 py-2">
+                  <option value="">-- Chọn --</option>
+                  <option value="male">Nam</option>
+                  <option value="female">Nữ</option>
+                  <option value="other">Khác</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Số CMND/CCCD</label>
+                <input {...register('id_number')} className="w-full border border-yellow-300 rounded-lg px-4 py-2" placeholder="Số CMND/CCCD" />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Dân tộc</label>
+                <input {...register('ethnicity')} className="w-full border border-yellow-300 rounded-lg px-4 py-2" placeholder="Dân tộc" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Tôn giáo</label>
+                <input {...register('religion')} className="w-full border border-yellow-300 rounded-lg px-4 py-2" placeholder="Tôn giáo" />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Nơi sinh</label>
+                <input {...register('place_of_birth')} className="w-full border border-yellow-300 rounded-lg px-4 py-2" placeholder="Nơi sinh" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Quốc tịch</label>
+              <input {...register('nationality')} className="w-full border border-yellow-300 rounded-lg px-4 py-2" placeholder="Quốc tịch" />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Địa chỉ</label>
+              <textarea {...register('address')} className="w-full border border-yellow-300 rounded-lg px-4 py-2" rows={3} placeholder="Địa chỉ liên hệ" />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Email trường</label>
+              <input {...register('email_school')} readOnly className="w-full border border-yellow-300 rounded-lg px-4 py-2 bg-gray-50" type="email" />
+              <p className="text-xs text-gray-500 mt-1">Được tạo tự động từ Mã giáo viên; không thể chỉnh sửa.</p>
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700">Số điện thoại</label>
+              <input {...register('phone')} className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" type="text" placeholder="Số điện thoại" />
+            </div>
+
             <div className="flex justify-end mt-6 gap-3">
-              <Button size="md" variant="primary" className="bg-yellow-500 hover:bg-yellow-600 font-semibold px-6 py-2 rounded-lg shadow">
+              <Button type="submit" size="md" variant="primary" className="bg-yellow-500 hover:bg-yellow-600 font-semibold px-6 py-2 rounded-lg shadow">
                 Lưu
               </Button>
-              <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={handleEditClose}>
+              <Button type="button" size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow" onClick={handleEditClose}>
                 Hủy
               </Button>
             </div>
+
+            {serverErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
+                {serverErrors.map((err, idx) => (
+                  <p key={idx}>⚠️ {err.field || err.path || err.param || 'error'}: {err.message || err.msg || JSON.stringify(err)}</p>
+                ))}
+              </div>
+            )}
           </form>
         </div>
       </Modal>
+      
     </>
   );
 }
@@ -220,13 +473,20 @@ export default function TeacherManagement() {
 
 
 const schema = yup.object({
-  name: yup.string().required('Tên giáo viên là bắt buộc').min(3, 'Tên phải có ít nhất 3 ký tự'),
-  email: yup.string().required('Email là bắt buộc').email('Email không hợp lệ'),
-  faculty_id: yup.string().required('Khoa phải là số').nullable(),
-  phone: yup.string().nullable(),
+  name: yup
+    .string()
+    .required('Tên giáo viên không được để trống')
+    .min(2, 'Tên giáo viên phải có ít nhất 2 ký tự')
+    .max(255, 'Tên giáo viên không được vượt quá 255 ký tự'),
+  teacher_identifier: yup
+    .string()
+    .required('Mã giáo viên không được để trống')
+    .matches(/^[A-Za-z0-9_-]+$/, 'Mã giáo viên chỉ được chứa chữ, số, dấu gạch ngang hoặc gạch dưới')
+    .max(50, 'Mã giáo viên không được vượt quá 50 ký tự'),
+  faculty_id: yup.string().required('Vui lòng chọn khoa'),
 });
 
-export function AddTeacherModal({ isAddOpen, handleAddClose }) {
+export function AddTeacherModal({ isAddOpen, handleAddClose, onCreated }) {
   const [serverErrors, setServerErrors] = useState([]);
 
   const {
@@ -238,16 +498,24 @@ export function AddTeacherModal({ isAddOpen, handleAddClose }) {
 
   const onSubmit = async (data) => {
     try {
-      const res = await axios.post('/api/teachers', data);
-      alert(res.data.message);
+      // use the shared service so base URL / auth is consistent
+      await createTeacher(data);
+      // success feedback
+      showSuccess && showSuccess('Tạo giáo viên thành công');
       reset();
-      handleAddClose();
+      // close modal if parent provided the handler
+      if (typeof handleAddClose === 'function') handleAddClose();
+      // notify parent via callback
+      if (typeof onCreated === 'function') onCreated();
+  // dispatch a global event so callers that didn't pass onCreated still refresh
+  try { window.dispatchEvent(new CustomEvent('teachers:created')); } catch { /* ignore */ }
     } catch (err) {
+      // Prefer structured backend validation errors
       if (err.response?.data?.errors) {
-        // Lỗi validate từ backend
         setServerErrors(err.response.data.errors);
       } else {
-        alert(err.response?.data?.message || 'Có lỗi xảy ra');
+        // fallback to toast/alert
+        showError && showError(err.response?.data?.message || 'Có lỗi xảy ra');
       }
     }
   };
@@ -263,9 +531,9 @@ export function AddTeacherModal({ isAddOpen, handleAddClose }) {
               <p className="text-red-500 text-sm">{errors.name?.message}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <input {...register('email')} className="w-full border rounded px-3 py-2 mt-1" />
-              <p className="text-red-500 text-sm">{errors.email?.message}</p>
+              <label className="block text-sm font-medium text-gray-700">Mã giáo viên</label>
+              <input {...register('teacher_identifier')} className="w-full border rounded px-3 py-2 mt-1" />
+              <p className="text-red-500 text-sm">{errors.teacher_identifier?.message}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Khoa</label>
@@ -282,14 +550,14 @@ export function AddTeacherModal({ isAddOpen, handleAddClose }) {
             {serverErrors.length > 0 && (
                 <div className="bg-red-50 border border-red-300 text-red-700 p-3 rounded">
                   {serverErrors.map((err, idx) => (
-                      <p key={idx}>⚠️ {err.field}: {err.message}</p>
+                      <p key={idx}>⚠️ {err.field || err.path || err.param || 'error'}: {err.message || err.msg || JSON.stringify(err)}</p>
                   ))}
                 </div>
             )}
 
             <div className="flex justify-end gap-3 mt-6">
               <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Lưu</button>
-              <button type="button" onClick={handleAddClose} className="border border-gray-400 px-4 py-2 rounded">Hủy</button>
+              <button type="button" onClick={() => { if (typeof handleAddClose === 'function') handleAddClose(); }} className="border border-gray-400 px-4 py-2 rounded">Hủy</button>
             </div>
           </form>
         </div>

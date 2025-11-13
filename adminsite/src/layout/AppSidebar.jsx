@@ -42,17 +42,27 @@ const navItems = [
       { name: "Equipments", path: "/equipment-management", pro: false },
     ],
   },
-   {
+  {
     name: "Scheduling",
-    icon: <Icon color="#22c55e" />, // green-500
+    icon: <Icon color="#fbbf24" />, // yellow-400
     subItems: [
-      { name: "Homeroom Teachers", path: "/homeroom-teachers", pro: false },
-      { name: "Teaching Assignment", path: "/teaching-assignment", pro: false },
-      { name: "Grade - Subject - Period", path: "/grade-subject-period", pro: false },
-      { name: "Timetable Arrangement", path: "/timetable-arrangement", pro: false },
+      { name: "Chatbot", path: "/chatbot", pro: false },
+      { name: "Hướng dẫn sử dụng", path: "/guide", pro: false },
+      { name: "Quản lý nguồn lực đầu vào", path: "/scheduler/inputs", pro: false },
+      { name: "Quản lý lịch xếp phòng", path: "/scheduler/schedule", pro: false },
       { name: "Research Schedule", path: "/research-schedule", pro: false },
     ],
   },
+  // {
+  //   name: "Scheduling",
+  //   icon: <Icon color="#22c55e" />, // green-500
+  //   subItems: [
+  //     { name: "Homeroom Teachers", path: "/homeroom-teachers", pro: false },
+  //     { name: "Teaching Assignment", path: "/teaching-assignment", pro: false },
+  //     { name: "Grade - Subject - Period", path: "/grade-subject-period", pro: false },
+  //     { name: "Timetable Arrangement", path: "/timetable-arrangement", pro: false },
+  //   ],
+  // },
     {
     name: "Configuration",
     icon: <Icon color="#a855f7" />, // purple-500

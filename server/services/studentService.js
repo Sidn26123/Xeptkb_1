@@ -1,4 +1,4 @@
-const Student = require('../models/Students');
+const { Student } = require('../models');
 
 /**
  * Tìm sinh viên theo mã định danh

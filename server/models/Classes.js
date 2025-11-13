@@ -24,4 +24,11 @@ const Class = sequelize.define('Class', {
   timestamps: false,
 });
 
+// Associations: Class -> Faculty
+Class.associate = (db) => {
+  if (db.Faculty) {
+    Class.belongsTo(db.Faculty, { foreignKey: 'faculty_id', as: 'faculty' });
+  }
+};
+
 module.exports = Class;

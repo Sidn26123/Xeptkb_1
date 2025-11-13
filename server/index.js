@@ -24,6 +24,8 @@ const scheduleRoutes = require('./routes/schedule');
 const semesterRoutes = require('./routes/semester');
 const softContraistRoutes = require('./routes/softContraist');
 const studentRoutes = require('./routes/student');
+const studentsiteRoutes = require('./routes/studentsite');
+const teachersiteRoutes = require('./routes/teachersite');
 const subjectRequiresEquipmentRoutes = require('./routes/subjectRequiresEquipment');
 const subjectRoutes = require('./routes/subject');
 const teacherRoutes = require('./routes/teacher');
@@ -41,6 +43,8 @@ const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 app.use(API_PREFIX + '/', authRoutes);
 app.use(API_PREFIX + '/admin', adminRoutes);
 app.use(API_PREFIX + '/students', studentRoutes);
+app.use(API_PREFIX + '/studentsite', studentsiteRoutes);
+app.use(API_PREFIX + '/teachersite', teachersiteRoutes);
 app.use(API_PREFIX + '/teachers', teacherRoutes);
 app.use(API_PREFIX + '/classes', classRoutes);
 app.use(API_PREFIX + '/academic-years', academicYearRoutes);
@@ -60,6 +64,8 @@ app.use(API_PREFIX + '/subject-requires-equipments', subjectRequiresEquipmentRou
 app.use(API_PREFIX + '/subjects', subjectRoutes);
 app.use(API_PREFIX + '/teachings', teachingRoutes);
 app.use(API_PREFIX + '/training-types', trainingTypeRoutes);
+// Mail API (used for sending emails via SMTP or Ethereal fallback)
+app.use(API_PREFIX + '/mail', mailRoutes);
 // 404 handler for unknown routes
 const ErrorResponse = require('./utils/responseUtils').ErrorResponse;
 const errorHandler = require("./middleware/errorHandler");

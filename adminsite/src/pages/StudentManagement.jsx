@@ -6,6 +6,7 @@ import * as yup from "yup";
 import PageMeta from "../components/common/PageMeta.jsx";
 import Button from "../components/ui/button/Button.jsx";
 import Modal from "../components/ui/modal/index.jsx";
+import { showError } from '../utils/toastUtils.js';
 import { getAllClasses } from "../services/classService.js";
 import {
   getAllStudents,
@@ -47,8 +48,31 @@ export default function StudentManagement() {
       name: "",
       student_identifier: "",
       class_id: "",
+      email_school: "",
+      phone: "",
+      date_of_birth: "",
+      gender: "",
+      status: "active",
+      id_number: "",
+      ethnicity: "",
+      religion: "",
+      place_of_birth: "",
+      nationality: "Việt Nam",
+      address: "",
     },
   });
+
+  // auto-generate school email from student_identifier and keep it read-only
+  const watchedIdentifier = formInstance.watch("student_identifier");
+  useEffect(() => {
+    const id = watchedIdentifier || "";
+    if (id) {
+      const generated = `${String(id).toLowerCase()}@student.example.edu.vn`;
+      formInstance.setValue("email_school", generated, { shouldDirty: true });
+    } else {
+      formInstance.setValue("email_school", "");
+    }
+  }, [watchedIdentifier, formInstance]);
 
   useEffect(() => {
     fetchStudents();
@@ -61,6 +85,14 @@ export default function StudentManagement() {
       setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load students", err);
+      // Show user-friendly toast and include HTTP details in console
+      const status = err?.response?.status;
+      const message = err?.response?.data?.message || err.message || 'Lỗi khi tải danh sách sinh viên';
+      try { showError(message); } catch { /* ignore if toast not available */ }
+      // If unauthorized or forbidden, log hint for debugging
+      if (status === 401 || status === 403) {
+        console.warn('Fetch students returned', status, '— check authentication/permissions and access token in localStorage (accessToken/refreshToken).');
+      }
     }
   };
 
@@ -124,6 +156,17 @@ export default function StudentManagement() {
       name: "",
       student_identifier: "",
       class_id: "",
+      email_school: "",
+      phone: "",
+      date_of_birth: "",
+      gender: "",
+      status: "active",
+      id_number: "",
+      ethnicity: "",
+      religion: "",
+      place_of_birth: "",
+      nationality: "Việt Nam",
+      address: "",
     });
     setIsModalOpen(true);
   };
@@ -134,6 +177,17 @@ export default function StudentManagement() {
       name: student.name || "",
       student_identifier: student.student_identifier || "",
       class_id: String(student.class_id) || "",
+      email_school: student.email_school || "",
+      phone: student.phone || "",
+      date_of_birth: student.date_of_birth || "",
+      gender: student.gender || "",
+      status: student.status || "active",
+      id_number: student.id_number || "",
+      ethnicity: student.ethnicity || "",
+      religion: student.religion || "",
+      place_of_birth: student.place_of_birth || "",
+      nationality: student.nationality || "Việt Nam",
+      address: student.address || "",
     });
     setIsModalOpen(true);
   };
@@ -184,7 +238,7 @@ export default function StudentManagement() {
             <Button size="sm" variant="outline" onClick={() => fetchStudents()}>Làm mới</Button>
           </div>
           <div>
-            <Button size="md" variant="primary" className="!px-6 !py-2 font-semibold bg-green-600 hover:bg-green-700" onClick={handleOpenAdd}>
+            <Button size="md" variant="primary" className="px-6 py-2 font-semibold bg-green-600 hover:bg-green-700" onClick={handleOpenAdd}>
               Thêm sinh viên
             </Button>
           </div>
@@ -233,7 +287,7 @@ export default function StudentManagement() {
             onClose={() => setIsModalOpen(false)}
             className="max-w-lg w-full mx-auto bg-white/98 backdrop-blur-sm shadow-2xl"
         >
-          <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
+          <div className="p-8 bg-white rounded-xl shadow-lg">
             <h2
                 className={`text-2xl font-bold mb-6 text-center ${
                     editStudent ? "text-yellow-700" : "text-green-700"
@@ -273,6 +327,76 @@ export default function StudentManagement() {
                       {formInstance.formState.errors.student_identifier.message}
                     </p>
                 )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Email trường</label>
+                  <input
+                      {...formInstance.register('email_school')}
+                      readOnly
+                      className="w-full border border-green-300 rounded-lg px-4 py-2 bg-gray-50"
+                      placeholder="Email trường (tự sinh từ mã sinh viên)"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Được tạo tự động từ Mã sinh viên; không thể chỉnh sửa.</p>
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Số điện thoại</label>
+                  <input
+                      {...formInstance.register('phone')}
+                      className="w-full border border-green-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 transition"
+                      placeholder="Số điện thoại"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Ngày sinh</label>
+                  <input type="date" {...formInstance.register('date_of_birth')} className="w-full border border-green-300 rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Giới tính</label>
+                  <select {...formInstance.register('gender')} className="w-full border border-green-300 rounded-lg px-3 py-2">
+                    <option value="">-- Chọn --</option>
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Số chứng minh / CCCD</label>
+                  <input {...formInstance.register('id_number')} className="w-full border border-green-300 rounded-lg px-4 py-2" placeholder="Số CMND/CCCD" />
+                </div>
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Dân tộc</label>
+                  <input {...formInstance.register('ethnicity')} className="w-full border border-green-300 rounded-lg px-4 py-2" placeholder="Dân tộc" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Tôn giáo</label>
+                  <input {...formInstance.register('religion')} className="w-full border border-green-300 rounded-lg px-4 py-2" placeholder="Tôn giáo" />
+                </div>
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Nơi sinh</label>
+                  <input {...formInstance.register('place_of_birth')} className="w-full border border-green-300 rounded-lg px-4 py-2" placeholder="Nơi sinh" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Quốc tịch</label>
+                <input {...formInstance.register('nationality')} className="w-full border border-green-300 rounded-lg px-4 py-2" placeholder="Quốc tịch" />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-700">Địa chỉ</label>
+                <textarea {...formInstance.register('address')} className="w-full border border-green-300 rounded-lg px-4 py-2" placeholder="Địa chỉ liên hệ" rows={3} />
               </div>
 
               <div>

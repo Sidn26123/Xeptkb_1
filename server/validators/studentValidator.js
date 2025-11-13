@@ -1,5 +1,5 @@
 const { body } = require('express-validator');
-const Student = require('../models/Students');
+const { Student } = require('../models');
 const { Op } = require('sequelize');
 
 // ✅ Validator khi tạo mới sinh viên
