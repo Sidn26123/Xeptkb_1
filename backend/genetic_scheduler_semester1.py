@@ -9,7 +9,7 @@ New Features:
 - Tự động đẩy môn về sau khi slot đầy
 """
 
-import datetime
+from datetime import datetime
 import random
 import copy
 from dataclasses import dataclass, field

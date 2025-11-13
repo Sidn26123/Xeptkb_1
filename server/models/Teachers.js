@@ -49,6 +49,15 @@ Teacher.associate = (models) => {
     foreignKey: 'faculty_id',
     as: 'faculty'
   });
+  Teacher.hasMany(models.Schedule, {
+    foreignKey: 'teacher_id',
+    as: 'schedules',
+  });
+
+  Teacher.hasMany(models.ScheduleInstance, {
+    foreignKey: 'teacher_id',
+    as: 'instances',
+  });
 };
 
 module.exports = Teacher;

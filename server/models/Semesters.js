@@ -45,5 +45,9 @@ Semester.associate = (models) => {
     foreignKey: 'semester_id',
     as: 'courseclasses'
   });
+  Semester.hasMany(models.ScheduleGeneration, {
+    foreignKey: 'semester_id',
+    as: 'generations',
+  });
 };
 module.exports = Semester;

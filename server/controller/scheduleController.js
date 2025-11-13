@@ -270,6 +270,7 @@ exports.saveSchedule = async (req, res) => {
     const apiResponse = req.body;
     console.log("Lưu schedule nhận được từ request body:", apiResponse);
     if (!apiResponse || !apiResponse.schedule) {
+      console.log("Thiếu dữ liệu schedule trong request body.");
       return res.status(400).json(
           new ErrorResponse('Thiếu dữ liệu schedule', 400)
       );

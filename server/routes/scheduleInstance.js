@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const scheduleInstanceController = require('../controller/scheduleInstanceController');
 const { verifyToken, authorize } = require('../middleware/auth');
+const {getScheduleInstancesByQuery} = require("../controller/scheduleInstanceController");
 
 /**
 * @route   POST /api/schedules/:scheduleId/instances/generate
@@ -9,6 +10,7 @@ const { verifyToken, authorize } = require('../middleware/auth');
 * @access  Admin only
 */
 router.post('/:scheduleId/instances/generate', verifyToken, authorize('admin'), scheduleInstanceController.generateInstancesForSchedule);
+router.get('/query', getScheduleInstancesByQuery);
 
 /**
  * @route   POST /api/schedules/generations/:generationId/instances/generate-all

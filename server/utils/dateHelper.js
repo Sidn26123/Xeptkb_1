@@ -99,10 +99,39 @@ const formatDateToDayMonth = (date) => {
 
   return `${day}/${month}`;
 };
+/**
+ * Thêm một số ngày vào một đối tượng Date.
+ * @param {Date} date - Ngày bắt đầu.
+ * @param {number} days - Số ngày cần thêm.
+ * @returns {Date}
+ */
+function addDays(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
 
+/**
+ * Lấy ngày Thứ Hai của tuần chứa ngày được cung cấp.
+ * @param {Date} date - Ngày bất kỳ trong tuần.
+ * @returns {Date} - Ngày thứ Hai của tuần đó.
+ */
+function getStartOfWeek(date) {
+  const d = new Date(date);
+  // 0 = Chủ Nhật, 1 = Thứ Hai, ..., 6 = Thứ Bảy
+  const day = d.getDay();
+  // (day === 0 ? -6 : 1) -> logic để đảm bảo Thứ Hai là ngày đầu tuần
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  // Set về 0 giờ để đảm bảo tính toán chính xác
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
 module.exports = {
   convertDayMonthToDate,
   convertDayMonthToCurrentYear,
   isDateInHolidayRange,
   formatDateToDayMonth,
+  getStartOfWeek,
+  addDays
 };

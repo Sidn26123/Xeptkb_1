@@ -8,7 +8,6 @@ const ScheduleGeneration = sequelize.define("ScheduleGeneration", {
     primaryKey: true,
   },
 
-  // lưu metadata
   semester: {
     type: DataTypes.STRING(50), // "2024-2025-1"
     allowNull: true,
@@ -23,6 +22,10 @@ const ScheduleGeneration = sequelize.define("ScheduleGeneration", {
   },
   total_weeks: {
     type: DataTypes.INTEGER,
+  },
+  //Lưu index tuần gen từ thuật toán, tuan 1 la tuan dau tien cua hoc ki
+  week_start: {
+    type: DataTypes.INTEGER
   },
   days_per_week: {
     type: DataTypes.INTEGER,

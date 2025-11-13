@@ -80,4 +80,39 @@ const ScheduleInstance = sequelize.define('ScheduleInstance', {
   }]
 });
 
+//assiocate
+ScheduleInstance.associate = (models) => {
+  // Mẫu TKB gốc
+  ScheduleInstance.belongsTo(models.Schedule, {
+    foreignKey: 'schedule_id',
+    as: 'schedule',
+  });
+
+  // Liên kết override
+  ScheduleInstance.belongsTo(models.TimeSlot, {
+    foreignKey: 'time_slot_id',
+    as: 'timeSlot',
+  });
+
+  ScheduleInstance.belongsTo(models.Room, {
+    foreignKey: 'room_id',
+    as: 'room',
+  });
+
+  ScheduleInstance.belongsTo(models.Teacher, {
+    foreignKey: 'teacher_id',
+    as: 'teacher',
+  });
+
+  // Liên kết tự tham chiếu (reschedule / replaced)
+  ScheduleInstance.belongsTo(models.ScheduleInstance, {
+    foreignKey: 'replaced_by_instance_id',
+    as: 'replacedBy',
+  });
+
+  ScheduleInstance.hasMany(models.ScheduleInstance, {
+    foreignKey: 'replaced_by_instance_id',
+    as: 'replacedInstances',
+  });
+};
 module.exports = ScheduleInstance;

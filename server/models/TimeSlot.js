@@ -49,5 +49,10 @@ TimeSlot.associate = (models) => {
     foreignKey: 'time_slot_id',
     as: 'unavailableTimes' // Tên alias mới để truy vấn
   });
+
+  TimeSlot.hasMany(models.ScheduleInstance, {
+    foreignKey: 'time_slot_id',
+    as: 'instances',
+  });
 };
 module.exports = TimeSlot;

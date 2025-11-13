@@ -55,6 +55,15 @@ const Schedule = sequelize.define('Schedule', {
     type: DataTypes.INTEGER,
     defaultValue: 1,
   },
+  //Lưu index tuần, tuan 1 la tuan week_start ở generation, cụ thể của schedule cua 1 course class
+  week_start: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  week_end: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   generation_id: {   // <-- thêm dòng này
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -93,7 +102,10 @@ Schedule.associate = (models) => {
     foreignKey: 'generation_id',
     as: 'generation'
   });
-
+  Schedule.hasMany(models.ScheduleInstance, {
+    foreignKey: 'schedule_id',
+    as: 'instances'
+  });
 };
 
 module.exports = Schedule;

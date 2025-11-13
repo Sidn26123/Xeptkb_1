@@ -67,5 +67,10 @@ Room.associate = (models) => {
     foreignKey: 'room_id',
     as: 'schedules'
   });
+  Room.hasMany(models.ScheduleInstance, {
+    foreignKey: 'room_id',
+    as: 'instances',
+  });
+
 };
 module.exports = Room;

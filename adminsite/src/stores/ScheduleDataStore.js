@@ -2,83 +2,88 @@ import { create } from 'zustand';
 
 const useSchedulerStore = create((set) => ({
     // --- DATA ---
+// courses: [
+    //     {
+    //         id: 1,
+    //         course_id: 101,
+    //         student_count: 50,
+    //         weeks_needed: 4,
+    //         sessions_per_week: 2,
+    //         duration_per_session: 2,
+    //     },
+    //     {
+    //         id: 2,
+    //         course_id: 102,
+    //         student_count: 40,
+    //         weeks_needed: 3,
+    //         sessions_per_week: 2,
+    //         duration_per_session: 2,
+    //     },
+    //     {
+    //         id: 3,
+    //         course_id: 103,
+    //         student_count: 60,
+    //         weeks_needed: 5,
+    //         sessions_per_week: 3,
+    //         duration_per_session: 2,
+    //     },
+    //     {
+    //         id: 4,
+    //         course_id: 104,
+    //         student_count: 45,
+    //         weeks_needed: 4,
+    //         sessions_per_week: 2,
+    //         duration_per_session: 2,
+    //     },
+    //     {
+    //         id: 5,
+    //         course_id: 105,
+    //         student_count: 50,
+    //         weeks_needed: 3,
+    //         sessions_per_week: 2,
+    //         duration_per_session: 2,
+    //     },
+    //     {
+    //         id: 6,
+    //         course_id: 106,
+    //         student_count: 35,
+    //         weeks_needed: 4,
+    //         sessions_per_week: 2,
+    //         duration_per_session: 2,
+    //     },
+    //     {
+    //         id: 7,
+    //         course_id: 107,
+    //         student_count: 55,
+    //         weeks_needed: 5,
+    //         sessions_per_week: 3,
+    //         duration_per_session: 2,
+    //     },
+    // ],
+    //
+    // teachers: [
+    //     { id: 1, name: 'Teacher A', can_teach_courses: [101, 102] },
+    //     { id: 2, name: 'Teacher B', can_teach_courses: [102, 103, 104] },
+    //     { id: 3, name: 'Teacher C', can_teach_courses: [104, 105, 106] },
+    //     { id: 4, name: 'Teacher D', can_teach_courses: [106, 107] },
+    // ],
+    //
+    // rooms: [
+    //     { id: 1, name: 'Room 101', capacity: 60 },
+    //     { id: 2, name: 'Room 102', capacity: 50 },
+    //     { id: 3, name: 'Room 103', capacity: 40 },
+    //     { id: 4, name: 'Room 201', capacity: 70 },
+    // ],
 
-    courses: [
-        {
-            id: 1,
-            course_id: 101,
-            student_count: 50,
-            weeks_needed: 4,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 2,
-            course_id: 102,
-            student_count: 40,
-            weeks_needed: 3,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 3,
-            course_id: 103,
-            student_count: 60,
-            weeks_needed: 5,
-            sessions_per_week: 3,
-            duration_per_session: 2,
-        },
-        {
-            id: 4,
-            course_id: 104,
-            student_count: 45,
-            weeks_needed: 4,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 5,
-            course_id: 105,
-            student_count: 50,
-            weeks_needed: 3,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 6,
-            course_id: 106,
-            student_count: 35,
-            weeks_needed: 4,
-            sessions_per_week: 2,
-            duration_per_session: 2,
-        },
-        {
-            id: 7,
-            course_id: 107,
-            student_count: 55,
-            weeks_needed: 5,
-            sessions_per_week: 3,
-            duration_per_session: 2,
-        },
-    ],
-
-    teachers: [
-        { id: 1, name: 'Teacher A', can_teach_courses: [101, 102] },
-        { id: 2, name: 'Teacher B', can_teach_courses: [102, 103, 104] },
-        { id: 3, name: 'Teacher C', can_teach_courses: [104, 105, 106] },
-        { id: 4, name: 'Teacher D', can_teach_courses: [106, 107] },
-    ],
-
-    rooms: [
-        { id: 1, name: 'Room 101', capacity: 60 },
-        { id: 2, name: 'Room 102', capacity: 50 },
-        { id: 3, name: 'Room 103', capacity: 40 },
-        { id: 4, name: 'Room 201', capacity: 70 },
-    ],
+    courses: [],
+    teachers: [],
+    rooms: [],
+    semesters: [],
     selected_courses: [], //ids of selected courses for scheduling
     selected_teachers: [],  //id of selected teacher for scheduling
     selected_rooms: [],
-
+    selected_semester: null,
+    schedules: {},
 
 
     // --- NEW DATA (from sampleData) ---
@@ -133,8 +138,6 @@ const useSchedulerStore = create((set) => ({
         },
     ],
 
-    schools: ['THCS Nghĩa Dân', 'THPT Lê Quý Đôn', 'THCS Trần Phú'],
-
     subjects: [
         'Chào cờ',
         'Tiếng Anh có yêu tố nước ngoài',
@@ -146,11 +149,13 @@ const useSchedulerStore = create((set) => ({
     ],
 
 
-
-    semester_config: {
+    semester_config:{
+        max_concurrent_courses: 4,
         start_week: 1,
         end_week: 15,
-        max_concurrent_courses: 4,
+        sessions_per_day: 14,
+        session_duration: 4,
+        days_per_week: 6
     },
 
     ga_config: {
@@ -182,6 +187,10 @@ const useSchedulerStore = create((set) => ({
                 ),
             })),
 
+        setCourses: (courses) =>
+            set(() => ({
+                courses: courses,
+            })),
         deleteCourse: (id) =>
             set((state) => ({
                 courses: state.courses.filter((c) => c.id !== id),
@@ -204,6 +213,11 @@ const useSchedulerStore = create((set) => ({
                 teachers: state.teachers.map((t) =>
                     t.id === id ? { ...t, ...teacher } : t
                 ),
+            })),
+
+        setTeachers: (teachers) =>
+            set(() => ({
+                teachers: teachers,
             })),
 
         deleteTeacher: (id) =>
@@ -230,46 +244,14 @@ const useSchedulerStore = create((set) => ({
                 ),
             })),
 
+        setRooms: (rooms) =>
+            set(() => ({
+                rooms: rooms,
+            })),
+
         deleteRoom: (id) =>
             set((state) => ({
                 rooms: state.rooms.filter((r) => r.id !== id),
-            })),
-
-        // ====== DEPARTMENTS ======
-        addDepartment: (dept) =>
-            set((state) => ({
-                departments: [
-                    ...state.departments,
-                    {
-                        ...dept,
-                        id:
-                            Math.max(...state.departments.map((d) => d.id), 0) +
-                            1,
-                    },
-                ],
-            })),
-
-        updateDepartment: (id, dept) =>
-            set((state) => ({
-                departments: state.departments.map((d) =>
-                    d.id === id ? { ...d, ...dept } : d
-                ),
-            })),
-
-        deleteDepartment: (id) =>
-            set((state) => ({
-                departments: state.departments.filter((d) => d.id !== id),
-            })),
-
-        // ====== SCHOOLS ======
-        addSchool: (school) =>
-            set((state) => ({
-                schools: [...state.schools, school],
-            })),
-
-        deleteSchool: (school) =>
-            set((state) => ({
-                schools: state.schools.filter((s) => s !== school),
             })),
 
         // ====== SUBJECTS ======
@@ -385,6 +367,29 @@ const useSchedulerStore = create((set) => ({
             set(() => ({
                 selected_rooms: [],
             })),
+
+        setSchedules: (schedules) =>
+            set(() => ({
+                schedules: schedules,
+            })),
+        setSelectedSemester: (semester) =>
+            set(() => ({
+                selected_semester: semester,
+            })),
+
+        setSemesters: (semesters) =>
+            set(() => ({
+                semesters: semesters,
+            })),
+
+        //update field in semester_config
+        updateSemesterConfig: (config) =>
+            set((state) => ({
+                semester_config: {
+                    ...state.semester_config,
+                    ...config,
+                },
+            })),
     },
 }));
 export const useCourses = () => useSchedulerStore((state) => state.courses);
@@ -392,18 +397,30 @@ export const useTeachers = () => useSchedulerStore((state) => state.teachers);
 export const useRooms = () => useSchedulerStore((state) => state.rooms);
 export const useSemesterConfig = () =>
     useSchedulerStore((state) => state.semester_config);
+export const useSchedules = () => useSchedulerStore((state) => state.schedules);
 export const useDepartments = () =>
     useSchedulerStore((state) => state.departments);
-export const useSchools = () => useSchedulerStore((state) => state.schools);
 export const useSubjects = () => useSchedulerStore((state) => state.subjects);
-
+export const useSemesters = () => useSchedulerStore((state) => state.semesters);
 export const useGAConfig = () => useSchedulerStore((state) => state.ga_config);
 export const useSelectedCourses = () => useSchedulerStore((state) => state.selected_courses);
 export const useSelectedTeachers = () => useSchedulerStore((state) => state.selected_teachers);
 export const useSelectedRooms = () => useSchedulerStore((state) => state.selected_rooms);
-
-
+export const useSelectedSemester = () => useSchedulerStore((state) => state.selected_semester);
 export const useSchedulingActions = () =>
     useSchedulerStore((state) => state.actions);
-
+export const setCourses = (courses) =>
+    useSchedulerStore.getState().actions.setCourses(courses);
+export const setTeachers = (teachers) =>
+    useSchedulerStore.getState().actions.setTeachers(teachers);
+export const setRooms = (rooms) =>
+    useSchedulerStore.getState().actions.setRooms(rooms);
 export default useSchedulerStore;
+export const setSchedules = (schedules) =>
+    useSchedulerStore.getState().actions.setSchedules(schedules);
+export const setSelectedSemester = (semester) =>
+    useSchedulerStore.getState().actions.setSelectedSemester(semester);
+export const setSemesters = (semesters) =>
+    useSchedulerStore.getState().actions.setSemesters(semesters);
+export const updateSemesterConfig = (config) =>
+    useSchedulerStore.getState().actions.updateSemesterConfig(config);

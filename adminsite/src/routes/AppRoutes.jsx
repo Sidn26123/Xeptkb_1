@@ -23,6 +23,8 @@ import ResearchScheduleManagement from "../pages/ResearchScheduleManagement";
 import TimeSlotManagement from "../pages/TimeSlotManagement.jsx";
 import DayManagement from "../pages/DayManagement.jsx";
 import CourseClassManagement from "../pages/CourseClassManagement.jsx";
+import {ReportPage} from "../pages/ReportPage.jsx";
+import SchedulerPage from "../pages/SchedulerPage.jsx";
 // research schedule is a single management page; child views are rendered inside it
 
 export default function AppRoutes() {
@@ -42,6 +44,7 @@ export default function AppRoutes() {
         <Route path={"/day-management"} element={<DayManagement />} />
         <Route path={"/course-class-management"} element={<CourseClassManagement />} />
         <Route path="/chatbot" element={<RAGApp />} />
+        <Route path="/report" element={<ReportPage />} />
           <Route path="/guide" element={<TutorialPage />} />
         <Route
             path={`/scheduler/inputs`}
@@ -49,7 +52,8 @@ export default function AppRoutes() {
         />
         <Route
             path={`/scheduler/schedule`}
-            element={<SchedulerResourcesManagement />}
+            // element={<SchedulerResourcesManagement />}
+            element={<SchedulerPage />}
         />
 
 

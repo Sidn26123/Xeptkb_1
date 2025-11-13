@@ -8,6 +8,7 @@ import {getAllSemesters} from '../../services/semesterService';
 import {getAllClasses, getClassById} from '../../services/classService';
 import {getRoomById} from "../../services/roomService.js";
 import {getAllSchedules} from "../../services/scheduleService.js";
+import {fetchScheduleEvents} from "../../services/scheduleService.js";
 
 export default function StudentSchedule() {
     const [events, setEvents] = React.useState([]);
@@ -25,7 +26,6 @@ export default function StudentSchedule() {
     // We fetch classes once; events will be generated when the user clicks "Tìm".
     React.useEffect(() => {
         let mounted = true;
-
         async function fetchClasses() {
             try {
                 const data = await getAllClasses();
@@ -83,7 +83,8 @@ export default function StudentSchedule() {
 
     const handleSearch = async () => {
         // Build sample events now that the user requested a search.
-        const sampleEvents =await convertSchedulesToUI();
+        const sampleEvents =await fetchScheduleEvents(1,1);
+        console.log('Fetched schedule events sample for search:', sampleEvents);
         // If user didn't click a suggestion, try to match typed query to a class
         let cls = null;
         if (selectedClassId) {
@@ -104,10 +105,10 @@ export default function StudentSchedule() {
         const qName = (cls?.name || '').toLowerCase();
         const qCode = (cls?.code || cls?.code_name || '').toLowerCase();
 
-        // const filtered = sampleEvents.filter(e => (
-        //     (qCode && e.subject && e.subject.toLowerCase().includes(qCode)) ||
-        //     (qName && e.title && e.title.toLowerCase().includes(qName))
-        // ));
+        const filtered = sampleEvents.filter(e => (
+            (qCode && e.subject && e.subject.toLowerCase().includes(qCode)) ||
+            (qName && e.title && e.title.toLowerCase().includes(qName))
+        ));
 
         setEvents(sampleEvents);
         setHasSearched(true);
@@ -121,8 +122,8 @@ export default function StudentSchedule() {
         setShowSuggestions(false);
 
         // build events even if empty, then show timetable
-        const sampleEvents = await convertSchedulesToUI();
-        console.log('sampleEvents', sampleEvents);
+        const sampleEvents = await fetchScheduleEvents(1,1);
+        console.log('Fetched schedule events s1ample for selected class:', sampleEvents);
         const qName = (c?.name || '').toLowerCase();
         const qCode = (c?.code || c?.code_name || '').toLowerCase();
         // const filtered = sampleEvents.filter(e => (

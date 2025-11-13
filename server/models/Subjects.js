@@ -19,15 +19,19 @@ const Subject = sequelize.define('Subject', {
     allowNull: false,
     unique: true,
   },
-  theory_hours: {
+  theory_period: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  self_study_hours: {
+  self_study_period: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  practice_hours: {
+  practice_period: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  credits: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },

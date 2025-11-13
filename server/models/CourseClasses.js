@@ -51,6 +51,18 @@ const CourseClass = sequelize.define('CourseClass', {
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT',
     },
+    slot: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    duration_per_session: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    session_per_week: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
 }, {
     tableName: 'courseclasses',
     timestamps: false,

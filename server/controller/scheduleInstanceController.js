@@ -4,14 +4,17 @@ const {
     getScheduleInstances,
     updateScheduleInstance,
     cancelScheduleInstance,
-    rescheduleInstance
+    rescheduleInstance, transformInstancesToEvents
 } = require('../services/scheduleInstanceService');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
 const ScheduleInstance = require('../models/ScheduleInstances');
 const Schedule = require('../models/Schedules');
 const ScheduleGeneration = require('../models/ScheduleGenerations');
 const { Op } = require('sequelize');
-
+const CourseClass = require('../models/CourseClasses');
+const Subject = require('../models/Subjects');
+const Room = require('../models/Rooms');
+const Teacher = require('../models/Teachers');
 // ==================== INSTANCE GENERATION ====================
 
 /**
@@ -24,15 +27,16 @@ exports.generateInstancesForSchedule = async (req, res) => {
         const { startDate, endDate } = req.body;
 
         if (!startDate || !endDate) {
-            return res.status(400).json(
-                new ErrorResponse('Thiếu startDate hoặc endDate', 400)
-            );
+            // return res.status(400).json(
+            //     new ErrorResponse('Thiếu startDate hoặc endDate', 400)
+            // );
+
         }
 
         const result = await generateScheduleInstances(
             scheduleId,
-            new Date(startDate),
-            new Date(endDate)
+            null,
+            null
         );
 
         res.status(201).json(
@@ -401,5 +405,72 @@ exports.deleteInstance = async (req, res) => {
         res.status(500).json(new ErrorResponse(err.message, 500));
     }
 };
+exports.getScheduleInstancesByQuery = async (req, res) => {
+    try {
+        const { classId, semesterId } = req.query;
 
+        if (!classId || !semesterId) {
+            return res.status(400).json({
+                message: 'Thiếu classId hoặc semesterId'
+            });
+        }
+
+        // Truy vấn chính: Lấy ScheduleInstance
+        const instances = await ScheduleInstance.findAll({
+            include: [
+                {
+                    model: Schedule,
+                    as: 'schedule',
+                    attributes: ['num_of_period'],
+                    required: true, // INNER JOIN
+                    include: [
+                        {
+                            model: ScheduleGeneration,
+                            as: 'generation',
+                            attributes: [],
+                            required: true,
+                            where: {
+                                semester_id: semesterId
+                            }
+                        },
+                        {
+                            model: CourseClass,
+                            as: 'courseClass',
+                            required: true,
+                            where: {
+                                class_id: classId
+                            },
+                            include: [
+                                { model: Subject, as: 'subject' }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    model: Room,
+                    as: 'room',
+                },
+                {
+                    model: Teacher,
+                    as: 'teacher',
+                }
+            ],
+            order: [
+                ['date', 'ASC'],
+                ['time_slot_id', 'ASC']
+            ]
+        });
+
+        console.log('Fetched schedule instances:', instances);
+
+        // Chuyển đổi dữ liệu về dạng Frontend
+        const events = transformInstancesToEvents(instances);
+
+        res.status(200).json(events);
+
+    } catch (error) {
+        console.error('Lỗi khi lấy schedule instances:', error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
 module.exports = exports;
