@@ -1,6 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, X, BarChart3, Calendar } from 'lucide-react';
+import React, {useState, useMemo} from 'react';
+import {Plus, X, BarChart3, Calendar} from 'lucide-react';
 import ScheduleAnalyzer from "./SchedulerAnalyzer.jsx";
+import {generateScheduleInstance, saveSchedule} from "../../services/scheduleService.js";
+import {showError, showSuccess} from "../../utils/toastUtils.js";
+import {useSelectedSemester, useSemesterConfig} from "../../stores/ScheduleDataStore.js";
 
 const DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
 const PERIODS = 12;
@@ -24,8 +27,8 @@ const scheduleData = {
             duration: 4,
             student_count: 35,
             weekly_slots: [
-                { day: 6, period: 8, duration: 2 },
-                { day: 3, period: 8, duration: 2 },
+                {day: 6, period: 8, duration: 2},
+                {day: 3, period: 8, duration: 2},
             ],
         },
         {
@@ -38,9 +41,9 @@ const scheduleData = {
             duration: 5,
             student_count: 60,
             weekly_slots: [
-                { day: 2, period: 2, duration: 2 },
-                { day: 7, period: 6, duration: 2 },
-                { day: 4, period: 6, duration: 2 },
+                {day: 2, period: 2, duration: 2},
+                {day: 7, period: 6, duration: 2},
+                {day: 4, period: 6, duration: 2},
             ],
         },
         {
@@ -53,8 +56,8 @@ const scheduleData = {
             duration: 4,
             student_count: 35,
             weekly_slots: [
-                { day: 7, period: 3, duration: 2 },
-                { day: 2, period: 10, duration: 2 },
+                {day: 7, period: 3, duration: 2},
+                {day: 2, period: 10, duration: 2},
             ],
         },
         {
@@ -67,8 +70,8 @@ const scheduleData = {
             duration: 3,
             student_count: 50,
             weekly_slots: [
-                { day: 4, period: 9, duration: 2 },
-                { day: 7, period: 3, duration: 2 },
+                {day: 4, period: 9, duration: 2},
+                {day: 7, period: 3, duration: 2},
             ],
         },
         {
@@ -81,8 +84,8 @@ const scheduleData = {
             duration: 4,
             student_count: 50,
             weekly_slots: [
-                { day: 3, period: 10, duration: 2 },
-                { day: 5, period: 8, duration: 2 },
+                {day: 3, period: 10, duration: 2},
+                {day: 5, period: 8, duration: 2},
             ],
         },
         {
@@ -95,8 +98,8 @@ const scheduleData = {
             duration: 4,
             student_count: 45,
             weekly_slots: [
-                { day: 5, period: 3, duration: 2 },
-                { day: 3, period: 4, duration: 2 },
+                {day: 5, period: 3, duration: 2},
+                {day: 3, period: 4, duration: 2},
             ],
         },
         {
@@ -109,21 +112,22 @@ const scheduleData = {
             duration: 3,
             student_count: 40,
             weekly_slots: [
-                { day: 2, period: 4, duration: 2 },
-                { day: 4, period: 6, duration: 2 },
+                {day: 2, period: 4, duration: 2},
+                {day: 4, period: 6, duration: 2},
             ],
         },
     ],
 };
 
-const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
-    const [currentWeek, setCurrentWeek] = useState(1);
+const ScheduleViewer = ({courses, teachers, rooms, resultData}) => {
+    const [currentWeek, setCurrentWeek] = useState(resultData ? resultData.semester.start_week : 1);
     const [viewMode, setViewMode] = useState('schedule'); // 'schedule', 'overview', 'data'
     const [selectedCell, setSelectedCell] = useState(null);
     const [isAdmin] = useState(true); // Set to true for admin features
-
+    const semester_config = useSemesterConfig();
+    const selectedSemester = useSelectedSemester();
     const result = resultData || scheduleData;
-
+    console.log('ScheduleViewer resultData:', resultData);
     // Get classes for a specific cell
     const getCellContent = (day, period) => {
         return result.courses.filter((course) => {
@@ -161,7 +165,7 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
         }
 
         const percentage = (usedWeeks / totalWeeks) * 100;
-        return { percentage, usedWeeks, totalWeeks };
+        return {percentage, usedWeeks, totalWeeks};
     };
 
     // Get color based on usage percentage
@@ -248,22 +252,57 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
     }, [overviewStats]);
 
     const handleWeekChange = (delta) => {
+        console.log("Semester bounds:", result.semester);
+        console.log("Changing week by:", delta);
         const newWeek = currentWeek + delta;
+        console.log("Calculated new week:", newWeek);
         if (
             newWeek >= result.semester.start_week &&
             newWeek <= result.semester.end_week
         ) {
+            console.log("New week is valid:", newWeek);
             setCurrentWeek(newWeek);
         }
     };
-
+    const handleSave = () => {
+        // result.semester = {
+        //     "end_week": 15,
+        //     "max_concurrent": 4,
+        //     "start_week": 1,
+        //     "semester_id": 1,
+        //     "days_per_week": 6,
+        //     "sessions_per_day": 6,
+        //     "session_duration": 2
+        // }
+        result.semester = semester_config;
+        console.log("Selected Semester:", selectedSemester);
+        result.semester.semester_id = selectedSemester.id;
+        console.log("Saving schedule data:", result);
+        var a = {"schedule": result};
+        saveSchedule(a).then((r) => {
+            console.log('Lưu thời khóa biểu thành công', r);
+            generateScheduleInstance(r.generation_id).then(r => {
+                console.log('Tạo các instance thời khóa biểu thành công', r);
+            })
+            showSuccess('Lưu thời khóa biểu thành công!');
+        }).catch(
+            (err) => {
+                showError('Lưu thời khóa biểu thất bại: ' + err.message);
+            }
+        );
+    }
     return (
         <div className="min-h-screen bg-gray-100 p-6">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-3xl font-bold mb-6 text-gray-800">
                     Quản Lý Thời Khóa Biểu
                 </h1>
-
+                <div>
+                    <button onClick={handleSave}
+                            className="mb-6 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Save Schedule
+                    </button>
+                </div>
                 {/* View Mode Selector */}
                 {isAdmin && (
                     <div className="mb-6 flex gap-2">
@@ -348,44 +387,45 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
                         <div className="bg-white rounded-lg shadow-md overflow-x-auto">
                             <table className="w-full border-collapse">
                                 <thead>
-                                    <tr>
-                                        <th className="bg-blue-500 text-white p-3 border border-gray-300 sticky left-0 z-10">
-                                            Tiết
+                                <tr>
+                                    <th className="bg-blue-500 text-white p-3 border border-gray-300 sticky left-0 z-10">
+                                        Tiết
+                                    </th>
+                                    {DAYS.map((day, idx) => (
+                                        <th
+                                            key={idx}
+                                            className="bg-blue-500 text-white p-3 border border-gray-300"
+                                        >
+                                            {day}
                                         </th>
-                                        {DAYS.map((day, idx) => (
-                                            <th
-                                                key={idx}
-                                                className="bg-blue-500 text-white p-3 border border-gray-300"
-                                            >
-                                                {day}
-                                            </th>
-                                        ))}
-                                    </tr>
+                                    ))}
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    {Array.from(
-                                        { length: PERIODS },
-                                        (_, periodIdx) => (
-                                            <tr key={periodIdx}>
-                                                <td className="bg-blue-100 text-center font-semibold p-3 border border-gray-300 sticky left-0 z-10">
-                                                    {periodIdx + 1}
-                                                </td>
-                                                {DAYS.map((_, dayIdx) => {
-                                                    const classes =
-                                                        getCellContent(
-                                                            dayIdx + 2,
-                                                            periodIdx + 1
-                                                        );
-                                                    const cellColor =
-                                                        getCellColor(classes);
-                                                    return (
-                                                        <td
-                                                            key={dayIdx}
-                                                            className={`${cellColor} border border-gray-300 p-2 min-w-[120px] relative group`}
-                                                        >
-                                                            {classes.length >
-                                                                0 && (
-                                                                <div className="text-xs space-y-1 text-white font-medium">
+                                {Array.from(
+                                    {length: PERIODS},
+                                    (_, periodIdx) => (
+                                        <tr key={periodIdx}>
+                                            <td className="bg-blue-100 text-center font-semibold p-3 border border-gray-300 sticky left-0 z-10">
+                                                {periodIdx + 1}
+                                            </td>
+                                            {DAYS.map((_, dayIdx) => {
+                                                const classes =
+                                                    getCellContent(
+                                                        dayIdx + 2,
+                                                        periodIdx + 1
+                                                    );
+                                                const cellColor =
+                                                    getCellColor(classes);
+                                                return (
+                                                    <td
+                                                        key={dayIdx}
+                                                        className={`${cellColor} border border-gray-300 p-2 min-w-[120px] relative group`}
+                                                    >
+                                                        {classes.length >
+                                                            0 && (
+                                                                <div
+                                                                    className="text-xs space-y-1 text-white font-medium">
                                                                     {classes.map(
                                                                         (
                                                                             cls,
@@ -419,33 +459,33 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
                                                                     )}
                                                                 </div>
                                                             )}
-                                                            <button
-                                                                onClick={() =>
-                                                                    setSelectedCell(
-                                                                        {
-                                                                            day:
-                                                                                dayIdx +
-                                                                                2,
-                                                                            period:
-                                                                                periodIdx +
-                                                                                1,
-                                                                            classes,
-                                                                        }
-                                                                    )
-                                                                }
-                                                                className="absolute bottom-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-gray-100"
-                                                            >
-                                                                <Plus
-                                                                    size={14}
-                                                                    className="text-blue-600"
-                                                                />
-                                                            </button>
-                                                        </td>
-                                                    );
-                                                })}
-                                            </tr>
-                                        )
-                                    )}
+                                                        <button
+                                                            onClick={() =>
+                                                                setSelectedCell(
+                                                                    {
+                                                                        day:
+                                                                            dayIdx +
+                                                                            2,
+                                                                        period:
+                                                                            periodIdx +
+                                                                            1,
+                                                                        classes,
+                                                                    }
+                                                                )
+                                                            }
+                                                            className="absolute bottom-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-gray-100"
+                                                        >
+                                                            <Plus
+                                                                size={14}
+                                                                className="text-blue-600"
+                                                            />
+                                                        </button>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    )
+                                )}
                                 </tbody>
                             </table>
                         </div>
@@ -574,64 +614,64 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
                         <div className="bg-white rounded-lg shadow-md overflow-x-auto">
                             <table className="w-full border-collapse">
                                 <thead>
-                                    <tr>
-                                        <th className="bg-blue-500 text-white p-3 border sticky left-0 z-10">
-                                            Tiết
+                                <tr>
+                                    <th className="bg-blue-500 text-white p-3 border sticky left-0 z-10">
+                                        Tiết
+                                    </th>
+                                    {DAYS.map((day, idx) => (
+                                        <th
+                                            key={idx}
+                                            className="bg-blue-500 text-white p-3 border"
+                                        >
+                                            {day}
                                         </th>
-                                        {DAYS.map((day, idx) => (
-                                            <th
-                                                key={idx}
-                                                className="bg-blue-500 text-white p-3 border"
-                                            >
-                                                {day}
-                                            </th>
-                                        ))}
-                                    </tr>
+                                    ))}
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    {Array.from(
-                                        { length: PERIODS },
-                                        (_, periodIdx) => (
-                                            <tr key={periodIdx}>
-                                                <td className="bg-blue-100 text-center font-semibold p-3 border sticky left-0 z-10">
-                                                    {periodIdx + 1}
-                                                </td>
-                                                {DAYS.map((_, dayIdx) => {
-                                                    const usageData =
-                                                        getCellUsageData(
-                                                            dayIdx + 2,
-                                                            periodIdx + 1
-                                                        );
-                                                    const color = getUsageColor(
-                                                        usageData.percentage
+                                {Array.from(
+                                    {length: PERIODS},
+                                    (_, periodIdx) => (
+                                        <tr key={periodIdx}>
+                                            <td className="bg-blue-100 text-center font-semibold p-3 border sticky left-0 z-10">
+                                                {periodIdx + 1}
+                                            </td>
+                                            {DAYS.map((_, dayIdx) => {
+                                                const usageData =
+                                                    getCellUsageData(
+                                                        dayIdx + 2,
+                                                        periodIdx + 1
                                                     );
-                                                    return (
-                                                        <td
-                                                            key={dayIdx}
-                                                            className={`${color} border p-3 min-w-[120px] text-center`}
-                                                        >
-                                                            <div className="text-white font-bold text-lg">
-                                                                {usageData.percentage.toFixed(
-                                                                    0
-                                                                )}
-                                                                %
-                                                            </div>
-                                                            <div className="text-white text-xs mt-1">
-                                                                {
-                                                                    usageData.usedWeeks
-                                                                }
-                                                                /
-                                                                {
-                                                                    usageData.totalWeeks
-                                                                }{' '}
-                                                                tuần
-                                                            </div>
-                                                        </td>
-                                                    );
-                                                })}
-                                            </tr>
-                                        )
-                                    )}
+                                                const color = getUsageColor(
+                                                    usageData.percentage
+                                                );
+                                                return (
+                                                    <td
+                                                        key={dayIdx}
+                                                        className={`${color} border p-3 min-w-[120px] text-center`}
+                                                    >
+                                                        <div className="text-white font-bold text-lg">
+                                                            {usageData.percentage.toFixed(
+                                                                0
+                                                            )}
+                                                            %
+                                                        </div>
+                                                        <div className="text-white text-xs mt-1">
+                                                            {
+                                                                usageData.usedWeeks
+                                                            }
+                                                            /
+                                                            {
+                                                                usageData.totalWeeks
+                                                            }{' '}
+                                                            tuần
+                                                        </div>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    )
+                                )}
                                 </tbody>
                             </table>
                         </div>
@@ -657,7 +697,7 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
                                     onClick={() => setSelectedCell(null)}
                                     className="text-gray-500 hover:text-gray-700"
                                 >
-                                    <X size={24} />
+                                    <X size={24}/>
                                 </button>
                             </div>
 
@@ -723,7 +763,7 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData }) => {
     );
 };
 
-const CourseDetailCard = ({ course, isFirst }) => {
+const CourseDetailCard = ({course, isFirst}) => {
     const [expanded, setExpanded] = useState(isFirst);
 
     return (

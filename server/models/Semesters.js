@@ -10,6 +10,10 @@ const Semester = sequelize.define('Semester', {
   AcademicYearsid: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'academicyears',
+        key: 'id',
+    }
   },
   code: {
     type: DataTypes.STRING(50),
@@ -36,5 +40,14 @@ const Semester = sequelize.define('Semester', {
   tableName: 'semesters',
   timestamps: false,
 });
-
+Semester.associate = (models) => {
+  Semester.hasMany(models.CourseClass, {
+    foreignKey: 'semester_id',
+    as: 'courseclasses'
+  });
+  Semester.hasMany(models.ScheduleGeneration, {
+    foreignKey: 'semester_id',
+    as: 'generations',
+  });
+};
 module.exports = Semester;

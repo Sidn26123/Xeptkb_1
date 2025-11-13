@@ -84,6 +84,41 @@ const Teacher = sequelize.define('Teacher', {
   createdAt: 'created_at',
   updatedAt: 'updated_at',
 });
+Teacher.associate = (models) => {
+  Teacher.hasMany(models.CourseClass, {
+    foreignKey: 'teacher_id',
+    as: 'courseclasses'
+  });
+};
+Teacher.associate = (models) => {
+  // Quan hệ 1:N thông qua bảng trung gian Teaching
+  Teacher.hasMany(models.Teaching, {
+    foreignKey: 'teacher_id',
+    as: 'teachings'
+  });
+
+  // **Quan hệ Many-to-Many với CourseClass thông qua bảng Teaching**
+  Teacher.belongsToMany(models.CourseClass, {
+    through: models.Teaching,
+    foreignKey: 'teacher_id',
+    otherKey: 'course_class_id',
+    as: 'courseclassesTaught' // Đổi tên alias để phân biệt với hasMany nếu cần
+  });
+
+  Teacher.belongsTo(models.Faculty, {
+    foreignKey: 'faculty_id',
+    as: 'faculty'
+  });
+  Teacher.hasMany(models.Schedule, {
+    foreignKey: 'teacher_id',
+    as: 'schedules',
+  });
+
+  Teacher.hasMany(models.ScheduleInstance, {
+    foreignKey: 'teacher_id',
+    as: 'instances',
+  });
+};
 
 Teacher.associate = (db) => {
   if (db.User) {

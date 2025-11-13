@@ -10,6 +10,10 @@ const Student = sequelize.define('Student', {
   class_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'classes',
+        key: 'id',
+    }
   },
   user_id: {
     type: DataTypes.INTEGER,

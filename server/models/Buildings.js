@@ -10,6 +10,10 @@ const Building = sequelize.define('Building', {
   campus_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'campus',
+        key: 'id',
+    }
   },
   name: {
     type: DataTypes.STRING(255),
@@ -22,7 +26,7 @@ const Building = sequelize.define('Building', {
   code: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
+    unique: false, // Changed to false to not create index when alter = true
   },
   location: {
     type: DataTypes.STRING(255),

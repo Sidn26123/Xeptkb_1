@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
 
-const HolidayRule = sequelize.define('Holidayrule', {
+const Holidayrule = sequelize.define('Holidayrule', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -36,4 +36,6 @@ const HolidayRule = sequelize.define('Holidayrule', {
   timestamps: false,
 });
 
-module.exports = HolidayRule;
+
+
+module.exports = Holidayrule;

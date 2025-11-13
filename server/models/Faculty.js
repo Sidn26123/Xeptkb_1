@@ -14,7 +14,7 @@ const Faculty = sequelize.define('Faculty', {
   faculty_id: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
+    unique: false,
   },
 }, {
   tableName: 'faculty',

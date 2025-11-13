@@ -39,6 +39,10 @@ const Room = sequelize.define('Room', {
   buildings_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+        model: 'buildings',
+        key: 'id',
+    }
   },
   metadata: {
     type: DataTypes.JSON,
@@ -58,5 +62,15 @@ const Room = sequelize.define('Room', {
   tableName: 'rooms',
   timestamps: false,
 });
+Room.associate = (models) => {
+  Room.hasMany(models.Schedule, {
+    foreignKey: 'room_id',
+    as: 'schedules'
+  });
+  Room.hasMany(models.ScheduleInstance, {
+    foreignKey: 'room_id',
+    as: 'instances',
+  });
 
+};
 module.exports = Room;

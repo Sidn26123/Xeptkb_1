@@ -23,6 +23,7 @@ const navItems = [
       { name: "Teacher Management", path: "/teacher-management", pro: false },
       { name: "Faculty Management", path: "/faculty-management", pro: false },
       { name: "Subject Management", path: "/Subject-management", pro: false },
+      { name: "Course Class Management", path: "/course-class-management", pro: false },
     ],
   },
   {
@@ -67,8 +68,8 @@ const navItems = [
     name: "Configuration",
     icon: <Icon color="#a855f7" />, // purple-500
     subItems: [
-      { name: "Set School Days", path: "/set-school-days", pro: false },
-      { name: "Set Break Periods", path: "/set-break-periods", pro: false },
+      { name: "Day Management", path: "/day-management", pro: false },
+      { name: "Periods Management", path: "/time-slot-management", pro: false },
       { name: "Fixed Periods", path: "/fixed-periods", pro: false },
     ],
   },

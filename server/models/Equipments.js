@@ -10,7 +10,7 @@ const Equipment = sequelize.define('Equipment', {
   code: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
+    unique: false,
   },
   name: {
     type: DataTypes.STRING(255),

@@ -1,0 +1,175 @@
+{
+  "semester": {
+    "start_week": 1,
+    "end_week": 16,
+    "max_concurrent": 4
+  },
+  "courses": [
+    {
+      "course_id": 107,
+      "class_id": 7,
+      "teacher_id": 4,
+      "room_id": 1,
+      "start_week": 5,
+      "end_week": 9,
+      "duration": 5,
+      "student_count": 55,
+      "weekly_slots": [
+        {
+          "day": 4,
+          "period": 1,
+          "duration": 2
+        },
+        {
+          "day": 7,
+          "period": 6,
+          "duration": 2
+        },
+        {
+          "day": 2,
+          "period": 3,
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "course_id": 103,
+      "class_id": 3,
+      "teacher_id": 2,
+      "room_id": 1,
+      "start_week": 8,
+      "end_week": 12,
+      "duration": 5,
+      "student_count": 60,
+      "weekly_slots": [
+        {
+          "day": 7,
+          "period": 9,
+          "duration": 2
+        },
+        {
+          "day": 3,
+          "period": 3,
+          "duration": 2
+        },
+        {
+          "day": 5,
+          "period": 5,
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "course_id": 101,
+      "class_id": 1,
+      "teacher_id": 1,
+      "room_id": 4,
+      "start_week": 1,
+      "end_week": 4,
+      "duration": 4,
+      "student_count": 50,
+      "weekly_slots": [
+        {
+          "day": 6,
+          "period": 3,
+          "duration": 2
+        },
+        {
+          "day": 4,
+          "period": 5,
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "course_id": 104,
+      "class_id": 4,
+      "teacher_id": 2,
+      "room_id": 2,
+      "start_week": 1,
+      "end_week": 4,
+      "duration": 4,
+      "student_count": 45,
+      "weekly_slots": [
+        {
+          "day": 3,
+          "period": 3,
+          "duration": 2
+        },
+        {
+          "day": 5,
+          "period": 10,
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "course_id": 104,
+      "class_id": 4,
+      "teacher_id": 2,
+      "room_id": 1,
+      "start_week": 4,
+      "end_week": 7,
+      "duration": 4,
+      "student_count": 45,
+      "weekly_slots": [
+        {
+          "day": 6,
+          "period": 9,
+          "duration": 2
+        },
+        {
+          "day": 3,
+          "period": 1,
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "course_id": 106,
+      "class_id": 6,
+      "teacher_id": 3,
+      "room_id": 1,
+      "start_week": 5,
+      "end_week": 8,
+      "duration": 4,
+      "student_count": 35,
+      "weekly_slots": [
+        {
+          "day": 7,
+          "period": 3,
+          "duration": 2
+        },
+        {
+          "day": 4,
+          "period": 4,
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "course_id": 102,
+      "class_id": 2,
+      "teacher_id": 1,
+      "room_id": 3,
+      "start_week": 6,
+      "end_week": 8,
+      "duration": 3,
+      "student_count": 40,
+      "weekly_slots": [
+        {
+          "day": 2,
+          "period": 5,
+          "duration": 2
+        },
+        {
+          "day": 4,
+          "period": 9,
+          "duration": 2
+        }
+      ]
+    }
+  ],
+  "started_at": "2025-11-13T04:06:01.611105",
+  "finished_at": "2025-11-13T04:06:01.925101"
+}

@@ -31,6 +31,10 @@ const subjectRoutes = require('./routes/subject');
 const teacherRoutes = require('./routes/teacher');
 const teachingRoutes = require('./routes/teaching');
 const trainingTypeRoutes = require('./routes/trainingType');
+const timeSlotRoutes = require('./routes/timeSlot');
+const dayRoutes = require('./routes/day');
+const reportRoutes = require('./routes/report');
+const scheduleInstanceRoutes = require('./routes/scheduleInstance');
 const mailRoutes = require('./routes/mail');
 const app = express();
 app.use(express.json());
@@ -42,6 +46,8 @@ const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 // API routes
 app.use(API_PREFIX + '/', authRoutes);
 app.use(API_PREFIX + '/admin', adminRoutes);
+app.use(API_PREFIX + '/schedule-instances', scheduleInstanceRoutes);
+
 app.use(API_PREFIX + '/students', studentRoutes);
 app.use(API_PREFIX + '/studentsite', studentsiteRoutes);
 app.use(API_PREFIX + '/teachersite', teachersiteRoutes);
@@ -66,6 +72,9 @@ app.use(API_PREFIX + '/teachings', teachingRoutes);
 app.use(API_PREFIX + '/training-types', trainingTypeRoutes);
 // Mail API (used for sending emails via SMTP or Ethereal fallback)
 app.use(API_PREFIX + '/mail', mailRoutes);
+app.use(API_PREFIX + '/time-slots', timeSlotRoutes);
+app.use(API_PREFIX + '/days', dayRoutes);
+app.use(API_PREFIX + '/reports', reportRoutes);
 // 404 handler for unknown routes
 const ErrorResponse = require('./utils/responseUtils').ErrorResponse;
 const errorHandler = require("./middleware/errorHandler");
@@ -151,7 +160,7 @@ let server; // giữ lại server instance
 sequelize.authenticate()
     .then(async () => {
       console.log('✅ Kết nối database thành công!');
-      await sequelize.sync({ force: false });
+      await sequelize.sync({ alter: false, force: false });
       server = app.listen(PORT, () => {
         console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
       });

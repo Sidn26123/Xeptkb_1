@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/initSequelize');
-
 const Subject = sequelize.define('Subject', {
   id: {
     type: DataTypes.INTEGER,
@@ -20,15 +19,19 @@ const Subject = sequelize.define('Subject', {
     allowNull: false,
     unique: true,
   },
-  theory_hours: {
+  theory_period: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  self_study_hours: {
+  self_study_period: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  practice_hours: {
+  practice_period: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  credits: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
@@ -40,5 +43,16 @@ const Subject = sequelize.define('Subject', {
   tableName: 'subjects',
   timestamps: false,
 });
+
+Subject.associate = (models) => {
+  Subject.hasMany(models.CourseClass, {
+    foreignKey: 'subject_id',
+    as: 'courseclasses'
+  });
+  Subject.belongsTo(models.TrainingType, {
+    foreignKey: 'training_type_id',
+    as: 'trainingType'
+  });
+};
 
 module.exports = Subject;

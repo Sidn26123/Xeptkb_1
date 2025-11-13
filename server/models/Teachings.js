@@ -19,5 +19,17 @@ const Teaching = sequelize.define('Teaching', {
   tableName: 'teachings',
   timestamps: false,
 });
+Teaching.associate = (models) => {
+  // Teaching thuộc về CourseClass (1:N)
+  Teaching.belongsTo(models.CourseClass, {
+    foreignKey: 'course_class_id',
+    as: 'courseclass' // Tên alias cho quan hệ
+  });
 
+  // Teaching thuộc về Teacher (1:N)
+  Teaching.belongsTo(models.Teacher, {
+    foreignKey: 'teacher_id',
+    as: 'teacher' // Tên alias cho quan hệ
+  });
+};
 module.exports = Teaching;
