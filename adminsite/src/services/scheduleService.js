@@ -61,6 +61,58 @@ export async function fetchScheduleEvents(classId, semesterId) {
     }
 }
 
+export async function fetchScheduleEventsByRoom(roomId, semesterId) {
+    if (!roomId || !semesterId) return [];
+    try {
+        const response = await api.get(`/schedule-instances/query`, {
+            params: {
+                roomId,
+                semesterId,
+            }
+        });
+        const data = response.data || [];
+        return data.map(event => ({
+            ...event,
+            start: new Date(event.start),
+            end: new Date(event.end),
+        }));
+    } catch (err) {
+        console.error('Error fetching schedule events by room:', err);
+        return [];
+    }
+}
+
+// Fetch schedule events for a teacher during a semester.
+// Uses the POST /schedule-instances/instances/filter endpoint which requires
+// startDate and endDate (semester boundaries).
+import { getSemesterById } from './semesterService';
+
+export async function fetchScheduleEventsByTeacher(teacherId, semesterId) {
+    if (!teacherId || !semesterId) return [];
+    try {
+        const semester = await getSemesterById(semesterId);
+        if (!semester || !semester.start || !semester.end) return [];
+
+        // Use the same query endpoint as classes: GET /schedule-instances/query
+        // so the response is an array of transformed events (not wrapped in SuccessResponse)
+        const response = await api.get('/schedule-instances/query', {
+            params: {
+                teacherId,
+                semesterId
+            }
+        });
+        const data = response?.data ?? [];
+        return data.map(event => ({
+            ...event,
+            start: new Date(event.start),
+            end: new Date(event.end),
+        }));
+    } catch (err) {
+        console.error('Error fetching schedule events by teacher:', err);
+        return [];
+    }
+}
+
 export const generateScheduleInstance = async (generationId, options) => {
     const res = await api.post(`/schedule-instances/${generationId}/instances/generate-all`, options);
     return res?.data ?? null;

@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function ScheduleDetailModal({ open = false, onClose = () => {}, detail = null }) {
+export default function TeacherScheduleDetailModal({ open = false, onClose = () => {}, detail = null }) {
   if (!open) return null;
   
   return (

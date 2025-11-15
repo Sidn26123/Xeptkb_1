@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function ScheduleDetailModal({ open = false, onClose = () => {}, detail = null }) {
+export default function ClassScheduleDetailModal({ open = false, onClose = () => {}, detail = null }) {
   if (!open) return null;
   
   return (
@@ -56,10 +56,8 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lớp học</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">
-                    {detail.className  || "-"}
-                  </p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Giảng viên</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">{detail.teacher || "-"}</p>
                 </div>
               </div>
 

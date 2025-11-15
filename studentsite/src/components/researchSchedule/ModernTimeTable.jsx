@@ -3,22 +3,22 @@ import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import './ModernTimeTable.blue.css';
 
-// 14 time slots như trong ảnh mẫu
+// 14 time slots: giờ chẵn, mỗi tiết 1 tiếng (07:00, 08:00, ...)
 const TIME_SLOTS = [
-  { id: 1, label: 'Tiết 1' },
-  { id: 2, label: 'Tiết 2' },
-  { id: 3, label: 'Tiết 3' },
-  { id: 4, label: 'Tiết 4' },
-  { id: 5, label: 'Tiết 5' },
-  { id: 6, label: 'Tiết 6' },
-  { id: 7, label: 'Tiết 7' },
-  { id: 8, label: 'Tiết 8' },
-  { id: 9, label: 'Tiết 9' },
-  { id: 10, label: 'Tiết 10' },
-  { id: 11, label: 'Tiết 11' },
-  { id: 12, label: 'Tiết 12' },
-  { id: 13, label: 'Tiết 13' },
-  { id: 14, label: 'Tiết 14' },
+  { id: 1, label: 'Tiết 1', start: '07:00', end: '08:00' },
+  { id: 2, label: 'Tiết 2', start: '08:00', end: '09:00' },
+  { id: 3, label: 'Tiết 3', start: '09:00', end: '10:00' },
+  { id: 4, label: 'Tiết 4', start: '10:00', end: '11:00' },
+  { id: 5, label: 'Tiết 5', start: '11:00', end: '12:00' },
+  { id: 6, label: 'Tiết 6', start: '12:00', end: '13:00' },
+  { id: 7, label: 'Tiết 7', start: '13:00', end: '14:00' },
+  { id: 8, label: 'Tiết 8', start: '14:00', end: '15:00' },
+  { id: 9, label: 'Tiết 9', start: '15:00', end: '16:00' },
+  { id: 10, label: 'Tiết 10', start: '16:00', end: '17:00' },
+  { id: 11, label: 'Tiết 11', start: '17:00', end: '18:00' },
+  { id: 12, label: 'Tiết 12', start: '18:00', end: '19:00' },
+  { id: 13, label: 'Tiết 13', start: '19:00', end: '20:00' },
+  { id: 14, label: 'Tiết 14', start: '20:00', end: '21:00' },
 ];
 
 const WEEKDAYS = [
@@ -118,9 +118,25 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
     date: addDays(weekStart, index),
   }));
 
-  const getEventsForCell = (dayIndex) => {
+  const getEventsForCell = (dayIndex, slotId) => {
     const targetDate = addDays(weekStart, dayIndex);
-    return events.filter(event => isSameDay(event.start, targetDate));
+    return events.filter(event => {
+      if (!event || !event.start) return false;
+      const eventStart = event.start instanceof Date ? event.start : new Date(event.start);
+      if (!isSameDay(eventStart, targetDate)) return false;
+
+      // Prefer explicit time_slot_idx from backend
+      if (event.time_slot_idx !== undefined && event.time_slot_idx !== null) {
+        return Number(event.time_slot_idx) === Number(slotId);
+      }
+
+      // Fallback: infer slot from start time using base 07:00 and 60 minutes/period
+      const minutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+      const base = 7 * 60; // 07:00
+      if (minutes < base) return false;
+      const inferredSlot = Math.floor((minutes - base) / 60) + 1;
+      return inferredSlot === slotId;
+    });
   };
 
   const handlePrevWeek = () => {
@@ -257,6 +273,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
                   {day.label}
                 </th>
               ))}
+              <th className="border border-blue-200" style={{ width: '80px' }}>Giờ bắt đầu</th>
             </tr>
           </thead>
           <tbody>
@@ -264,9 +281,9 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
               <tr key={slot.id}>
                 <td className="time-slot-cell border border-blue-200">{slot.label}</td>
                 {weekDays.map((day, dayIndex) => {
-                  const cellEvents = getEventsForCell(dayIndex);
+                  const cellEvents = getEventsForCell(dayIndex, slot.id);
                   const isTodayCol = isToday(day.date);
-                  
+
                   return (
                     <td
                       key={day.id}
@@ -288,6 +305,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
                     </td>
                   );
                 })}
+                <td className="time-start-cell border border-blue-200">{slot.start}</td>
               </tr>
             ))}
           </tbody>

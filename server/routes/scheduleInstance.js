@@ -14,6 +14,9 @@ router.post('/:generationId/instances/generate-all', verifyToken, authorize('adm
 
 router.get('/query', getScheduleInstancesByQuery);
 
+// Unified endpoint for student/teacher to fetch their schedule
+router.post('/instances/daily', verifyToken, authorize('admin', 'teacher', 'student'), scheduleInstanceController.getInstancesForUser);
+
 /**
  * @route   POST /api/schedules/generations/:generationId/instances/generate-all
  * @desc    Tạo tất cả instances cho một generation (toàn bộ học kỳ)

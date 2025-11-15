@@ -44,7 +44,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
   {/* Global top navbar for teachersite pages */}
   <NavBar teacher={profile ?? { name: '—' }} onLogout={handleLogout} />
-      <main className="p-4">
+      <main className="p-4 pt-20">
         <Outlet />
       </main>
     </div>

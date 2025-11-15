@@ -1,373 +1,3 @@
-// // const { Op } = require('sequelize');
-// // const { addDays, addWeeks, setDay } = require('date-fns'); // Thư viện xử lý ngày
-// // const { ScheduleGeneration, Schedule, ScheduleInstance, Semester, sequelize } = require('../models'); // Giả sử bạn đã import
-// //
-// // /**
-// //  * Tính toán ngày cụ thể dựa trên ngày bắt đầu học kỳ, số tuần và ngày trong tuần.
-// //  * @param {Date} semesterStartDate - Ngày bắt đầu của học kỳ (ví dụ: 20/10/2025).
-// //  * @param {number} weekIndex - Tuần muốn tính (ví dụ: tuần 1, 2, 3...).
-// //  * @param {number} dayOfWeek - Ngày trong tuần (ví dụ: 2=Thứ 2, 3=Thứ 3... LƯU Ý: date-fns 1=T2, 2=T3).
-// //  */
-// // function calculateDate(semesterStartDate, weekIndex, dayOfWeek) {
-// //     // date-fns: 0=Chủ Nhật, 1=Thứ 2, ..., 6=Thứ 7
-// //     // Giả sử: day_id của bạn (từ 2 đến 7)
-// //     // Cần 1 map nhỏ:
-// //     const dayMap = {
-// //         2: 1, // Thứ 2 (DB) -> 1 (date-fns)
-// //         3: 2, // Thứ 3 (DB) -> 2 (date-fns)
-// //         4: 3, // Thứ 4 (DB) -> 3 (date-fns)
-// //         5: 4, // Thứ 5 (DB) -> 4 (date-fns)
-// //         6: 5, // Thứ 6 (DB) -> 5 (date-fns)
-// //         7: 6, // Thứ 7 (DB) -> 6 (date-fns)
-// //         8: 0  // Giả sử 8 là Chủ Nhật (DB) -> 0 (date-fns)
-// //     };
-// //
-// //     const targetDay = dayMap[dayOfWeek];
-// //     if (targetDay === undefined) {
-// //         throw new Error(`Invalid day_id: ${dayOfWeek}`);
-// //     }
-// //
-// //     // 1. Lấy ngày đầu tiên của tuần (tuần 1)
-// //     // setDay sẽ tự động nhảy đến ngày `targetDay` (ví dụ T2) của tuần chứa `semesterStartDate`
-// //     const firstTargetDay = setDay(semesterStartDate, targetDay, { weekStartsOn: 1 }); // Giả sử tuần bắt đầu từ Thứ 2 (1)
-// //
-// //     // 2. Thêm số tuần (trừ đi 1 vì tuần 1 đã được tính)
-// //     // addWeeks sẽ thêm (weekIndex - 1) * 7 ngày
-// //     const targetDate = addWeeks(firstTargetDay, weekIndex - 1);
-// //
-// //     // 3. Trả về định dạng YYYY-MM-DD
-// //     return targetDate.toISOString().split('T')[0];
-// // }
-// //
-// // // --- Thêm các model cần thiết ở đầu file ---
-// // const { Op } = require("sequelize");
-// // const sequelize = require('../config/initSequelize'); // Import sequelize instance
-// // const ScheduleGeneration = require('../models/ScheduleGeneration');
-// // const Schedule = require('../models/Schedule');
-// // const ScheduleInstance = require('../models/ScheduleInstance');
-// // const Semester = require('../models/Semester'); // <-- BẮT BUỘC
-// //
-// // // --- Thêm hàm helper (nếu cần) để lấy ISO day (Thứ 2=1, CN=7) ---
-// // // (Date.getDay() trả về 0 cho CN, nên ta cần chuẩn hóa)
-// // function getISODay(date) {
-// //     const day = date.getDay();
-// //     return day === 0 ? 7 : day; // 0 (Sun) -> 7
-// // }
-// //
-// //
-// // /**
-// //  * Hàm lưu TKB (pattern) VÀ sinh tất cả các buổi học (instances)
-// //  * @param {Object} req.body - JSON từ Python service
-// //  */
-// // exports.saveGeneratedSchedule1 = async (req, res) => {
-// //     // 1. Khởi tạo Transaction
-// //     const t = await sequelize.transaction();
-// //
-// //     try {
-// //         // --- CẤU HÌNH BẮT BUỘC: ÁNH XẠ `day_id` sang ISO Weekday ---
-// //         // Bạn PHẢI CẬP NHẬT map này cho đúng với CSDL của bạn.
-// //         // Format: [day_id_trong_CSDL, ISO_day_of_week]
-// //         // (ISO Weekday: 1 = Thứ Hai, 2 = Thứ Ba, ..., 7 = Chủ Nhật)
-// //         //
-// //         // Ví dụ: Nếu bảng 'days' của bạn có:
-// //         // id: 2, name: "Thứ Hai" -> [2, 1]
-// //         // id: 3, name: "Thứ Ba"  -> [3, 2]
-// //         // id: 7, name: "Thứ Bảy" -> [7, 6]
-// //         // id: 8, name: "Chủ Nhật" -> [8, 7]
-// //         //
-// //         // Dựa trên JSON mẫu (day: 2, 6, 7), tôi giả định:
-// //         const dayIsoMap = new Map([
-// //             [2, 1], // Giả định: day_id 2 = Thứ Hai (ISO 1)
-// //             [3, 2], // Giả định: day_id 3 = Thứ Ba (ISO 2)
-// //             [4, 3], // Giả định: day_id 4 = Thứ Tư (ISO 3)
-// //             [5, 4], // Giả định: day_id 5 = Thứ Năm (ISO 4)
-// //             [6, 5], // Giả định: day_id 6 = Thứ Sáu (ISO 5)
-// //             [7, 6], // Giả định: day_id 7 = Thứ Bảy (ISO 6)
-// //             [8, 7], // Giả định: day_id 8 = Chủ Nhật (ISO 7) <-- Hoặc [1, 7] nếu ID 1 là CN
-// //         ]);
-// //         // --- KẾT THÚC CẤU HÌNH ---
-// //
-// //
-// //         const rawRequestData = req.body;
-// //         const scheduleData = req.body.schedule;
-// //
-// //         if (!scheduleData) {
-// //             await t.rollback();
-// //             return res.status(400).json({ message: "Missing 'schedule' key in request body." });
-// //         }
-// //
-// //         console.log("📌 Input scheduleData:", JSON.stringify(scheduleData, null, 2));
-// //
-// //         // --- BẮT BUỘC: Lấy thông tin HỌC KỲ ---
-// //         const semester = await Semester.findByPk(scheduleData.semester.semesterId, { transaction: t });
-// //         if (!semester || !semester.start_date) {
-// //             await t.rollback();
-// //             return res.status(404).json({ message: `Semester with ID ${scheduleData.semester.semesterId} not found or has no 'start_date'.` });
-// //         }
-// //         const semesterStartDate = new Date(semester.start_date);
-// //         // --- KẾT THÚC LẤY DỮ LIỆU HỌC KỲ ---
-// //
-// //         // 2. Tạo record tổng quan (ScheduleGeneration)
-// //         const generation = await ScheduleGeneration.create({
-// //             semester_id: scheduleData.semester.semesterId,
-// //             total_weeks: scheduleData.semester.end_week,
-// //             days_per_week: scheduleData.semester.daysPerWeek,
-// //             sessions_per_day: scheduleData.semester.sessionsPerDay,
-// //             session_duration: scheduleData.semester.sessionDuration,
-// //             fitness_score: scheduleData.fitness,
-// //             penalty_breakdown: scheduleData.penalty_breakdown,
-// //             raw_json: rawRequestData,
-// //         }, { transaction: t });
-// //
-// //
-// //         // 3. Chuẩn bị dữ liệu cho Schedule (mẫu TKB)
-// //         const schedulePatternsToCreate = [];
-// //         const courseWeekMap = new Map(scheduleData.courses.map(c => [
-// //             c.class_id,
-// //             { start_week: c.start_week, end_week: c.end_week }
-// //         ]));
-// //
-// //         for (const course of scheduleData.courses) {
-// //             for (const slot of course.weekly_slots) {
-// //                 // Kiểm tra xem day_id có trong map thủ công không
-// //                 if (!dayIsoMap.has(slot.day)) {
-// //                     await t.rollback();
-// //                     return res.status(400).json({ message: `Invalid day_id: ${slot.day}. Not found in your hardcoded 'dayIsoMap'.` });
-// //                 }
-// //
-// //                 schedulePatternsToCreate.push({
-// //                     course_class_id: course.class_id,
-// //                     teacher_id: course.teacher_id,
-// //                     day_id: slot.day, // <-- Dùng ID (ví dụ: 2) từ JSON
-// //                     time_slot_id: slot.period,
-// //                     room_id: course.room_id,
-// //                     num_of_period: slot.duration,
-// //                     scheduler: "system",
-// //                     generation_id: generation.id,
-// //                 });
-// //             }
-// //         }
-// //
-// //         // 3.1. Bulk Create Schedule (mẫu TKB)
-// //         const createdSchedules = await Schedule.bulkCreate(schedulePatternsToCreate, {
-// //             transaction: t,
-// //             returning: true
-// //         });
-// //
-// //
-// //         // 4. Sinh ScheduleInstance (buổi học cụ thể)
-// //         const instancesToCreate = [];
-// //
-// //         for (const schedulePattern of createdSchedules) {
-// //             const courseWeeks = courseWeekMap.get(schedulePattern.course_class_id);
-// //             // Lấy ngày ISO từ map thủ công
-// //             const scheduleDayOfWeekISO = dayIsoMap.get(schedulePattern.day_id); // (ví dụ: 1 cho Thứ Hai)
-// //
-// //             // Tính ngày đầu tiên của môn học
-// //             const firstWeekStartDate = new Date(semesterStartDate);
-// //             const dayOffset = (scheduleDayOfWeekISO - getISODay(firstWeekStartDate) + 7) % 7;
-// //             const firstInstanceDate = new Date(firstWeekStartDate);
-// //             firstInstanceDate.setDate(firstWeekStartDate.getDate() + dayOffset);
-// //
-// //             // Lặp qua các tuần mà môn học này diễn ra
-// //             for (let week = courseWeeks.start_week; week <= courseWeeks.end_week; week++) {
-// //                 const instanceDate = new Date(firstInstanceDate);
-// //                 instanceDate.setDate(firstInstanceDate.getDate() + (week - 1) * 7);
-// //
-// //                 instancesToCreate.push({
-// //                     schedule_id: schedulePattern.id,
-// //                     date: instanceDate.toISOString().split('T')[0], // Format YYYY-MM-DD
-// //                     time_slot_id: null,
-// //                     room_id: null,
-// //                     teacher_id: null,
-// //                     status: 'scheduled',
-// //                     origin: 'auto',
-// //                 });
-// //             }
-// //         }
-// //
-// //         // 4.1. Bulk Create ScheduleInstance (buổi học cụ thể)
-// //         await ScheduleInstance.bulkCreate(instancesToCreate, { transaction: t });
-// //
-// //         // 5. Commit Transaction
-// //         await t.commit();
-// //
-// //         console.log(`✅ Saved schedule pattern (${createdSchedules.length} records) and generated ${instancesToCreate.length} instances successfully.`);
-// //         return res.status(201).json({
-// //             message: "Schedule pattern and all instances saved successfully",
-// //             generation_id: generation.id,
-// //             patterns_created: createdSchedules.length,
-// //             instances_created: instancesToCreate.length,
-// //             data: generation
-// //         });
-// //
-// //     } catch (error) {
-// //         // 6. Rollback Transaction
-// //         await t.rollback();
-// //
-// //         console.error("❌ Error saving schedule and instances:", error);
-// //
-// //         if (error.name === 'SequelizeValidationError') {
-// //             return res.status(400).json({
-// //                 message: "Validation error",
-// //                 errors: error.errors.map(e => e.message)
-// //             });
-// //         }
-// //
-// //         return res.status(500).json({
-// //             message: "Failed to save generated schedule and instances",
-// //             error: error.message || error
-// //         });
-// //     }
-// // };
-// //
-// //
-// // module.exports = {
-// //     calculateDate
-// // }
-//
-// const ScheduleGeneration = require('../models');
-// const Schedule = require('../models');
-// const sequelize = require('../config/initSequelize');
-//
-// /**
-//  * Lưu schedule từ API response vào database
-//  * @param {Object} apiResponse - Response từ API generate schedule
-//  * @returns {Promise<Object>} - Trả về generation record đã tạo
-//  */
-// async function saveScheduleToDatabase(apiResponse) {
-//     const transaction = await sequelize.transaction();
-//
-//     try {
-//         const { schedule } = apiResponse;
-//         const {
-//             courses,
-//             fitness,
-//             generations,
-//             penalty_breakdown,
-//             schedule_summary,
-//             semester
-//         } = schedule;
-//
-//         // 1. Tạo record ScheduleGeneration
-//         const scheduleGeneration = await ScheduleGeneration.create({
-//             semester: semester.semesterName,
-//             semester_id: semester.semesterId,
-//             total_weeks: semester.end_week - semester.start_week + 1,
-//             days_per_week: semester.daysPerWeek,
-//             sessions_per_day: semester.sessionsPerDay,
-//             session_duration: semester.sessionDuration,
-//             generated_at: new Date(),
-//             fitness_score: fitness,
-//             penalty_breakdown: penalty_breakdown,
-//             raw_json: schedule, // Lưu toàn bộ JSON để trace
-//         }, { transaction });
-//
-//         // 2. Tạo các records Schedule từ courses
-//         const scheduleRecords = [];
-//
-//         for (const course of courses) {
-//             // Mỗi course có thể có nhiều weekly_slots
-//             for (const slot of course.weekly_slots) {
-//                 const scheduleRecord = {
-//                     course_class_id: course.class_id,
-//                     teacher_id: course.teacher_id,
-//                     day_id: slot.day,
-//                     room_id: course.room_id,
-//                     time_slot_id: slot.period,
-//                     num_of_period: slot.duration,
-//                     generation_id: scheduleGeneration.id,
-//                     scheduler: 'genetic_algorithm', // hoặc thông tin khác
-//                 };
-//
-//                 scheduleRecords.push(scheduleRecord);
-//             }
-//         }
-//
-//         // Bulk insert các Schedule records
-//         await Schedule.bulkCreate(scheduleRecords, { transaction });
-//
-//         // Commit transaction
-//         await transaction.commit();
-//
-//         return {
-//             success: true,
-//             generation_id: scheduleGeneration.id,
-//             total_schedules: scheduleRecords.length,
-//             fitness_score: fitness,
-//             message: 'Schedule saved successfully'
-//         };
-//
-//     } catch (error) {
-//         // Rollback nếu có lỗi
-//         await transaction.rollback();
-//
-//         console.error('Error saving schedule to database:', error);
-//         throw {
-//             success: false,
-//             error: error.message,
-//             message: 'Failed to save schedule to database'
-//         };
-//     }
-// }
-//
-// /**
-//  * Lấy schedule generation với các schedules liên quan
-//  * @param {number} generationId
-//  * @returns {Promise<Object>}
-//  */
-// async function getScheduleGeneration(generationId) {
-//     try {
-//         const generation = await ScheduleGeneration.findByPk(generationId, {
-//             include: [{
-//                 model: Schedule,
-//                 as: 'schedules',
-//                 include: [
-//                     { model: require('../models/CourseClasses'), as: 'courseClass' },
-//                     { model: require('../models/Days'), as: 'day' },
-//                     { model: require('../models/Rooms'), as: 'room' },
-//                     { model: require('../models/TimeSlot'), as: 'timeSlot' }
-//                 ]
-//             }]
-//         });
-//
-//         return generation;
-//     } catch (error) {
-//         console.error('Error fetching schedule generation:', error);
-//         throw error;
-//     }
-// }
-//
-// /**
-//  * Lấy tất cả schedule generations của một học kỳ
-//  * @param {number} semesterId
-//  * @returns {Promise<Array>}
-//  */
-// async function getSchedulesBySemester(semesterId) {
-//     try {
-//         const generations = await ScheduleGeneration.findAll({
-//             where: { semester_id: semesterId },
-//             include: [{
-//                 model: Schedule,
-//                 as: 'schedules'
-//             }],
-//             order: [['generated_at', 'DESC']]
-//         });
-//
-//         return generations;
-//     } catch (error) {
-//         console.error('Error fetching schedules by semester:', error);
-//         throw error;
-//     }
-// }
-//
-// // Export functions
-// module.exports = {
-//     saveScheduleToDatabase,
-//     getScheduleGeneration,
-//     getSchedulesBySemester
-// };
-
 const { Op, QueryTypes } = require('sequelize');
 const Schedule = require('../models/Schedules');
 const CourseClass = require('../models/CourseClasses');
@@ -1262,6 +892,9 @@ function transformInstancesToEvents(instances) {
         const teacher = instance.teacher; // Từ FK trên ScheduleInstance
         const room = instance.room;       // Từ FK trên ScheduleInstance
 
+        // Try to prefer an actual TimeSlot record if available
+        const instanceTimeSlot = instance.timeSlot || schedule?.timeSlot || null;
+
         // --- Tính toán Start/End ---
         // Logic này được lấy TỪ file StudentSchedule.jsx của bạn
         // (logic tính toán trong hàm convertSchedulesToUI #2)
@@ -1271,15 +904,28 @@ function transformInstancesToEvents(instances) {
         // Thêm 'T00:00:00' để nó được parse là giờ địa phương
         const eventDate = new Date(`${instance.date}T00:00:00`);
 
-        // Giả định: 7:00 AM là tiết 1
-        const baseStartTime = setHours(setMinutes(eventDate, 0), 7);
-        // Giả định: time_slot_id là index (1, 2, 3...)
-        const startMinutesOffset = (instance.time_slot_id - 1) * 45; // 45 phút/tiết
-        const start = addMinutes(baseStartTime, startMinutesOffset);
+        let start, end;
 
-        // Lấy số tiết từ `Schedule` (pattern)
-        const num_of_period = schedule?.num_of_period || 1;
-        const end = addMinutes(start, num_of_period * 45);
+        if (instanceTimeSlot && (instanceTimeSlot.start_hour !== undefined && instanceTimeSlot.start_min !== undefined)) {
+            // Use explicit timeslot start/end when present
+            start = setHours(setMinutes(eventDate, instanceTimeSlot.start_min), instanceTimeSlot.start_hour);
+            if (instanceTimeSlot.end_hour !== undefined && instanceTimeSlot.end_min !== undefined) {
+                end = setHours(setMinutes(eventDate, instanceTimeSlot.end_min), instanceTimeSlot.end_hour);
+            } else {
+                // fallback to num_of_period * 45 if timeslot has no end
+                const num_of_period = schedule?.num_of_period || 1;
+                end = addMinutes(start, num_of_period * 45);
+            }
+        } else {
+            // QUAN TRỌNG: backward-compat fallback (old logic)
+            // Giả định: 7:00 AM là tiết 1
+            const baseStartTime = setHours(setMinutes(eventDate, 0), 7);
+            // Giả định: time_slot_id là index (1, 2, 3...)
+            const startMinutesOffset = (instance.time_slot_id - 1) * 45; // 45 phút/tiết
+            start = addMinutes(baseStartTime, startMinutesOffset);
+            const num_of_period = schedule?.num_of_period || 1;
+            end = addMinutes(start, num_of_period * 45);
+        }
 
         // --- Trả về cấu trúc Event ---
         return {
@@ -1288,9 +934,21 @@ function transformInstancesToEvents(instances) {
             start: start, // JS Date object
             end: end,     // JS Date object
             teacher: teacher?.name || 'N/A',
-            room: room ? `${room.name} - ${room.building_id || 'N/A'}` : 'N/A',
+            room: room ? `${room.code} - ${room.name}` : 'N/A',
             type: courseClass?.type || 'lecture',
             subject: subject?.code || 'N/A', // Mã môn học
+            // Richer fields for UI detail (room view)
+            subjectName: subject?.name || null,
+            // Provide explicit class name field for frontend
+            // Prefer the associated `Class` record on CourseClass (alias: 'class')
+            // We only send `className` to avoid requesting/unwrapping DB columns
+            // that may not exist in all environments.
+            className: courseClass?.class?.name || courseClass?.name || null,
+            teacherName: teacher?.name || null,
+            date: instance.date || null,
+            // Provide timeslot index if possible for frontend grid placement
+            time_slot_id: instance.time_slot_id || null,
+            time_slot_idx: (instance.timeSlot && instance.timeSlot.idx) || instance.time_slot_idx || null,
         };
     });
 }

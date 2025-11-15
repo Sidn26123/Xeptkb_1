@@ -172,6 +172,15 @@ export const changePassword = (current_password, new_password) =>
   // use absolute URL so it's explicit in logs/stack traces while still using apiClient interceptors
   apiClient.put(`${API_BASE_URL}/change-password`, { current_password, new_password });
 
+// Fetch the current student's profile (normalized)
+export const getProfile = async () => {
+  const res = await apiClient.get('/studentsite/profile');
+  const payload = res?.data;
+  if (!payload) return null;
+  const profile = payload.data || payload;
+  return profile;
+};
+
 export default {
   login,
   refreshAccessToken,
@@ -183,5 +192,6 @@ export default {
   getRole,
   clearRole,
   changePassword,
+  getProfile,
   apiClient,
 };

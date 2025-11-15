@@ -1,7 +1,243 @@
 import { useEffect, useState } from 'react';
 import authService from '../services/authService';
+import { fetchScheduleForUserOnDate, fetchScheduleForClassOnDate } from '../services/scheduleService';
 import { Link } from 'react-router-dom';
 // NavBar is rendered globally by AppLayout
+
+// Inline heroicon-like SVGs
+const IconClock = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const IconPhone = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.09 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72c.12.97.37 1.91.73 2.79a2 2 0 0 1-.45 2.11L8.91 9.91a16 16 0 0 0 6 6l.3-.3a2 2 0 0 1 2.11-.45c.88.36 1.82.61 2.79.73A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const IconBell = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .53-.21 1.05-.58 1.42L4 17h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const IconCalendar = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M16 3v4M8 3v4M3 11h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+function StudentInfoCard({ profile }) {
+  const initials = (profile?.name || '—').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase();
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6 flex gap-6 items-center border-l-4 border-blue-200">
+      <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center text-2xl font-semibold text-blue-600">{initials}</div>
+      <div className="flex-1">
+        <div className="text-lg font-semibold text-gray-800">{profile?.name || '—'}</div>
+        <div className="text-sm text-gray-500 mt-1">Mã SV: <span className="font-medium text-gray-700">{profile?.student_identifier || '—'}</span></div>
+        <div className="text-sm text-gray-500 mt-1">Chương trình: <span className="font-medium text-gray-700">{profile?.program || profile?.major || '—'}</span></div>
+      </div>
+    </div>
+  );
+}
+
+function InfoGroups({ profile }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-sky-100">
+        <div className="text-sm font-medium text-gray-700 mb-3">Thông tin sinh viên</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
+          <div>
+            <div className="text-xs text-gray-400">Mã SV</div>
+            <div className="font-medium">{profile?.student_identifier || '—'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-400">Ngày sinh</div>
+            <div className="font-medium">{profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString() : '—'}</div>
+          </div>
+
+          <div>
+            <div className="text-xs text-gray-400">Tên</div>
+            <div className="font-medium">{profile?.name || '—'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-400">Giới tính</div>
+            <div className="font-medium">{profile?.gender || '—'}</div>
+          </div>
+
+          <div>
+            <div className="text-xs text-gray-400">Trạng thái</div>
+            <div className="font-medium">{profile?.status || '—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-sky-100">
+        <div className="text-sm font-medium text-gray-700 mb-3">Liên hệ & Khóa</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
+          <div>
+            <div className="text-xs text-gray-400">Số điện thoại</div>
+            <div className="font-medium">{profile?.phone || '—'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-400">Khoa / Ngành</div>
+            <div className="font-medium">{profile?.faculty?.name || profile?.program || '—'}</div>
+          </div>
+
+          <div className="sm:col-span-2">
+            <div className="text-xs text-gray-400">Email trường</div>
+            <div className="font-medium break-words">{profile?.email_school || profile?.user?.username || '—'}</div>
+          </div>
+
+          <div className="sm:col-span-2">
+            <div className="text-xs text-gray-400">Email cá nhân</div>
+            <div className="font-medium break-words">{profile?.email_personal || '—'}</div>
+          </div>
+
+          <div className="sm:col-span-2">
+            <div className="text-xs text-gray-400">Địa chỉ</div>
+            <div className="font-medium">{profile?.address || '—'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NextClassCard({ scheduleToday, nextClassDisplay }) {
+  const hasClass = Array.isArray(scheduleToday) && scheduleToday.length > 0;
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-indigo-200">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-blue-50 rounded-md text-blue-600"><IconClock className="w-6 h-6" /></div>
+          <div>
+            <div className="text-xs text-gray-400">Next Class</div>
+            <div className="text-lg font-semibold text-gray-800">{hasClass ? (nextClassDisplay.course || 'Môn học') : 'Hôm nay không có lớp'}</div>
+            <div className="text-sm text-gray-500 mt-1">{hasClass ? (nextClassDisplay.time || '') : 'Chúc bạn một ngày học tốt!'}</div>
+            {/* Room code moved below summary */}
+            { hasClass && (
+              <div className="mt-3 text-sm text-gray-600 border-t pt-3">
+                <div className="text-xs text-gray-400">Phòng</div>
+                <div className="text-lg font-semibold text-gray-800">{nextClassDisplay.room?.code || '—'}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="text-sm text-gray-600 text-right">
+          <div className="mb-1"><span className="text-xs text-gray-400">Tầng</span>
+            <div className="font-medium">{(nextClassDisplay.room?.floor_number === 0) ? 'Tầng trệt' : (nextClassDisplay.room?.floor_number ?? '—')}</div>
+          </div>
+          <div className="mb-1"><span className="text-xs text-gray-400">Tòa</span><div className="font-medium">{nextClassDisplay.room?.building?.name || '—'}</div></div>
+          <div><span className="text-xs text-gray-400">Cơ sở</span><div className="font-medium">{nextClassDisplay.room?.building?.campus?.name || '—'}</div></div>
+        </div>
+      </div>
+      { !hasClass && (
+        <div className="mt-4 text-sm text-gray-500 border-t pt-4">
+          <div>Không có lịch hôm nay. Bạn có thể xem lịch đầy đủ để lên kế hoạch.</div>
+          <div className="mt-3">
+            <Link to="/schedule" className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded text-sm">
+              <IconCalendar className="w-4 h-4" /> Xem thời khóa biểu
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UpcomingClasses({ upcoming, scheduleToday }) {
+  const hasClass = Array.isArray(scheduleToday) && scheduleToday.length > 0;
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-sky-100">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-gray-800">Upcoming classes</h3>
+        <div className="text-sm text-gray-500">This week</div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        { hasClass ? (
+          upcoming.map(u => (
+            <div key={u.id} className="flex items-center justify-between p-3 border rounded hover:shadow-sm transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-50 rounded text-gray-600"><IconClock className="w-5 h-5" /></div>
+                <div>
+                  <div className="font-medium text-gray-800">{u.course}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{u.time || ''}</div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center text-sm text-gray-500 py-6">
+            <div className="font-medium mb-1">Hôm nay bạn không có lớp</div>
+            <div>Xem lịch đầy đủ để kiểm tra các lớp trong tuần.</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuickActions() {
+  const btnClass = "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition";
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-emerald-100">
+      <h3 className="text-sm font-medium text-gray-800 mb-3">Quick actions</h3>
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/schedule" className={`${btnClass} bg-blue-600 text-white`}>
+          <IconCalendar className="w-5 h-5" />
+          <span>Xem thời khóa biểu</span>
+        </Link>
+
+        <Link to="/profile" className={`${btnClass} bg-white border text-gray-700`}>
+          <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span>Thông tin cá nhân</span>
+        </Link>
+
+        <Link to="/change-password" className={`${btnClass} bg-white border text-gray-700`}>
+          <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none"><path d="M12 2v6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><rect x="3" y="8" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span>Đổi mật khẩu</span>
+        </Link>
+
+        <Link to="/contact" className={`${btnClass} bg-white border text-gray-700`}>
+          <IconPhone className="w-5 h-5" />
+          <span>Liên hệ hỗ trợ</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Notifications({ notifications = [] }) {
+  const hasNoti = Array.isArray(notifications) && notifications.length > 0;
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-yellow-100">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-yellow-50 rounded text-yellow-600"><IconBell className="w-5 h-5"/></div>
+          <div className="text-sm font-medium text-gray-800">Notifications</div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        { hasNoti ? (
+          notifications.map((n, idx) => (
+            <div key={idx} className="p-3 border rounded mb-2 text-sm text-gray-700">{n.title || n.message}</div>
+          ))
+        ) : (
+          <div className="text-sm text-gray-500">Bạn chưa có thông báo mới.</div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   // header dropdown state moved into NavBar component
@@ -12,10 +248,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // (removed unused stats cards) 
-
-  // logout is handled by the global NavBar
-
   // helper: try to parse start time from timeslot name like "07:30-09:00"
   const parseStartTime = (timeslotName) => {
     if (!timeslotName) return null;
@@ -23,13 +255,9 @@ export default function Home() {
     return m ? m[1] : null;
   };
 
-  // helper: initials for avatar fallback
-  // (avatar/initials removed — not needed)
-
   // compute next class from scheduleToday (attempt best-effort)
   const computeNextClass = (list) => {
     if (!list || list.length === 0) return null;
-    // Try sort by timeslot.idx if present, else by parsed time
     const items = [...list];
     items.sort((a, b) => {
       const ai = a.timeslot?.idx ?? 0;
@@ -45,38 +273,56 @@ export default function Home() {
       const start = parseStartTime(it.timeslot?.name) || '00:00';
       if (start >= nowStr) return it;
     }
-    // fallback: return first
     return items[0];
   };
 
   const nextClass = computeNextClass(scheduleToday);
-  const nextClassDisplay = nextClass || {
-    course: '—',
-    time: '—',
-    room: { name: '—', code: '—', floor_number: null, building: { name: '—', campus: { name: '—' } } },
-    teacher: { name: '—', teacher_identifier: '—' },
+  const noClassDisplay = {
+    course: 'Hôm nay không có lớp',
+    time: '',
+    room: { name: '', code: '', floor_number: null, building: { name: '', campus: { name: '' } } },
+    teacher: { name: profile?.name || '—', teacher_identifier: profile?.student_identifier || '—' },
   };
 
-  // derive display values
+  const nextClassDisplay = nextClass
+    ? {
+        course: nextClass.subject?.name || nextClass.course || nextClass.title || 'Môn học',
+        time: nextClass.time || nextClass.timeslot?.name || '',
+        room: nextClass.room || noClassDisplay.room,
+        teacher: nextClass.teacher || noClassDisplay.teacher,
+      }
+    : noClassDisplay;
+
   const student = profile || { name: '—', program: '-', year: '-' };
   const upcoming = (scheduleToday && scheduleToday.length > 0)
     ? scheduleToday.slice(0, 5).map(s => ({ id: s.id, course: s.subject?.name || s.course_class_name || s.course?.name || s.courseName || s.name || 'Môn học', time: s.timeslot?.name || s.time || '' }))
     : [];
 
-  // For now we mock the backend responses locally. The mocked objects
-  // mirror the DB shapes (students, schedules, timeslots, subjects, teachers, rooms).
   useEffect(() => {
-    // Fetch profile from backend and fall back to mock for schedule display
     let cancelled = false;
     setLoading(true);
     setError(null);
 
     const fetchData = async () => {
       try {
-  // call the studentsite-specific profile endpoint
-  const res = await authService.apiClient.get('/studentsite/profile');
+        // call the studentsite-specific profile endpoint
+        const res = await authService.apiClient.get('/studentsite/profile');
         const student = res?.data?.data || null;
         if (!cancelled) setProfile(student);
+
+        // after we have the profile, try to fetch today's schedule by the student's class id
+        try {
+          const classId = student?.course_class?.id || student?.class?.id || student?.class_id || student?.course_class_id;
+          if (classId) {
+            const yyyy = new Date().toISOString().slice(0,10);
+            const rows = await fetchScheduleForClassOnDate(classId, yyyy);
+            if (!cancelled && Array.isArray(rows)) {
+              setScheduleToday(rows);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to fetch schedule for class', err);
+        }
       } catch (err) {
         console.error('Failed to fetch profile', err);
         if (!cancelled) setError('Không thể tải thông tin sinh viên');
@@ -87,176 +333,43 @@ export default function Home() {
 
     fetchData();
 
-    // keep the small schedule mock so UI still shows upcoming classes
-    const ts1 = { id: 1, name: '07:30-09:00', idx: 1 };
-    const ts2 = { id: 2, name: '09:15-10:45', idx: 2 };
-    const ts3 = { id: 3, name: '11:00-12:30', idx: 3 };
-    const subj1 = { id: 1, name: 'Lập trình Cơ bản' };
-    const subj2 = { id: 2, name: 'Cơ sở dữ liệu' };
-    const teacher1 = { id: 1, name: 'Nguyễn Văn A', teacher_identifier: 'GV001' };
-    const room101 = { id: 101, code: '1A01', name: 'Phòng TSCH-A - Tầng trệt - 01', floor_number: 0, building: { name: 'Tòa A1', campus: { name: 'Trụ sở chính' } } };
-    const mockSchedules = [
-      { id: 1001, timeslot: ts1, subject: subj1, teacher: teacher1, room: room101 },
-      { id: 1002, timeslot: ts2, subject: subj2, teacher: teacher1, room: room101 },
-      { id: 1003, timeslot: ts3, subject: subj1, teacher: teacher1, room: room101 },
-    ];
-    setScheduleToday(mockSchedules);
-
+    // no mock data: use API-only. scheduleToday will be set from API response (or remain []).
     return () => { cancelled = true; };
   }, []);
 
+  const notifications = [];
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gray-50">
+      <main className="max-w-7xl mx-auto p-6 lg:p-8">
         {loading ? (
-          <div className="p-6 bg-white rounded shadow text-center">Đang tải dữ liệu...</div>
+          <div className="p-6 bg-white rounded-lg shadow-sm text-center">Đang tải dữ liệu...</div>
         ) : (
           <>
-            <div className="bg-white border border-blue-300 rounded-lg shadow p-4 mb-6">
-              <h3 className="text-lg font-medium text-blue-700 flex items-center gap-2">
-                <span>Thông tin sinh viên</span>
-              </h3>
-
-              {/* three-column compact layout like the provided sample (no avatar) */}
-              <div className="mt-4 text-sm text-gray-700">
-                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x sm:divide-blue-100">
-                  <div className="py-3 px-4">
-                    <div className="text-xs text-gray-500">Mã SV:</div>
-                    <div className="font-medium">{profile?.student_identifier || '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Tên sinh viên:</div>
-                    <div className="font-medium">{profile?.name || '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Ngày sinh:</div>
-                    <div className="font-medium">{profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString() : '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Giới tính:</div>
-                    <div className="font-medium">{profile?.gender || '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Trạng thái:</div>
-                    <div className="font-medium">{profile?.status || '—'}</div>
-                  </div>
-
-                  <div className="py-3 px-4">
-                    <div className="text-xs text-gray-500">Số điện thoại:</div>
-                    <div className="font-medium">{profile?.phone || '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Số CMND/CCCD:</div>
-                    <div className="font-medium">{profile?.identity_number || profile?.id_number || '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Dân tộc:</div>
-                    <div className="font-medium">{profile?.ethnicity || profile?.dan_toc || '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Tôn giáo:</div>
-                    <div className="font-medium">{profile?.religion || profile?.ton_giao || '—'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Nơi sinh:</div>
-                    <div className="font-medium">{profile?.place_of_birth || profile?.birth_place || profile?.noi_sinh || '—'}</div>
-                  </div>
-
-                  <div className="py-3 px-4">
-                    <div className="text-xs text-gray-500">Quốc tịch:</div>
-                    <div className="font-medium">{profile?.nationality || 'Việt Nam'}</div>
-
-                    <div className="text-xs text-gray-500 mt-3">Email trường:</div>
-                    <div className="font-medium wrap-break-word">
-                      {profile?.email_school ? (
-                        <a className="text-blue-600 hover:underline" href={`mailto:${profile.email_school}`}>{profile.email_school}</a>
-                      ) : profile?.user?.username ? (
-                        <span className="text-gray-700">{profile.user.username}</span>
-                      ) : (
-                        '—'
-                      )}
-                    </div>
-
-                    <div className="text-xs text-gray-500 mt-3">Email cá nhân:</div>
-                    <div className="font-medium wrap-break-word">
-                      {profile?.email_personal ? (
-                        <a className="text-blue-600 hover:underline" href={`mailto:${profile.email_personal}`}>{profile.email_personal}</a>
-                      ) : (
-                        '—'
-                      )}
-                    </div>
-
-                    <div className="text-xs text-gray-500 mt-3">Địa chỉ:</div>
-                    <div className="font-medium">{profile?.address || '—'}</div>
-                  </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="lg:col-span-2">
+                <StudentInfoCard profile={profile} />
+                <div className="mt-4">
+                  <InfoGroups profile={profile} />
                 </div>
+              </div>
+
+              <div className="lg:col-span-1 flex flex-col gap-4">
+                <NextClassCard scheduleToday={scheduleToday} nextClassDisplay={nextClassDisplay} />
+                <Notifications notifications={notifications} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {error && <div className="col-span-full p-3 bg-red-50 text-red-700 rounded">{error}</div>}
-
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h1 className="text-2xl font-semibold">Xin chào, {student.name}</h1>
-                      <p className="text-sm text-gray-500">Chương trình: {student.program} · {student.year}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2 bg-white p-4 rounded shadow">
-                      <div className="text-sm text-gray-500">Next class</div>
-                      <div className="mt-2 font-medium">{nextClassDisplay.course}</div>
-                      <div className="text-sm text-gray-500 mt-1">{nextClassDisplay.time}</div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 rounded">
-                      <div className="text-sm text-gray-500">Phòng học</div>
-                      <div className="mt-2 font-medium">{nextClassDisplay.room?.code || '—'}</div>
-                      <div className="text-sm text-gray-500">{nextClassDisplay.room?.name || '—'}</div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 rounded">
-                      <div className="text-sm text-gray-500">Tòa & Tầng</div>
-                      <div className="mt-2 font-medium">{nextClassDisplay.room?.building?.name || '—'}</div>
-                      <div className="text-sm text-gray-500">Tầng: {nextClassDisplay.room?.floor_number === 0 ? 'tầng chệt' : (nextClassDisplay.room?.floor_number ?? '—')}</div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 rounded">
-                      <div className="text-sm text-gray-500">Cơ sở</div>
-                      <div className="mt-2 font-medium">{nextClassDisplay.room?.building?.campus?.name || '—'}</div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 rounded">
-                      <div className="text-sm text-gray-500">Giảng viên</div>
-                      <div className="mt-2 font-medium">{nextClassDisplay.teacher?.name || '—'}</div>
-                      <div className="text-sm text-gray-500">Mã: {nextClassDisplay.teacher?.teacher_identifier || '—'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-medium">Upcoming classes</h2>
-                  <ul className="mt-4 space-y-2">
-                    {upcoming.map(u => (
-                      <li key={u.id} className="p-3 border rounded flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{u.course}</div>
-                        </div>
-                        <div className="text-sm text-gray-500">{u.time}</div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <UpcomingClasses upcoming={upcoming} scheduleToday={scheduleToday} />
               </div>
 
               <aside className="space-y-6">
-                <div className="bg-white rounded-lg shadow p-4">
-                  <h3 className="font-medium">Thông báo</h3>
-                  <div className="mt-3 text-sm text-gray-500">Hiện bạn chưa có thông báo mới.</div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-4">
-                  <h3 className="font-medium">Quick actions</h3>
-                  <div className="mt-3 flex flex-col gap-2">
-                    <Link to="/schedule" className="px-3 py-2 bg-blue-600 text-white rounded text-sm text-center">Xem thời khóa biểu</Link>
-                    <Link to="/profile" className="px-3 py-2 border rounded text-sm text-center">Xem thông tin cá nhân</Link>
-                    <Link to="/change-password" className="px-3 py-2 border rounded text-sm text-center">Thay đổi mật khẩu</Link>
-                  </div>
+                <QuickActions />
+                <div className="bg-white rounded-lg shadow-sm p-5">
+                  <h3 className="text-sm font-medium text-gray-800 mb-2">Hints</h3>
+                  <div className="text-sm text-gray-500">Các nút nhanh giúp bạn truy cập nhanh đến lịch, thông tin cá nhân và cài đặt.</div>
                 </div>
               </aside>
             </div>

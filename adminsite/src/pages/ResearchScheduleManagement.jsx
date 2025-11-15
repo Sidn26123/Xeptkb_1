@@ -1,10 +1,9 @@
 import React from "react";
 import PageMeta from "../components/common/PageMeta.jsx";
 import ResearchScheduleHub from "../components/researchSchedule/ResearchScheduleHub.jsx";
-import StudentSchedule from "../components/researchSchedule/ClassSchedule.jsx";
 import ClassSchedule from "../components/researchSchedule/ClassSchedule.jsx";
 import RoomSchedule from "../components/researchSchedule/RoomSchedule.jsx";
-import CampusSchedule from "../components/researchSchedule/CampusSchedule.jsx";
+import TeacherSchedule from "../components/researchSchedule/TeacherSchedule.jsx";
 
 export default function ResearchScheduleManagement() {
   const [viewType, setViewType] = React.useState(null); // null = hub
@@ -15,8 +14,8 @@ export default function ResearchScheduleManagement() {
         return <ClassSchedule />;
       case 'room':
         return <RoomSchedule />;
-      case 'campus':
-        return <CampusSchedule />;
+      case 'teacher':
+        return <TeacherSchedule />;
       default:
         return null;
     }
@@ -28,7 +27,7 @@ export default function ResearchScheduleManagement() {
       <div className="flex-1 p-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Tra cứu Thời khóa biểu</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Tìm kiếm và xem lịch học theo sinh viên, lớp, phòng hoặc cơ sở</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Tìm kiếm và xem lịch học theo sinh viên, lớp, phòng hoặc giảng viên</p>
         </div>
         
         <div className="space-y-6">

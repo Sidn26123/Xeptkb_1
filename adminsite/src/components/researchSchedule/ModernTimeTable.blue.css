@@ -198,6 +198,27 @@
   width: 100px;
 }
 
+/* Right-most time start column (blue) */
+.time-start-cell {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color:  #495057;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+  width: 80px;
+  padding: 8px;
+  position: sticky;
+  right: 0;
+  z-index: 30;
+}
+
+.timetable-table thead th:last-child {
+  background: linear-gradient(135deg, #3b7ec9 0%, #4A90E2 100%);
+  color: white;
+  font-weight: 700;
+  text-align: center;
+}
+
 /* Time Column */
 .time-slot-cell {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -236,16 +257,18 @@
 
 /* Event in Cell */
 .cell-event {
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  line-height: 1.3;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 1.125rem;
+  line-height: 1.4;
   cursor: pointer;
-  border-left: 3px solid;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  margin-bottom: 4px;
+  border-left: 4px solid #28a745;
+  background: linear-gradient(180deg, #eefcf1 0%, #e1f7e8 100%);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  margin: 0;
   transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .cell-event:hover {
@@ -257,18 +280,58 @@
   margin-bottom: 0;
 }
 
+/* Make event card fill the td when it uses rowspan */
+.cell-event {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+/* Ensure td with event has no extra gaps so the card appears to span rows cleanly */
+.schedule-table-cell.event-td {
+  padding: 4px; /* small outer padding so card doesn't touch cell border */
+}
+
+.schedule-table-cell.event-td .cell-event {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Force all specific event color classes to use green look as requested */
+.cell-event.event-math,
+.cell-event.event-programming,
+.cell-event.event-physics,
+.cell-event.event-english,
+.cell-event.event-datastructure,
+.cell-event.event-default {
+  background: linear-gradient(180deg, #eefcf1 0%, #e1f7e8 100%) !important;
+  border-left-color: #28a745 !important;
+}
+
 .event-title {
-  font-weight: 600;
-  color: #212529;
+  font-weight: 700;
+  color: #000;
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .event-details {
-  font-size: 0.7rem;
-  color: #6c757d;
+  font-size: 0.875rem;
+  color: #495057;
   display: flex;
   flex-direction: column;
   gap: 1px;
+}
+
+.event-details span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Event Colors */
@@ -300,6 +363,11 @@
 .event-default {
   border-left-color: #6c757d;
   background: #f8f9fa;
+}
+
+/* Slightly stronger default for merged card look */
+.event-default {
+  background: linear-gradient(180deg, #fbfdff 0%, #f3f6f9 100%);
 }
 
 /* Navigation Arrows in Header */
