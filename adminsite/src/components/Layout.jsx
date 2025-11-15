@@ -3,7 +3,6 @@ import { Menu, X, Home, Users, Settings, FileText } from 'lucide-react';
 import Sidebar from './admin/Sidebar.jsx';
 import { Outlet } from 'react-router-dom';
 
-import SchedulerResourcesManagement from './admin/SchedulerResources.jsx';
 
 // const Sidebar = ({ isOpen, toggleSidebar }) => {
 //     return (

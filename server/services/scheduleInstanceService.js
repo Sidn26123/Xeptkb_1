@@ -724,7 +724,7 @@ async function saveScheduleToDatabase(apiResponse) {
             schedule_summary,
             semester
         } = schedule;
-
+        console.log("📌 Saving schedule for semester:", semester);
         // 1. Tạo record ScheduleGeneration
         const scheduleGeneration = await ScheduleGeneration.create({
             semester: semester.semesterName,
@@ -735,7 +735,7 @@ async function saveScheduleToDatabase(apiResponse) {
             session_duration: semester.session_duration,
             generated_at: new Date(),
             week_start: semester.start_week,
-            week_end: semester.end_week,
+            week_end: 17,
             fitness_score: fitness,
             penalty_breakdown: penalty_breakdown,
             raw_json: schedule, // Lưu toàn bộ JSON để trace

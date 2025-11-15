@@ -14,7 +14,6 @@ import SignIn from "../pages/SignIn";
 import RAGApp from "../components/chatbot/RagApp.jsx";
 import GuidePage from "../pages/GuidePage.jsx";
 import TutorialPage from "../pages/GuidePage.jsx";
-import SchedulerResourcesManagement from "../components/admin/SchedulerResources.jsx";
 import {InputResourcesManagement} from "../components/admin/InputComponent.jsx";
 import HolidayManagement from "../pages/HolidayManagement";
 import EquipmentManagement from "../pages/EquipmentManagement.jsx";

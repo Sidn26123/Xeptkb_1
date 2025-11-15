@@ -129,15 +129,14 @@ exports.generateAllInstances = async (req, res) => {
         const { startDate, endDate } = req.body;
 
         if (!startDate || !endDate) {
-            return res.status(400).json(
-                new ErrorResponse('Thiếu startDate hoặc endDate', 400)
-            );
+            // return res.status(400).json(
+            //     new ErrorResponse('Thiếu startDate hoặc endDate', 400)
+            // );
         }
 
         const result = await generateAllInstancesForGeneration(
             generationId,
-            new Date(startDate),
-            new Date(endDate)
+            null, null
         );
 
         res.status(201).json(

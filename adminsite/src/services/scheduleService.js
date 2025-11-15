@@ -29,6 +29,10 @@ export const saveSchedule = async (scheduleData) => {
     return res?.data?.data ?? null;
 }
 
+export const generateAllSchedules = async (id) => {
+    const res = await api.post('/schedule-instances/generations/' + id + '/instances/generate-all');
+}
+
 export async function fetchScheduleEvents(classId, semesterId) {
     if (!classId || !semesterId) {
         return []; // Không gọi API nếu thiếu tham số
