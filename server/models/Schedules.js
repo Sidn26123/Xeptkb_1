@@ -62,7 +62,7 @@ const Schedule = sequelize.define('Schedule', {
   },
   week_end: {
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
   },
   generation_id: {   // <-- thêm dòng này
     type: DataTypes.INTEGER,

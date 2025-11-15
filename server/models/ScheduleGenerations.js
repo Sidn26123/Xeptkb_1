@@ -27,6 +27,9 @@ const ScheduleGeneration = sequelize.define("ScheduleGeneration", {
   week_start: {
     type: DataTypes.INTEGER
   },
+  week_end: {
+    type: DataTypes.INTEGER,
+  },
   days_per_week: {
     type: DataTypes.INTEGER,
   },

@@ -1,5 +1,4 @@
 import SchedulerViewer from "../components/admin/SchedulerViewer.jsx";
-import AlgorithmInputSelector from "../components/scheduler/SchedulerInput.jsx";
 import React from "react";
 import ResourceManager from "../components/scheduler/ResourceManager.jsx";
 
