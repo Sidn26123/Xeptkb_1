@@ -15,6 +15,7 @@ const CourseClass = require('../models/CourseClasses');
 const Subject = require('../models/Subjects');
 const Room = require('../models/Rooms');
 const Teacher = require('../models/Teachers');
+const Class = require('../models/Classes');
 // ==================== INSTANCE GENERATION ====================
 
 /**
@@ -477,61 +478,80 @@ exports.deleteInstance = async (req, res) => {
 };
 exports.getScheduleInstancesByQuery = async (req, res) => {
     try {
-        const { classId, semesterId } = req.query;
+        const { classId, semesterId, roomId, teacherId } = req.query;
 
-        if (!classId || !semesterId) {
+        if ((!classId && !roomId && !teacherId) || !semesterId) {
             return res.status(400).json({
-                message: 'Thiếu classId hoặc semesterId'
+                message: 'Thiếu classId, roomId hoặc teacherId, hoặc thiếu semesterId'
             });
         }
 
-        // Truy vấn chính: Lấy ScheduleInstance
-        const instances = await ScheduleInstance.findAll({
+        // Build include for Schedule with generation filter by semester
+        const courseClassInclude = {
+            model: CourseClass,
+            as: 'courseClass',
+            required: false,
+            include: [
+                { model: Subject, as: 'subject' },
+                // Only select `id` and `name` from Class to avoid
+                // requesting columns that may not exist in older DBs
+                { model: Class, as: 'class', attributes: ['id', 'name'] }
+            ]
+        };
+
+        const scheduleInclude = {
+            model: Schedule,
+            as: 'schedule',
+            attributes: ['num_of_period', 'room_id'],
+            required: true,
             include: [
                 {
-                    model: Schedule,
-                    as: 'schedule',
-                    attributes: ['num_of_period'],
-                    required: true, // INNER JOIN
-                    include: [
-                        {
-                            model: ScheduleGeneration,
-                            as: 'generation',
-                            attributes: [],
-                            required: true,
-                            where: {
-                                semester_id: semesterId
-                            }
-                        },
-                        {
-                            model: CourseClass,
-                            as: 'courseClass',
-                            required: true,
-                            where: {
-                                class_id: classId
-                            },
-                            include: [
-                                { model: Subject, as: 'subject' }
-                            ]
-                        }
-                    ]
+                    model: ScheduleGeneration,
+                    as: 'generation',
+                    attributes: [],
+                    required: true,
+                    where: { semester_id: semesterId }
                 },
-                {
-                    model: Room,
-                    as: 'room',
-                },
-                {
-                    model: Teacher,
-                    as: 'teacher',
-                }
-            ],
-            order: [
-                ['date', 'ASC'],
-                ['time_slot_id', 'ASC']
+                courseClassInclude
             ]
-        });
+        };
 
-        console.log('Fetched schedule instances:', instances);
+        // Build where clause for ScheduleInstance
+        const whereClause = {};
+
+        if (roomId) {
+            // filter instances by room OR schedule.room_id
+            whereClause[Op.or] = [
+                { room_id: roomId },
+                { '$schedule.room_id$': roomId }
+            ];
+        }
+
+        // Filter by teacher (either override on instance or schedule.teacher_id)
+        if (teacherId) {
+            whereClause[Op.or] = [
+                ...(whereClause[Op.or] || []),
+                { teacher_id: teacherId },
+                { '$schedule.teacher_id$': teacherId }
+            ];
+        }
+
+        if (classId) {
+            // restrict to instances whose schedule.courseClass.class_id matches
+            courseClassInclude.required = true;
+            courseClassInclude.where = { class_id: classId };
+        }
+
+        const instances = await ScheduleInstance.findAll({
+            where: whereClause,
+            include: [
+                scheduleInclude,
+                { model: Room, as: 'room' },
+                { model: Teacher, as: 'teacher' },
+                { model: require('../models/TimeSlot'), as: 'timeSlot' }
+            ],
+            order: [ ['date', 'ASC'], ['time_slot_id', 'ASC'] ]
+        });
 
         // Chuyển đổi dữ liệu về dạng Frontend
         const events = transformInstancesToEvents(instances);
@@ -541,6 +561,94 @@ exports.getScheduleInstancesByQuery = async (req, res) => {
     } catch (error) {
         console.error('Lỗi khi lấy schedule instances:', error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
+/**
+ * Lấy instances cho một user (teacher hoặc student)
+ * POST /api/v1/schedule-instances/instances/for-user
+ * body: { userId, role: 'teacher'|'student', startDate, endDate, semesterId }
+ */
+exports.getInstancesForUser = async (req, res) => {
+    try {
+        const { userId, role, startDate, endDate, semesterId, classId } = req.body;
+
+        // Validation: for student role we expect classId; for teacher role we expect userId
+        if (!role || !startDate || !endDate) {
+            return res.status(400).json(new ErrorResponse('Thiếu role, startDate hoặc endDate', 400));
+        }
+        if (role === 'student' && !classId) {
+            return res.status(400).json(new ErrorResponse('Thiếu classId cho role student', 400));
+        }
+        if (role === 'teacher' && !userId) {
+            return res.status(400).json(new ErrorResponse('Thiếu userId cho role teacher', 400));
+        }
+
+        // Build base where clause for date range
+        const whereClause = {
+            date: {
+                [Op.between]: [startDate, endDate]
+            }
+        };
+
+        // Build include clause similar to getAllInstances
+        const includeClause = [
+            {
+                model: Schedule,
+                as: 'schedule',
+                required: true,
+                include: [
+                    { model: require('../models/CourseClasses'), as: 'courseClass' },
+                    { model: require('../models/Rooms'), as: 'room' },
+                    { model: require('../models/TimeSlot'), as: 'timeSlot' },
+                    { model: require('../models/Days'), as: 'day' }
+                ]
+            }
+        ];
+
+        // If semesterId provided, filter generation
+        if (semesterId) {
+            includeClause[0].include.push({
+                model: ScheduleGeneration,
+                as: 'generation',
+                where: { semester_id: semesterId }
+            });
+        }
+
+        if (role === 'teacher') {
+            // Filter by teacher (either override or pattern)
+            whereClause[Op.or] = [
+                { teacher_id: userId },
+                { teacher_id: null, '$schedule.teacher_id$': userId }
+            ];
+        } else if (role === 'student') {
+            // We expect caller to supply classId
+            // Restrict to schedules whose courseClass.class_id matches this class
+            includeClause[0].include = includeClause[0].include.map(inc => {
+                if (inc.as === 'courseClass') {
+                    return { ...inc, required: true, where: { class_id: classId } };
+                }
+                return inc;
+            });
+        } else {
+            return res.status(400).json(new ErrorResponse('Role không hợp lệ (teacher|student)', 400));
+        }
+
+        const instances = await ScheduleInstance.findAll({
+            where: whereClause,
+            include: [
+                ...includeClause,
+                { model: Room, as: 'room' },
+                { model: Teacher, as: 'teacher' },
+                { model: require('../models/TimeSlot'), as: 'timeSlot' }
+            ],
+            order: [['date', 'ASC'], ['time_slot_id', 'ASC']]
+        });
+
+        res.status(200).json(new SuccessResponse(instances, 'Lấy instances cho user thành công'));
+    } catch (err) {
+        console.error('Lỗi getInstancesForUser:', err);
+        res.status(500).json(new ErrorResponse(err.message, 500));
     }
 };
 module.exports = exports;

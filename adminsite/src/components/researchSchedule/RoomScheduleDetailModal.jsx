@@ -1,10 +1,10 @@
 import React from "react";
 
-export default function ScheduleDetailModal({ open = false, onClose = () => {}, detail = null }) {
+export default function RoomScheduleDetailModal({ open = false, onClose = () => {}, detail = null }) {
   if (!open) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl p-6 m-4 transform transition-all">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -68,8 +68,10 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Phòng học</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">{detail.room || "-"}</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lớp học</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">
+                    {detail.className  || "-"}
+                  </p>
                 </div>
               </div>
 

@@ -12,9 +12,9 @@ export default function ResearchScheduleHub({ onSelect }) {
           <div className="text-lg font-semibold">Theo Phòng học</div>
           <div className="text-sm text-gray-500 mt-1">Kiểm tra lịch sử sử dụng phòng</div>
         </button>
-        <button onClick={() => onSelect('campus')} className="card p-4 rounded-lg bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 text-left">
-          <div className="text-lg font-semibold">Theo Cơ sở</div>
-          <div className="text-sm text-gray-500 mt-1">Tổng quan tòa nhà, heatmap sử dụng</div>
+        <button onClick={() => onSelect('teacher')} className="card p-4 rounded-lg bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 text-left">
+          <div className="text-lg font-semibold">Theo Giảng viên</div>
+          <div className="text-sm text-gray-500 mt-1">Tìm lịch theo mã hoặc tên giảng viên</div>
         </button>
       </div>
     </div>

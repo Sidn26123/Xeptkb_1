@@ -2,15 +2,16 @@ import React from "react";
 import {startOfWeek, addDays, setHours, setMinutes, format, addMinutes} from 'date-fns';
 import {vi as viLocale} from 'date-fns/locale';
 import ModernTimeTable from "./ModernTimeTable";
-import ScheduleDetailModal from "./ScheduleDetailModal";
+import ClassScheduleDetailModal from "./ClassScheduleDetailModal";
 import SemesterSchedule from "./SemesterSchedule";
 import {getAllSemesters} from '../../services/semesterService';
-import {getAllClasses, getClassById} from '../../services/classService';
-import {getRoomById} from "../../services/roomService.js";
+import {getAllClasses} from '../../services/classService';
+import {getAllRooms} from '../../services/roomService.js';
+import {getAllCourseClasses} from '../../services/courseClassService.js';
 import {getAllSchedules} from "../../services/scheduleService.js";
 import {fetchScheduleEvents} from "../../services/scheduleService.js";
 
-export default function StudentSchedule() {
+export default function ClassSchedule() {
     const [events, setEvents] = React.useState([]);
     const [_filter, setFilter] = React.useState({});
     const [_classes, setClasses] = React.useState([]);
@@ -19,9 +20,12 @@ export default function StudentSchedule() {
     const [query, setQuery] = React.useState("");
     const [showSuggestions, setShowSuggestions] = React.useState(false);
     const [mode, setMode] = React.useState("week");
+    const [loading, setLoading] = React.useState(false);
     const [semesters, setSemesters] = React.useState([]);
     const [selectedSemester, setSelectedSemester] = React.useState(null);
     const [hasSearched, setHasSearched] = React.useState(false);
+    const [rooms, setRooms] = React.useState([]);
+    const [courseClasses, setCourseClasses] = React.useState([]);
 
     // We fetch classes once; events will be generated when the user clicks "Tìm".
     React.useEffect(() => {
@@ -35,25 +39,56 @@ export default function StudentSchedule() {
                 console.error('Error fetching classes in ClassSchedule:', err);
             }
         }
-
         fetchClasses();
-        return () => {
-            mounted = false;
-        };
+        return () => { mounted = false; };
+    }, []);
+
+    // Preload rooms and course-classes once to avoid per-item API calls when
+    // converting schedules or when doing UI lookups (use cache only).
+    React.useEffect(() => {
+        let mounted = true;
+        async function fetchCaches() {
+            try {
+                const [roomsData, ccData] = await Promise.all([
+                    getAllRooms(),
+                    getAllCourseClasses(),
+                ]);
+                if (!mounted) return;
+                setRooms(roomsData || []);
+                setCourseClasses(ccData || []);
+            } catch (err) {
+                console.error('Error preloading rooms/course-classes:', err);
+            }
+        }
+        fetchCaches();
+        return () => { mounted = false; };
     }, []);
 
     // Fetch semesters once so multiple views can reuse the list and the
     // selected semester value.
     React.useEffect(() => {
         let mounted = true;
-
         async function fetchSemesters() {
             try {
                 const data = await getAllSemesters();
                 if (!mounted) return;
                 setSemesters(data || []);
-                if (data && data.length > 0) {
-                    setSelectedSemester(data[0]);
+
+                if (Array.isArray(data) && data.length > 0) {
+                    const now = new Date();
+                    // Find semester that contains 'now' (inclusive)
+                    const current = data.find(s => {
+                        try {
+                            const start = new Date(s.start);
+                            const end = new Date(s.end);
+                            return start <= now && now <= end;
+                        } catch {
+                            return false;
+                        }
+                    });
+
+                    // If a matching semester exists choose it, otherwise fallback to first
+                    setSelectedSemester(current || data[0]);
                 }
             } catch (err) {
                 console.error('Error fetching semesters in StudentSchedule:', err);
@@ -65,6 +100,33 @@ export default function StudentSchedule() {
             mounted = false;
         };
     }, []);
+
+    // When the selected semester changes (or selected class changes), refetch
+    // schedule events for the currently selected class so the view matches the
+    // chosen semester automatically.
+    React.useEffect(() => {
+        let mounted = true;
+        async function refreshEventsForSemester() {
+            if (!selectedClassId) return;
+
+            const semesterId = selectedSemester?.id || (semesters && semesters[0]?.id) || null;
+            try {
+                setLoading(true);
+                const fetched = await fetchScheduleEvents(selectedClassId, semesterId);
+                if (!mounted) return;
+                setEvents(Array.isArray(fetched) ? fetched : []);
+            } catch (err) {
+                console.error('Error fetching schedule after semester change:', err);
+                if (!mounted) return;
+                setEvents([]);
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        }
+
+        refreshEventsForSemester();
+        return () => { mounted = false; };
+    }, [selectedSemester, selectedClassId, semesters]);
 
     const handleEventClick = (event) => {
         setModal({
@@ -82,9 +144,11 @@ export default function StudentSchedule() {
     };
 
     const handleSearch = async () => {
-        // Build sample events now that the user requested a search.
-        const sampleEvents =await fetchScheduleEvents(1,1);
-        console.log('Fetched schedule events sample for search:', sampleEvents);
+        setLoading(true);
+        // Determine semester id to query (use selectedSemester or fallback to first)
+        const semesterId = selectedSemester?.id || (semesters && semesters[0]?.id) || null;
+
+        // If user didn't click a suggestion, try to match typed query to a class
         // If user didn't click a suggestion, try to match typed query to a class
         let cls = null;
         if (selectedClassId) {
@@ -94,7 +158,6 @@ export default function StudentSchedule() {
             cls = (_classes || []).find(c => ((c.name || '').toLowerCase().includes(q)) || ((c.code || '').toLowerCase().includes(q)) || String(c.id) === q);
             if (cls) setSelectedClassId(cls.id);
         }
-
         if (!cls) {
             // nothing matched
             setEvents([]);
@@ -102,17 +165,19 @@ export default function StudentSchedule() {
             setFilter({selectedClassId: null, mode});
             return;
         }
-        const qName = (cls?.name || '').toLowerCase();
-        const qCode = (cls?.code || cls?.code_name || '').toLowerCase();
 
-        const filtered = sampleEvents.filter(e => (
-            (qCode && e.subject && e.subject.toLowerCase().includes(qCode)) ||
-            (qName && e.title && e.title.toLowerCase().includes(qName))
-        ));
+        try {
+            // fetch schedule events for the selected class + semester
+            const fetched = await fetchScheduleEvents(cls.id, semesterId);
+            setEvents(Array.isArray(fetched) ? fetched : []);
+        } catch (err) {
+            console.error('Error fetching schedule for class in handleSearch:', err);
+            setEvents([]);
+        }
 
-        setEvents(sampleEvents);
         setHasSearched(true);
         setFilter({selectedClassId: cls.id, mode});
+        setLoading(false);
     };
 
     const handleSelectClass = async  (c) => {
@@ -120,17 +185,20 @@ export default function StudentSchedule() {
         setQuery((c.name || c.id) + (c.code ? ` (${c.code})` : ''));
         setSelectedClassId(id);
         setShowSuggestions(false);
+        // build events for the selected class (for the currently selected semester)
+        const semesterId = selectedSemester?.id || (semesters && semesters[0]?.id) || null;
 
-        // build events even if empty, then show timetable
-        const sampleEvents = await fetchScheduleEvents(1,1);
-        console.log('Fetched schedule events s1ample for selected class:', sampleEvents);
-        const qName = (c?.name || '').toLowerCase();
-        const qCode = (c?.code || c?.code_name || '').toLowerCase();
-        // const filtered = sampleEvents.filter(e => (
-        //     (qCode && e.subject && e.subject.toLowerCase().includes(qCode)) ||
-        //     (qName && e.title && e.title.toLowerCase().includes(qName))
-        // ));
-        setEvents(sampleEvents);
+        try {
+            setLoading(true);
+            const fetched = await fetchScheduleEvents(id, semesterId);
+            setEvents(Array.isArray(fetched) ? fetched : []);
+        } catch (err) {
+            console.error('Error fetching schedule for selected class:', err);
+            setEvents([]);
+        } finally {
+            setLoading(false);
+        }
+
         setHasSearched(true);
         setFilter({selectedClassId: id, mode});
     };
@@ -261,9 +329,10 @@ export default function StudentSchedule() {
         const result = [];
 
         for (const s of schedules) {
-            const courseClass = await getClassById(s.course_class_id);
-            const room = await getRoomById(s.room_id);
-            console.log('schedule item', s, 'class', courseClass, 'room', room);
+            // Use preloaded courseClasses and rooms cache to avoid many API calls
+            const courseClass = (courseClasses || []).find(cc => String(cc.id) === String(s.course_class_id)) || null;
+            const room = (rooms || []).find(r => String(r.id) === String(s.room_id)) || null;
+
             // DAY: day_id = số thứ tự trong tuần (1 = Thứ 2)
             const eventDate = addDays(monday, s.day_id - 1);
 
@@ -274,15 +343,22 @@ export default function StudentSchedule() {
             // Kéo dài theo num_of_period
             const end = addMinutes(start, s.num_of_period * 45);
 
+            // Prefer showing the actual class (student group) name when available.
+            // `courseClass` may belong to a `Class` (via class_id). Use the
+            // preloaded `_classes` cache to find that name and fall back to
+            // courseClass or subject if missing.
+            const classObj = ( _classes || [] ).find(cl => String(cl.id) === String(courseClass?.class_id)) || null;
+
             result.push({
                 id: s.id,
-                title: courseClass?.name,
+                title: classObj?.name || courseClass?.name || courseClass?.Subject?.name || '',
                 start,
                 end,
-                teacher: courseClass?.Teacher?.name,
-                room: `${room.name} - ${room.building_id}`,
+                teacher: courseClass?.Teacher?.name || '',
+                room: `${room?.name || ''} - ${room?.building_id || ''}`,
                 type: courseClass?.type ?? 'lecture',
-                subject: courseClass?.Subject?.code,
+                subject: courseClass?.Subject?.code || '',
+                day_id: s.day_id,
             });
         }
 
@@ -392,7 +468,7 @@ export default function StudentSchedule() {
                     )
                 )
             ) : null}
-            <ScheduleDetailModal
+            <ClassScheduleDetailModal
                 open={modal.open}
                 onClose={() => setModal({open: false, detail: null})}
                 detail={modal.detail}

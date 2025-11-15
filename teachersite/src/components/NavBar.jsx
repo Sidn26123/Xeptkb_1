@@ -7,7 +7,7 @@ export default function NavBar({ teacher = { name: '—' }, onLogout = () => {} 
   const closeMenu = () => setShowAccount(false);
 
   return (
-    <header className="bg-white shadow">
+    <header className="bg-white shadow fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-3">

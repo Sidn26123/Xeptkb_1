@@ -3,9 +3,10 @@ import { startOfWeek, addDays, setHours, setMinutes, format } from 'date-fns';
 import { vi as viLocale } from 'date-fns/locale';
 import ModernTimeTable from './ModernTimeTable';
 import SemesterSchedule from './SemesterSchedule';
-import ScheduleDetailModal from './ScheduleDetailModal';
+import RoomScheduleDetailModal from './RoomScheduleDetailModal';
 import { getAllSemesters } from '../../services/semesterService';
 import { getAllRooms } from '../../services/roomService';
+import { fetchScheduleEventsByRoom } from '../../services/scheduleService';
 
 export default function RoomSchedule({ events: initialEvents = null, fetchEventsByRoom = null }) {
   const [query, setQuery] = React.useState('');
@@ -77,6 +78,30 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
     return () => { mounted = false; };
   }, []);
 
+  // When the selected semester changes (or selected room changes), refetch
+  // schedule events for the currently selected room so the view matches
+  // the chosen semester automatically (same pattern as ClassSchedule.jsx).
+  React.useEffect(() => {
+    let mounted = true;
+    async function refreshEventsForSemester() {
+      if (!selectedRoomId) return;
+
+      const semesterId = selectedSemester?.id || (semesters && semesters[0]?.id) || null;
+      try {
+        const fetched = await fetchScheduleEventsByRoom(selectedRoomId, semesterId);
+        if (!mounted) return;
+        setEvents(Array.isArray(fetched) ? fetched : []);
+      } catch (err) {
+        console.error('Error fetching room schedule after semester change:', err);
+        if (!mounted) return;
+        setEvents([]);
+      }
+    }
+
+    refreshEventsForSemester();
+    return () => { mounted = false; };
+  }, [selectedSemester, selectedRoomId, semesters]);
+
   // Fetch semesters once so multiple views can reuse the list
   React.useEffect(() => {
     let mounted = true;
@@ -85,7 +110,23 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
         const data = await getAllSemesters();
         if (!mounted) return;
         setSemesters(data || []);
-        if (data && data.length > 0) setSelectedSemester(data[0]);
+
+        if (Array.isArray(data) && data.length > 0) {
+          const now = new Date();
+          // Find semester that contains 'now' (inclusive)
+          const current = data.find(s => {
+            try {
+              const start = new Date(s.start);
+              const end = new Date(s.end);
+              return start <= now && now <= end;
+            } catch {
+              return false;
+            }
+          });
+
+          // If a matching semester exists choose it, otherwise fallback to first
+          setSelectedSemester(current || data[0]);
+        }
       } catch (err) {
         console.error('Error fetching semesters in RoomSchedule:', err);
       }
@@ -100,6 +141,8 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
       detail: {
         subject: event.title,
         teacher: event.teacher,
+        // prefer class info when available
+        className: event.className || null,
         room: event.room,
         time: `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`,
         date: format(event.start, 'EEEE, dd/MM/yyyy', { locale: viLocale }),
@@ -148,7 +191,15 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
       (qName && e.room && e.room.toLowerCase().includes(qName)) ||
       (String(e.room || '').toLowerCase().includes(String(roomObj.id).toLowerCase()))
     ));
-    setEvents(filtered);
+    // If we have a semester selected, try to call the API to get instances
+    const semesterId = selectedSemester?.id || (semesters && semesters[0]?.id) || null;
+    try {
+      const fetched = await fetchScheduleEventsByRoom(roomObj.id, semesterId);
+      setEvents(Array.isArray(fetched) && fetched.length > 0 ? fetched : filtered);
+    } catch (err) {
+      console.error('Error fetching schedule by room from API:', err);
+      setEvents(filtered);
+    }
     setSelectedRoomId(roomObj.id);
     setHasSearched(true);
   };
@@ -157,16 +208,26 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
     setQuery((r.name || r.id) + (r.code ? ` (${r.code})` : ''));
     setSelectedRoomId(r.id);
     setShowSuggestions(false);
-    // build filtered events immediately and show timetable
-    const qName = (r.name || '').toLowerCase();
-    const qCode = (r.code || '').toLowerCase();
-    const filtered = (initialEvents || events || []).filter(e => (
-      (qCode && e.room && e.room.toLowerCase().includes(qCode)) ||
-      (qName && e.room && e.room.toLowerCase().includes(qName)) ||
-      (String(e.room || '').toLowerCase().includes(String(r.id).toLowerCase()))
-    ));
-    setEvents(filtered);
-    setHasSearched(true);
+    // build events by calling schedule API (prefer exact data)
+    (async () => {
+      const semesterId = selectedSemester?.id || (semesters && semesters[0]?.id) || null;
+      try {
+        const fetched = await fetchScheduleEventsByRoom(r.id, semesterId);
+        setEvents(Array.isArray(fetched) ? fetched : []);
+      } catch (err) {
+        console.error('Error fetching schedule for selected room:', err);
+        // fallback to local filter if API fails
+        const qName = (r.name || '').toLowerCase();
+        const qCode = (r.code || '').toLowerCase();
+        const filtered = (initialEvents || events || []).filter(e => (
+          (qCode && e.room && e.room.toLowerCase().includes(qCode)) ||
+          (qName && e.room && e.room.toLowerCase().includes(qName)) ||
+          (String(e.room || '').toLowerCase().includes(String(r.id).toLowerCase()))
+        ));
+        setEvents(filtered);
+      }
+      setHasSearched(true);
+    })();
   };
 
   const handleClear = () => {
@@ -265,7 +326,7 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
         )
       )  : null}
 
-      <ScheduleDetailModal open={modal.open} onClose={() => setModal({ open: false, detail: null })} detail={modal.detail} />
+      <RoomScheduleDetailModal open={modal.open} onClose={() => setModal({ open: false, detail: null })} detail={modal.detail} />
     </div>
   );
 }

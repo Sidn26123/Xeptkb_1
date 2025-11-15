@@ -7,13 +7,13 @@
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
 
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+--
+-- AUTO_INCREMENT for table `schedule_instances`
+--
+ 
+-- (Removed premature AUTO_INCREMENT ALTER for `schedule_instances`)
+-- This ALTER will be applied after the table is created later in the dump.
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
@@ -87,8 +87,19 @@ CREATE TABLE `campus` (
 CREATE TABLE `days` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
+  `idx` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table school_management.days: ~7 rows (approximately)
+REPLACE INTO `days` (`id`, `name`, `idx`) VALUES
+	(1, 'Thứ Hai', 1),
+	(2, 'Thứ Ba', 2),
+	(3, 'Thứ Tư', 3),
+	(4, 'Thứ Năm', 4),
+	(5, 'Thứ Sáu', 6),
+	(6, 'Thứ Bảy', 7),
+	(7, 'Chủ Nhật', 8);
 
 -- Table structure for table `equipments`
 --
@@ -163,8 +174,30 @@ CREATE TABLE `timeslots` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `idx` int(11) NOT NULL,
+  `start_hour` int(11) DEFAULT NULL,
+  `start_min` int(11) DEFAULT NULL,
+  `end_hour` int(11) DEFAULT NULL,
+  `end_min` int(11) DEFAULT NULL,
+  `is_break` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table school_management.timeslots: ~14 rows (approximately)
+REPLACE INTO `timeslots` (`id`, `name`, `idx`, `start_hour`, `start_min`, `end_hour`, `end_min`, `is_break`) VALUES
+	(1, 'Tiết 1', 1, 7, 0, 7, 50, 0),
+	(2, 'Tiết 2', 2, 8, 0, 8, 50, 0),
+	(3, 'Tiết 3', 3, 9, 0, 9, 50, 0),
+	(4, 'Tiết 4', 4, 10, 0, 10, 50, 0),
+	(5, 'Tiết 5', 5, 11, 0, 11, 50, 0),
+	(6, 'Tiết 6', 6, 12, 0, 12, 50, 1),
+	(7, 'Tiết 7', 7, 13, 0, 13, 50, 0),
+	(8, 'Tiết 8', 8, 14, 0, 14, 50, 0),
+	(9, 'Tiết 9', 9, 15, 0, 15, 50, 0),
+	(10, 'Tiết 10', 10, 16, 0, 16, 50, 0),
+	(11, 'Tiết 11', 11, 17, 0, 17, 50, 0),
+	(12, 'Tiết 12', 12, 18, 0, 18, 50, 0),
+	(13, 'Tiết 13', 13, 19, 0, 19, 50, 0),
+	(14, 'Tiết 14', 14, 20, 0, 20, 50, 0);
 
 -- Table structure for table `trainingtypes`
 --
@@ -425,6 +458,8 @@ CREATE TABLE `schedule_generations` (
 CREATE TABLE `schedules` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `course_class_id` int(11) NOT NULL,
+  `teacher_id` int(11) DEFAULT NULL,
+  `room_id` int(11) DEFAULT NULL,
   `day_id` int(11) NOT NULL,
   `time_slot_id` int(11) DEFAULT NULL,
   `scheduler` varchar(255) DEFAULT NULL,
@@ -434,9 +469,35 @@ CREATE TABLE `schedules` (
   `generation_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `course_class_id` (`course_class_id`),
+  KEY `teacher_id` (`teacher_id`),
+  KEY `room_id` (`room_id`),
   KEY `day_id` (`day_id`),
   KEY `time_slot_id` (`time_slot_id`),
   KEY `generation_id` (`generation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `schedule_instances`
+-- Stores concrete generated instances from schedule patterns
+CREATE TABLE `schedule_instances` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `schedule_id` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `time_slot_id` int(11) DEFAULT NULL,
+  `room_id` int(11) DEFAULT NULL,
+  `teacher_id` int(11) DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'scheduled',
+  `cancel_reason` text DEFAULT NULL,
+  `replaced_by_instance_id` int(11) DEFAULT NULL,
+  `origin` varchar(50) DEFAULT 'auto',
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `schedule_id` (`schedule_id`),
+  KEY `time_slot_id` (`time_slot_id`),
+  KEY `room_id` (`room_id`),
+  KEY `teacher_id` (`teacher_id`),
+  KEY `replaced_by_instance_id` (`replaced_by_instance_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table structure for table `teachings`
@@ -565,12 +626,12 @@ INSERT INTO `students` (`class_id`, `name`, `student_identifier`, `user_id`, `em
 -- Sample data for table `courseclasses`
 -- (id, name, subject_id, class_id, semester_id, teacher_id, slot, session_per_week, duration_per_session)
 INSERT INTO `courseclasses` (`id`, `name`, `subject_id`, `class_id`, `semester_id`, `teacher_id`, `slot`, `session_per_week`, `duration_per_session`) VALUES
-  (1, 'IT', 2, 1, 5, 3, 1, 2, 45),
-  (2, 'IT1', 1, 2, 5, 2, 1, 2, 45),
-  (3, 'AI', 3, 1, 5, 1, 2, 3, 45),
-  (4, 'Databases', 2, 2, 5, 2, 1, 2, 60),
-  (5, 'Networks', 1, 1, 6, 3, 2, 2, 45),
-  (6, 'Web Development', 3, 2, 6, 1, 3, 3, 90);
+  (1, 'IT', 2, 1, 5, 3, 1, 2, 4),
+  (2, 'IT1', 1, 2, 5, 2, 1, 2, 4),
+  (3, 'AI', 3, 1, 5, 1, 2, 3, 4),
+  (4, 'Databases', 2, 2, 5, 2, 1, 2, 4),
+  (5, 'Networks', 1, 1, 6, 3, 2, 2, 4),
+  (6, 'Web Development', 3, 2, 6, 1, 3, 3, 4);
 
 -- TSCH campus (campus id 1)
 -- TSCH-A (building id 1) floors 0..3
@@ -1043,7 +1104,20 @@ ALTER TABLE `schedules`
   ADD CONSTRAINT `schedules_ibfk_1` FOREIGN KEY (`course_class_id`) REFERENCES `courseclasses` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`day_id`) REFERENCES `days` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`time_slot_id`) REFERENCES `timeslots` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `schedules_ibfk_4` FOREIGN KEY (`generation_id`) REFERENCES `schedule_generations` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `schedules_ibfk_4` FOREIGN KEY (`generation_id`) REFERENCES `schedule_generations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `schedules_ibfk_5` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE SET NULL;
+  ALTER TABLE `schedules`
+  ADD CONSTRAINT `schedules_ibfk_6` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `schedule_instances`
+--
+ALTER TABLE `schedule_instances`
+  ADD CONSTRAINT `schedule_instances_ibfk_1` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `schedule_instances_ibfk_2` FOREIGN KEY (`time_slot_id`) REFERENCES `timeslots` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `schedule_instances_ibfk_3` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `schedule_instances_ibfk_4` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `schedule_instances_ibfk_5` FOREIGN KEY (`replaced_by_instance_id`) REFERENCES `schedule_instances` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `semesters`
@@ -1089,8 +1163,6 @@ ALTER TABLE `teachings`
   ADD CONSTRAINT `teachings_ibfk_2` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE CASCADE;
 COMMIT;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+-- (Removed leftover charset/collation restore statements that referenced unset variables)
 
 -- End of assistant-updated explicit room seeds

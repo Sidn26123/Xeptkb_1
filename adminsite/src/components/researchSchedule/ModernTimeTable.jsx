@@ -3,22 +3,22 @@ import {format, addDays, startOfWeek, isSameDay} from 'date-fns';
 import {vi} from 'date-fns/locale';
 import './ModernTimeTable.blue.css';
 
-// 14 time slots như trong ảnh mẫu
+// 14 time slots: giờ chẵn, mỗi tiết 1 tiếng (07:00, 08:00, ...)
 const TIME_SLOTS = [
-    {id: 1, label: 'Tiết 1'},
-    {id: 2, label: 'Tiết 2'},
-    {id: 3, label: 'Tiết 3'},
-    {id: 4, label: 'Tiết 4'},
-    {id: 5, label: 'Tiết 5'},
-    {id: 6, label: 'Tiết 6'},
-    {id: 7, label: 'Tiết 7'},
-    {id: 8, label: 'Tiết 8'},
-    {id: 9, label: 'Tiết 9'},
-    {id: 10, label: 'Tiết 10'},
-    {id: 11, label: 'Tiết 11'},
-    {id: 12, label: 'Tiết 12'},
-    {id: 13, label: 'Tiết 13'},
-    {id: 14, label: 'Tiết 14'},
+    {id: 1, label: 'Tiết 1', start: '07:00', end: '08:00'},
+    {id: 2, label: 'Tiết 2', start: '08:00', end: '09:00'},
+    {id: 3, label: 'Tiết 3', start: '09:00', end: '10:00'},
+    {id: 4, label: 'Tiết 4', start: '10:00', end: '11:00'},
+    {id: 5, label: 'Tiết 5', start: '11:00', end: '12:00'},
+    {id: 6, label: 'Tiết 6', start: '12:00', end: '13:00'},
+    {id: 7, label: 'Tiết 7', start: '13:00', end: '14:00'},
+    {id: 8, label: 'Tiết 8', start: '14:00', end: '15:00'},
+    {id: 9, label: 'Tiết 9', start: '15:00', end: '16:00'},
+    {id: 10, label: 'Tiết 10', start: '16:00', end: '17:00'},
+    {id: 11, label: 'Tiết 11', start: '17:00', end: '18:00'},
+    {id: 12, label: 'Tiết 12', start: '18:00', end: '19:00'},
+    {id: 13, label: 'Tiết 13', start: '19:00', end: '20:00'},
+    {id: 14, label: 'Tiết 14', start: '20:00', end: '21:00'},
 ];
 
 const WEEKDAYS = [
@@ -31,14 +31,6 @@ const WEEKDAYS = [
     {id: 7, label: 'Chủ Nhật', short: 'CN'},
 ];
 
-const SUBJECT_COLORS = {
-    'INT1332': 'event-math',
-    'INT1331': 'event-programming',
-    'PHY1343': 'event-physics',
-    'ENG1001': 'event-english',
-    'INT2204': 'event-datastructure',
-};
-
 export default function ModernTimeTable({
                                             events = [],
                                             onEventClick,
@@ -47,17 +39,28 @@ export default function ModernTimeTable({
                                             onSelectSemester = () => {
                                             }
                                         }) {
-    const [currentWeek, setCurrentWeek] = useState(new Date());
-    console.log('events', events);
+    const [currentWeek, setCurrentWeek] = useState(() => startOfWeek(new Date(), {weekStartsOn: 1}));
     // Update current week when semester changes
     useEffect(() => {
         if (selectedSemester) {
             const semesterStart = new Date(selectedSemester.start);
             const semesterEnd = new Date(selectedSemester.end);
 
-            // Check if currentWeek is within semester range
-            if (currentWeek < semesterStart || currentWeek > semesterEnd) {
-                setCurrentWeek(semesterStart);
+            // Normalize to week starts to avoid time-of-day comparisons
+            const currentWeekStart = startOfWeek(currentWeek, {weekStartsOn: 1});
+            const semesterFirstWeek = startOfWeek(semesterStart, {weekStartsOn: 1});
+            const semesterLastWeek = startOfWeek(semesterEnd, {weekStartsOn: 1});
+
+            // If current week lies inside semester, keep it. Otherwise try to
+            // default to the week that contains today (if it's inside the
+            // semester). If today is also outside, fall back to semester start.
+            if (currentWeekStart < semesterFirstWeek || currentWeekStart > semesterLastWeek) {
+                const thisWeekStart = startOfWeek(new Date(), {weekStartsOn: 1});
+                if (thisWeekStart >= semesterFirstWeek && thisWeekStart <= semesterLastWeek) {
+                    setCurrentWeek(thisWeekStart);
+                } else {
+                    setCurrentWeek(semesterFirstWeek);
+                }
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,9 +128,33 @@ export default function ModernTimeTable({
         date: addDays(weekStart, index),
     }));
 
-    const getEventsForCell = (dayIndex) => {
+    const computeSlotFromStart = (dt) => {
+        if (!dt) return null;
+        // base 7:00 is slot 1, use 60 minutes per slot (full hours)
+        try {
+            const eventHour = dt.getHours();
+            const eventMin = dt.getMinutes();
+            const minutesFromSeven = (eventHour - 7) * 60 + eventMin;
+            if (minutesFromSeven < 0) return null;
+            return Math.floor(minutesFromSeven / 60) + 1;
+        } catch {
+            return null;
+        }
+    };
+
+    const getEventsForCell = (dayIndex, slotId) => {
         const targetDate = addDays(weekStart, dayIndex);
-        return events.filter(event => isSameDay(event.start, targetDate));
+        return events.filter(event => {
+            const eventStart = event.start ? new Date(event.start) : null;
+            if (!eventStart || !isSameDay(eventStart, targetDate)) return false;
+            // prefer explicit slot index from event (support string/number)
+            if (event.time_slot_idx !== undefined && event.time_slot_idx !== null) {
+                return Number(event.time_slot_idx) === Number(slotId);
+            }
+            // fallback: compute from start time
+            const inferred = computeSlotFromStart(eventStart);
+            return Number(inferred) === Number(slotId);
+        });
     };
 
     const handlePrevWeek = () => {
@@ -157,13 +184,23 @@ export default function ModernTimeTable({
             {/* Top Blue Header Bar */}
             <div className="timetable-top-bar">
                 <div className="top-bar-left">
-                    <h1 className="top-bar-title">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        Thời Khóa Biểu
-                    </h1>
+                        <div className="header-nav-arrows">
+                            <button className="arrow-btn" onClick={handlePrevWeek} disabled={!canGoPrevWeek()} title="Tuần trước">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                        </div>
+                        <h1 className="top-bar-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Thời Khóa Biểu
+                        </h1>
+                </div>
+                <div className="header-nav-arrows">
+                    <button className="arrow-btn" onClick={handleNextWeek} disabled={!canGoNextWeek()} title="Tuần sau">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+                    </button>
                 </div>
             </div>
 
@@ -267,6 +304,7 @@ export default function ModernTimeTable({
                                 {day.label}
                             </th>
                         ))}
+                        <th className="border border-blue-200" style={{width: '80px'}}>Giờ bắt đầu</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -274,7 +312,7 @@ export default function ModernTimeTable({
                         <tr key={slot.id}>
                             <td className="time-slot-cell border border-blue-200">{slot.label}</td>
                             {weekDays.map((day, dayIndex) => {
-                                const cellEvents = getEventsForCell(dayIndex);
+                                const cellEvents = getEventsForCell(dayIndex, slot.id);
                                 const isTodayCol = isToday(day.date);
 
                                 return (
@@ -285,10 +323,10 @@ export default function ModernTimeTable({
                                         {cellEvents.map((event) => (
                                             <div
                                                 key={event.id}
-                                                className={`cell-event ${SUBJECT_COLORS[event.subject] || 'event-default'}`}
+                                                className={`cell-event ${event.subject || 'event-default'}`}
                                                 onClick={() => handleEventClick(event)}
                                             >
-                                                <div className="event-title">{event.title}</div>
+                                                <div className="event-title">{event.title || event.name || event.course_name || event.subjectName || ''}</div>
                                                 <div className="event-details">
                                                     <span>{event.teacher}</span>
                                                     <span>{event.room}</span>
@@ -298,6 +336,7 @@ export default function ModernTimeTable({
                                     </td>
                                 );
                             })}
+                            <td className="time-start-cell border border-blue-200">{slot.start}</td>
                         </tr>
                     ))}
                     </tbody>
