@@ -373,6 +373,9 @@ CREATE TABLE `courseclasses` (
   `class_id` int(11) NOT NULL,
   `semester_id` int(11) NOT NULL,
   `teacher_id` int(11) NOT NULL,
+  `slot` int(11) DEFAULT NULL,
+  `session_per_week` int(11) DEFAULT NULL,
+  `duration_per_session` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `subject_id` (`subject_id`),
   KEY `class_id` (`class_id`),
@@ -395,6 +398,29 @@ CREATE TABLE `subjectrequiresequipment` (
 
 -- Table structure for table `schedules`
 --
+-- Table structure for table `schedule_generations`
+--
+
+CREATE TABLE `schedule_generations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `semester` varchar(50) DEFAULT NULL,
+  `semester_id` int(11) DEFAULT NULL,
+  `total_weeks` int(11) DEFAULT NULL,
+  `week_start` int(11) DEFAULT NULL,
+  `week_end` int(11) DEFAULT NULL,
+  `days_per_week` int(11) DEFAULT NULL,
+  `sessions_per_day` int(11) DEFAULT NULL,
+  `session_duration` int(11) DEFAULT NULL,
+  `generated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `fitness_score` double DEFAULT NULL,
+  `penalty_breakdown` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`penalty_breakdown`)),
+  `raw_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`raw_json`)),
+  PRIMARY KEY (`id`),
+  KEY `semester_id` (`semester_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `schedules`
+--
 
 CREATE TABLE `schedules` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -403,10 +429,14 @@ CREATE TABLE `schedules` (
   `time_slot_id` int(11) DEFAULT NULL,
   `scheduler` varchar(255) DEFAULT NULL,
   `num_of_period` int(11) DEFAULT 1,
+  `week_start` int(11) DEFAULT NULL,
+  `week_end` int(11) DEFAULT NULL,
+  `generation_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `course_class_id` (`course_class_id`),
   KEY `day_id` (`day_id`),
-  KEY `time_slot_id` (`time_slot_id`)
+  KEY `time_slot_id` (`time_slot_id`),
+  KEY `generation_id` (`generation_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table structure for table `teachings`
@@ -531,6 +561,16 @@ INSERT INTO `students` (`class_id`, `name`, `student_identifier`, `user_id`, `em
   (1, 'Nguyễn Văn An', 'B21DCCN001', 4, 'b21dccn001@student.example.edu.vn'),
   (1, 'Trần Thị Bình', 'B21DCCN002', 5, 'b21dccn002@student.example.edu.vn'),
   (2, 'Lê Văn Cường', 'B21DCAT001', 6, 'b21dcat001@student.example.edu.vn');
+
+-- Sample data for table `courseclasses`
+-- (id, name, subject_id, class_id, semester_id, teacher_id, slot, session_per_week, duration_per_session)
+INSERT INTO `courseclasses` (`id`, `name`, `subject_id`, `class_id`, `semester_id`, `teacher_id`, `slot`, `session_per_week`, `duration_per_session`) VALUES
+  (1, 'IT', 2, 1, 5, 3, 1, 2, 45),
+  (2, 'IT1', 1, 2, 5, 2, 1, 2, 45),
+  (3, 'AI', 3, 1, 5, 1, 2, 3, 45),
+  (4, 'Databases', 2, 2, 5, 2, 1, 2, 60),
+  (5, 'Networks', 1, 1, 6, 3, 2, 2, 45),
+  (6, 'Web Development', 3, 2, 6, 1, 3, 3, 90);
 
 -- TSCH campus (campus id 1)
 -- TSCH-A (building id 1) floors 0..3
@@ -993,13 +1033,17 @@ ALTER TABLE `roomsequipments`
   ADD CONSTRAINT `roomsequipments_ibfk_1` FOREIGN KEY (`equipment_id`) REFERENCES `equipments` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `roomsequipments_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE;
 
+ALTER TABLE `schedule_generations`
+  ADD CONSTRAINT `schedule_generations_ibfk_1` FOREIGN KEY (`semester_id`) REFERENCES `semesters` (`id`) ON DELETE CASCADE;
+
 --
 -- Constraints for table `schedules`
 --
 ALTER TABLE `schedules`
   ADD CONSTRAINT `schedules_ibfk_1` FOREIGN KEY (`course_class_id`) REFERENCES `courseclasses` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`day_id`) REFERENCES `days` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`time_slot_id`) REFERENCES `timeslots` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`time_slot_id`) REFERENCES `timeslots` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `schedules_ibfk_4` FOREIGN KEY (`generation_id`) REFERENCES `schedule_generations` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `semesters`
