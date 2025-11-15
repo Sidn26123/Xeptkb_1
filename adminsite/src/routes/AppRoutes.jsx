@@ -46,7 +46,7 @@ export default function AppRoutes() {
         <Route path="/chatbot" element={<RAGApp />} />
         <Route path="/guide" element={<TutorialPage />} />
         <Route path={`/scheduler/inputs`} element={<InputResourcesManagement />}/>
-        <Route path={`/scheduler/schedule`} element={<SchedulerResourcesManagement />}/>
+        <Route path={`/scheduler/schedule`} element={<SchedulerPage />}/>
         <Route path="/report" element={<ReportPage />} />
         <Route path="/holiday-management" element={<HolidayManagement />} />
         <Route path="/equipment-management" element={<EquipmentManagement />} />
