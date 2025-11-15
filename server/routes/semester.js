@@ -7,8 +7,8 @@ const {
     createSemesterValidator,
     updateSemesterValidator
 } = require('../validators/semesterValidator');
-router.get('/', verifyToken, authorize('admin'), semesterController.getAllSemesters);
-router.get('/:id', verifyToken, authorize('admin'), semesterController.getSemesterById);
+router.get('/', verifyToken, authorize('admin','student','teacher'), semesterController.getAllSemesters);
+router.get('/:id', verifyToken, authorize('admin','student','teacher'), semesterController.getSemesterById);
 router.post(
     '/',
     verifyToken,

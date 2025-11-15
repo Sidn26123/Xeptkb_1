@@ -10,7 +10,7 @@ const AcademicYear = sequelize.define('AcademicYear', {
   year_code: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: false, // Changed to false to not create index when alter = true
+    unique: true,
   },
   start_date: {
     type: DataTypes.DATEONLY,

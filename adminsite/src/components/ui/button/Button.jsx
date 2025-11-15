@@ -7,6 +7,7 @@ export default function Button({
   onClick,
   className = "",
   disabled = false,
+  type = "button",
 }) {
   const sizeClasses = {
     sm: "px-4 py-3 text-sm",
@@ -22,6 +23,7 @@ export default function Button({
 
   return (
     <button
+      type={type}
       className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${
         sizeClasses[size]
       } ${variantClasses[variant]} ${

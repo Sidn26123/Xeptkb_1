@@ -66,6 +66,12 @@ const CourseClass = sequelize.define('CourseClass', {
 }, {
     tableName: 'courseclasses',
     timestamps: false,
+    indexes: [
+        { fields: ['subject_id'] },
+        { fields: ['class_id'] },
+        { fields: ['semester_id'] },
+        { fields: ['teacher_id'] }
+    ],
 });
 // Associations
 CourseClass.associate = (models) => {

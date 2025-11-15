@@ -44,19 +44,10 @@ export default function AppRoutes() {
         <Route path={"/day-management"} element={<DayManagement />} />
         <Route path={"/course-class-management"} element={<CourseClassManagement />} />
         <Route path="/chatbot" element={<RAGApp />} />
+        <Route path="/guide" element={<TutorialPage />} />
+        <Route path={`/scheduler/inputs`} element={<InputResourcesManagement />}/>
+        <Route path={`/scheduler/schedule`} element={<SchedulerResourcesManagement />}/>
         <Route path="/report" element={<ReportPage />} />
-          <Route path="/guide" element={<TutorialPage />} />
-        <Route
-            path={`/scheduler/inputs`}
-            element={<InputResourcesManagement />}
-        />
-        <Route
-            path={`/scheduler/schedule`}
-            // element={<SchedulerResourcesManagement />}
-            element={<SchedulerPage />}
-        />
-
-
         <Route path="/holiday-management" element={<HolidayManagement />} />
         <Route path="/equipment-management" element={<EquipmentManagement />} />
         <Route path="/room-management" element={<RoomManagement />} />

@@ -24,6 +24,8 @@ const scheduleRoutes = require('./routes/schedule');
 const semesterRoutes = require('./routes/semester');
 const softContraistRoutes = require('./routes/softContraist');
 const studentRoutes = require('./routes/student');
+const studentsiteRoutes = require('./routes/studentsite');
+const teachersiteRoutes = require('./routes/teachersite');
 const subjectRequiresEquipmentRoutes = require('./routes/subjectRequiresEquipment');
 const subjectRoutes = require('./routes/subject');
 const teacherRoutes = require('./routes/teacher');
@@ -47,6 +49,8 @@ app.use(API_PREFIX + '/admin', adminRoutes);
 app.use(API_PREFIX + '/schedule-instances', scheduleInstanceRoutes);
 
 app.use(API_PREFIX + '/students', studentRoutes);
+app.use(API_PREFIX + '/studentsite', studentsiteRoutes);
+app.use(API_PREFIX + '/teachersite', teachersiteRoutes);
 app.use(API_PREFIX + '/teachers', teacherRoutes);
 app.use(API_PREFIX + '/classes', classRoutes);
 app.use(API_PREFIX + '/academic-years', academicYearRoutes);
@@ -66,6 +70,8 @@ app.use(API_PREFIX + '/subject-requires-equipments', subjectRequiresEquipmentRou
 app.use(API_PREFIX + '/subjects', subjectRoutes);
 app.use(API_PREFIX + '/teachings', teachingRoutes);
 app.use(API_PREFIX + '/training-types', trainingTypeRoutes);
+// Mail API (used for sending emails via SMTP or Ethereal fallback)
+app.use(API_PREFIX + '/mail', mailRoutes);
 app.use(API_PREFIX + '/time-slots', timeSlotRoutes);
 app.use(API_PREFIX + '/days', dayRoutes);
 app.use(API_PREFIX + '/reports', reportRoutes);

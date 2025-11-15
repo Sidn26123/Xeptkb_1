@@ -29,7 +29,9 @@ export default function SignIn() {
           setError('Bạn không có quyền truy cập');
           return;
         }
-        authService.saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken }, !!isChecked);
+  authService.saveTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken }, !!isChecked);
+  // persist role so RequireAuth can read it
+  if (authService.saveRole && role) authService.saveRole(role, !!isChecked);
         const from = location.state?.from?.pathname || '/admin-home';
         navigate(from, { replace: true });
         return;

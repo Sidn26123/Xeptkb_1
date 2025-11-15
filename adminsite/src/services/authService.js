@@ -30,6 +30,29 @@ export const saveTokens = ({ accessToken, refreshToken }, persistent = true) => 
   }
 };
 
+/**
+ * Save role string to storage
+ * @param {string} role
+ * @param {boolean} persistent
+ */
+export const saveRole = (role, persistent = true) => {
+  try {
+    const storage = persistent ? localStorage : sessionStorage;
+    if (role !== undefined && role !== null) storage.setItem('role', String(role));
+    const other = persistent ? sessionStorage : localStorage;
+    other.removeItem('role');
+  } catch { /* ignore storage errors (e.g., storage disabled) */ }
+};
+
+export const getRole = () => {
+  try { return localStorage.getItem('role') || sessionStorage.getItem('role') || null; } catch { return null; }
+};
+
+export const clearRole = () => {
+  try { localStorage.removeItem('role'); } catch { /* ignore */ };
+  try { sessionStorage.removeItem('role'); } catch { /* ignore */ };
+};
+
 export const clearTokens = () => {
   try {
     localStorage.removeItem('accessToken');
@@ -128,8 +151,11 @@ export default {
   login,
   refreshAccessToken,
   saveTokens,
+  saveRole,
   clearTokens,
   getAccessToken,
   getRefreshToken,
+  getRole,
+  clearRole,
   apiClient,
 };

@@ -14,11 +14,14 @@ const Faculty = sequelize.define('Faculty', {
   faculty_id: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: false,
+    unique: true,
   },
 }, {
   tableName: 'faculty',
   timestamps: false,
+  indexes: [
+    { fields: ['faculty_id'] }
+  ],
 });
 
 module.exports = Faculty;

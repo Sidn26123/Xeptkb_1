@@ -10,14 +10,26 @@ const Teaching = sequelize.define('Teaching', {
   course_class_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'courseclasses',
+      key: 'id',
+    }
   },
   teacher_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'teachers',
+      key: 'id',
+    }
   },
 }, {
   tableName: 'teachings',
   timestamps: false,
+  indexes: [
+    { fields: ['course_class_id'] },
+    { fields: ['teacher_id'] }
+  ],
 });
 Teaching.associate = (models) => {
   // Teaching thuộc về CourseClass (1:N)
