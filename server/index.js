@@ -189,7 +189,9 @@ function gracefulShutdown(signal) {
 // Bắt các tín hiệu hệ thống
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));   // Ctrl + C
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM')); // kill <pid>
+process.once("SIGUSR2", () => gracefulShutdown("SIGUSR2"));
 process.on('uncaughtException', (err) => {
   console.error('💥 Uncaught Exception:', err);
   gracefulShutdown('uncaughtException');
+  //
 });
