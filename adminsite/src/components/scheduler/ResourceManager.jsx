@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from "react";
 import useSchedulerStore, {
-    setCourses, setRooms, setSchedules, setSelectedSemester, setTeachers, updateSemesterConfig,
+    setCourses, setRooms, setSchedules, setSelectedSemester, setTeachers, updateSemesterConfig, useConstraints,
     useCourses,
     useRooms, useSchedulingActions,
     useSelectedCourses, useSelectedRooms, useSelectedSemester,
@@ -25,6 +25,8 @@ import {getAllCourseClasses} from "../../services/courseClassService.js";
 import {getAllTeachers} from "../../services/teacherService.js";
 import {getAllRooms} from "../../services/roomService.js";
 import {callGenerateSchedule} from "../../services/scheduleService.js";
+import ConstraintSelector from "../constrant/ConstraintSelector.jsx";
+import {getAll} from "../../services/constraintService.js";
 
 /**
  * Chuyển đổi chuỗi "2-1, 3-7" thành mảng [[2, 1], [3, 7]]
@@ -112,7 +114,296 @@ const formatDataForApi = (state, data) => {
         semester_config: finalSemesterConfig,
     };
 };
-
+export const convertConstraintsToAPI = (selectedConstraints) => {
+    return selectedConstraints.map(constraint => ({
+        name: constraint.code,
+        weight: constraint.weight
+    }));
+};
+const testData = {
+    "courses": [
+        {
+            "id": 1,
+            "course_id": 101,
+            "class_id": 1,
+            "teacher_id": 1,
+            "student_count": 50,
+            "weeks_needed": 3,
+            "sessions_per_week": 1,
+            "duration_per_session": 4,
+            "type": "theory",
+            "required_equipment_ids": [1, 3],
+            "dependency_id": 21
+        },
+        {
+            "id": 21,
+            "course_id": 101,
+            "class_id": 1,
+            "teacher_id": 1,
+            "student_count": 25,
+            "weeks_needed": 4,
+            "sessions_per_week": 1,
+            "duration_per_session": 2,
+            "type": "lab",
+            "required_equipment_ids": [2, 3, 5],
+            "dependency_id": 1
+        },
+        {
+            "id": 2,
+            "course_id": 102,
+            "class_id": 2,
+            "teacher_id": 3,
+            "student_count": 40,
+            "weeks_needed": 5,
+            "sessions_per_week": 1,
+            "duration_per_session": 4,
+            "type": "theory",
+            "required_equipment_ids": [1, 2],
+            "dependency_id": null
+        },
+        {
+            "id": 3,
+            "course_id": 103,
+            "class_id": 2,
+            "teacher_id": 2,
+            "student_count": 60,
+            "weeks_needed": 5,
+            "sessions_per_week": 3,
+            "duration_per_session": 2,
+            "type": "theory",
+            "required_equipment_ids": [1, 3],
+            "dependency_id": null
+        },
+        {
+            "id": 4,
+            "course_id": 104,
+            "class_id": 2,
+            "teacher_id": 3,
+            "student_count": 45,
+            "weeks_needed": 4,
+            "sessions_per_week": 2,
+            "duration_per_session": 2,
+            "type": "theory",
+            "required_equipment_ids": [1, 3, 4],
+            "dependency_id": null
+        },
+        {
+            "id": 5,
+            "course_id": 105,
+            "class_id": 3,
+            "teacher_id": 3,
+            "student_count": 35,
+            "weeks_needed": 3,
+            "sessions_per_week": 2,
+            "duration_per_session": 2,
+            "type": "theory",
+            "required_equipment_ids": [1, 3],
+            "dependency_id": null
+        },
+        {
+            "id": 6,
+            "course_id": 106,
+            "class_id": 3,
+            "teacher_id": 4,
+            "student_count": 35,
+            "weeks_needed": 4,
+            "sessions_per_week": 2,
+            "duration_per_session": 2,
+            "type": "theory",
+            "required_equipment_ids": [1, 3],
+            "dependency_id": null
+        }
+    ],
+    "teachers": [
+        {
+            "id": 1,
+            "name": "Teacher A",
+            "busy_slots": [[2, 1], [2, 2], [2, 3], [2, 4]],
+            "should_avoid_slots": [],
+            "want_slots": [],
+            "days_off": [6]
+        },
+        {
+            "id": 2,
+            "name": "Teacher B",
+            "busy_slots": [[3, 7], [3, 8]],
+            "should_avoid_slots": [],
+            "want_slots": [],
+            "days_off": []
+        },
+        {
+            "id": 3,
+            "name": "Teacher C",
+            "busy_slots": [],
+            "should_avoid_slots": [],
+            "want_slots": [],
+            "days_off": []
+        },
+        {
+            "id": 4,
+            "name": "Teacher D",
+            "busy_slots": [[6, 1], [6, 2]],
+            "should_avoid_slots": [],
+            "want_slots": [],
+            "days_off": []
+        }
+    ],
+    "rooms": [
+        {
+            "id": 1,
+            "name": "Room 101",
+            "capacity": 60,
+            "equipment_ids": [1, 2, 3, 4],
+            "building_id": 1,
+            "campus_id": 1
+        },
+        {
+            "id": 2,
+            "name": "Room 102",
+            "capacity": 50,
+            "equipment_ids": [1, 3],
+            "building_id": 1,
+            "campus_id": 1
+        },
+        {
+            "id": 3,
+            "name": "Room 103",
+            "capacity": 40,
+            "equipment_ids": [3],
+            "building_id": 1,
+            "campus_id": 1
+        },
+        {
+            "id": 4,
+            "name": "Lab 1",
+            "capacity": 35,
+            "equipment_ids": [2, 3, 5],
+            "building_id": 1,
+            "campus_id": 1
+        },
+        {
+            "id": 5,
+            "name": "Lab 2",
+            "capacity": 35,
+            "equipment_ids": [2, 3, 5],
+            "building_id": 1,
+            "campus_id": 1
+        },
+        {
+            "id": 6,
+            "name": "Room 201",
+            "capacity": 70,
+            "equipment_ids": [1, 2, 3, 4, 6],
+            "building_id": 2,
+            "campus_id": 1
+        }
+    ],
+    "equipment": [
+        {"id": 1, "name": "Projector"},
+        {"id": 2, "name": "Computer"},
+        {"id": 3, "name": "Whiteboard"},
+        {"id": 4, "name": "Sound System"},
+        {"id": 5, "name": "Lab Equipment"},
+        {"id": 6, "name": "Smart Board"}
+    ],
+    "semester_config": {
+        "start_week": 1,
+        "end_week": 15,
+        "max_concurrent_courses": 3,
+        "blocked_slots": [[2, 1], [2, 2]],
+        "prime_slots": [[2, 2], [2, 3], [2, 4], [2, 8]]
+    },
+    "constraints": [
+        {
+            "name": "HARD_CONFLICT_TEACHER",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_CONFLICT_ROOM",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_CONFLICT_CLASS",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_ROOM_CAPACITY",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_TEACHER_BUSY",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_OUT_OF_BOUNDS",
+            "weight": 5000000
+        },
+        {
+            "name": "HARD_ROOM_EQUIPMENT",
+            "weight": 2000000
+        },
+        {
+            "name": "HARD_THEORY_BEFORE_LAB",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_OUT_OF_DAILY_PERIODS",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_TEACHER_DAY_OFF",
+            "weight": 1000000
+        },
+        {
+            "name": "HARD_MEETING_BLOCK",
+            "weight": 5000000
+        },
+        {
+            "name": "HARD_INTER_CAMPUS_TRAVEL",
+            "weight": 1000000
+        },
+        {
+            "name": "SOFT_CONCURRENT_OVERLOAD",
+            "weight": 1000
+        },
+        {
+            "name": "SOFT_WEEKLY_IMBALANCE",
+            "weight": 50
+        },
+        {
+            "name": "SOFT_AVOID_LUNCH",
+            "weight": 1000000
+        },
+        {
+            "name": "SOFT_AVOID_EDGE",
+            "weight": 25
+        },
+        {
+            "name": "SOFT_STUDENT_GAPS",
+            "weight": 75
+        },
+        {
+            "name": "SOFT_TEACHER_GAPS",
+            "weight": 50
+        },
+        {
+            "name": "SOFT_STUDENT_DAYS",
+            "weight": 100
+        },
+        {
+            "name": "SOFT_LIMIT_CONTINUOUS",
+            "weight": 50
+        },
+        {
+            "name": "SOFT_PREFER_PRIME_SLOTS",
+            "weight": 20
+        },
+        {
+            "name": "SOFT_TEACHER_SUBJECT_CLUSTER",
+            "weight": 70
+        }
+    ]
+}
 
 const ResourceManager = () => {
     const [activeTab, setActiveTab] = useState('courses');
@@ -133,21 +424,25 @@ const ResourceManager = () => {
     const [startWeek, setStartWeek] = useState('');
     const [endWeek, setEndWeek] = useState('');
     const [errors, setErrors] = useState({ startWeek: '', endWeek: '' });
+    const [constraints, setConstraints] = useState([]);
+    const selectedConstraints = useConstraints();
     useEffect(() => {
         const fetchData = async () => {
             try {
                 // Khởi tạo dữ liệu
-                const [dataCourse, dataTeacher, dataRoom] = await Promise.all([
+                const [dataCourse, dataTeacher, dataRoom, constraints] = await Promise.all([
                     getAllCourseClasses(),
                     getAllTeachers(),
                     getAllRooms(),
+                    getAll()
                 ]);
 
-                console.log("Loaded data:", {dataCourse, dataTeacher, dataRoom});
+                console.log("Loaded data:", {dataCourse, dataTeacher, dataRoom, constraints});
 
                 setCourses(dataCourse);
                 setTeachers(dataTeacher);
                 setRooms(dataRoom);
+                setConstraints(constraints);
             } catch (error) {
                 console.error("Error loading data:", error);
             }
@@ -533,71 +828,71 @@ const ResourceManager = () => {
                 </div>
 
                 {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Distribution Pie Chart */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3">Phân bố lựa chọn</h3>
-                        <ResponsiveContainer width="100%" height={200}>
-                            <PieChart>
-                                <Pie
-                                    data={selectionDistribution}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({name, value}) => `${name}: ${value}`}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {selectionDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]}/>
-                                    ))}
-                                </Pie>
-                                <Tooltip/>
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                {/*<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">*/}
+                {/*    /!* Distribution Pie Chart *!/*/}
+                {/*    <div>*/}
+                {/*        <h3 className="text-sm font-semibold text-gray-700 mb-3">Phân bố lựa chọn</h3>*/}
+                {/*        <ResponsiveContainer width="100%" height={200}>*/}
+                {/*            <PieChart>*/}
+                {/*                <Pie*/}
+                {/*                    data={selectionDistribution}*/}
+                {/*                    cx="50%"*/}
+                {/*                    cy="50%"*/}
+                {/*                    labelLine={false}*/}
+                {/*                    label={({name, value}) => `${name}: ${value}`}*/}
+                {/*                    outerRadius={80}*/}
+                {/*                    fill="#8884d8"*/}
+                {/*                    dataKey="value"*/}
+                {/*                >*/}
+                {/*                    {selectionDistribution.map((entry, index) => (*/}
+                {/*                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]}/>*/}
+                {/*                    ))}*/}
+                {/*                </Pie>*/}
+                {/*                <Tooltip/>*/}
+                {/*            </PieChart>*/}
+                {/*        </ResponsiveContainer>*/}
+                {/*    </div>*/}
 
-                    {/* Bar Chart based on tab */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                            {activeTab === 'courses' ? 'Số sinh viên theo khóa' :
-                                activeTab === 'teachers' ? 'Số khóa giảng viên có thể dạy' :
-                                    'Sức chứa phòng học'}
-                        </h3>
-                        <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={activeTab === 'courses' ? courseChartData : roomCapacityData}>
-                                <CartesianGrid strokeDasharray="3 3"/>
-                                <XAxis dataKey="name" tick={{fontSize: 12}}/>
-                                <YAxis/>
-                                <Tooltip/>
-                                <Bar
-                                    dataKey={activeTab === 'courses' ? 'students' : activeTab === 'teachers' ? 'courses' : 'capacity'}
-                                    fill="#3b82f6"
-                                    radius={[8, 8, 0, 0]}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+                {/*    /!* Bar Chart based on tab *!/*/}
+                {/*    <div>*/}
+                {/*        <h3 className="text-sm font-semibold text-gray-700 mb-3">*/}
+                {/*            {activeTab === 'courses' ? 'Số sinh viên theo khóa' :*/}
+                {/*                activeTab === 'teachers' ? 'Số khóa giảng viên có thể dạy' :*/}
+                {/*                    'Sức chứa phòng học'}*/}
+                {/*        </h3>*/}
+                {/*        <ResponsiveContainer width="100%" height={200}>*/}
+                {/*            <BarChart data={activeTab === 'courses' ? courseChartData : roomCapacityData}>*/}
+                {/*                <CartesianGrid strokeDasharray="3 3"/>*/}
+                {/*                <XAxis dataKey="name" tick={{fontSize: 12}}/>*/}
+                {/*                <YAxis/>*/}
+                {/*                <Tooltip/>*/}
+                {/*                <Bar*/}
+                {/*                    dataKey={activeTab === 'courses' ? 'students' : activeTab === 'teachers' ? 'courses' : 'capacity'}*/}
+                {/*                    fill="#3b82f6"*/}
+                {/*                    radius={[8, 8, 0, 0]}*/}
+                {/*                />*/}
+                {/*            </BarChart>*/}
+                {/*        </ResponsiveContainer>*/}
+                {/*    </div>*/}
+                {/*</div>*/}
 
                 {/* Additional Course Statistics */}
-                {activeTab === 'courses' && (
-                    <div className="mt-6">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3">Phân tích chi tiết khóa học</h3>
-                        <ResponsiveContainer width="100%" height={200}>
-                            <LineChart data={courseChartData}>
-                                <CartesianGrid strokeDasharray="3 3"/>
-                                <XAxis dataKey="name" tick={{fontSize: 12}}/>
-                                <YAxis/>
-                                <Tooltip/>
-                                <Legend/>
-                                <Line type="monotone" dataKey="weeks" stroke="#8b5cf6" name="Số tuần"/>
-                                <Line type="monotone" dataKey="sessions" stroke="#ec4899" name="Buổi/tuần"/>
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                )}
+                {/*{activeTab === 'courses' && (*/}
+                {/*    <div className="mt-6">*/}
+                {/*        <h3 className="text-sm font-semibold text-gray-700 mb-3">Phân tích chi tiết khóa học</h3>*/}
+                {/*        <ResponsiveContainer width="100%" height={200}>*/}
+                {/*            <LineChart data={courseChartData}>*/}
+                {/*                <CartesianGrid strokeDasharray="3 3"/>*/}
+                {/*                <XAxis dataKey="name" tick={{fontSize: 12}}/>*/}
+                {/*                <YAxis/>*/}
+                {/*                <Tooltip/>*/}
+                {/*                <Legend/>*/}
+                {/*                <Line type="monotone" dataKey="weeks" stroke="#8b5cf6" name="Số tuần"/>*/}
+                {/*                <Line type="monotone" dataKey="sessions" stroke="#ec4899" name="Buổi/tuần"/>*/}
+                {/*            </LineChart>*/}
+                {/*        </ResponsiveContainer>*/}
+                {/*    </div>*/}
+                {/*)}*/}
             </div>
         );
     };
@@ -661,7 +956,8 @@ const ResourceManager = () => {
             }
         )
         console.log("Formatted data for schedule generation:", formattedData);
-        const res = await callGenerateSchedule(formattedData);
+        testData.constraints = convertConstraintsToAPI(selectedConstraints);
+        const res = await callGenerateSchedule(testData);
         setSchedules(res);
         console.log("Schedule generation response:", res);
     }
@@ -973,7 +1269,19 @@ const ResourceManager = () => {
                         Phòng học
                     </button>
                     <button
+                        onClick={() => setActiveTab('constraints')}
+                        className={`px-6 py-3 font-medium transition-all ${
+                            activeTab === 'constraints'
+                                ? 'text-purple-600 border-b-2 border-purple-600'
+                                : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                        <Home className="w-5 h-5 inline mr-2"/>
+                        Ràng buộc
+                    </button>
+                    <button
                         onClick={() => handleSchedule('rooms')}
+                        className = {"text-gray-600 hover:text-gray-900"}
                     >
                         <Home className="w-5 h-5 inline mr-2"/>
                         Xếp lịch
@@ -1013,6 +1321,9 @@ const ResourceManager = () => {
                     {activeTab === 'courses' && renderCourseList()}
                     {activeTab === 'teachers' && renderTeacherList()}
                     {activeTab === 'rooms' && renderRoomList()}
+                    {activeTab === 'constraints' && (
+                        <ConstraintSelector constraintsProps = {constraints}/>
+                    )}
                 </div>
             </div>
         </div>
