@@ -22,7 +22,7 @@ const roomEquipmentRoutes = require('./routes/roomEquipment');
 const roomRoutes = require('./routes/room');
 const scheduleRoutes = require('./routes/schedule');
 const semesterRoutes = require('./routes/semester');
-const softContraistRoutes = require('./routes/softContraist');
+const constraintRoutes = require('./routes/constraint');
 const studentRoutes = require('./routes/student');
 const studentsiteRoutes = require('./routes/studentsite');
 const teachersiteRoutes = require('./routes/teachersite');
@@ -69,6 +69,7 @@ app.use(API_PREFIX + '/semesters', semesterRoutes);
 app.use(API_PREFIX + '/soft-contraists', softContraistRoutes);
 // Schedule change requests (teacher/admin)
 app.use(API_PREFIX + '/schedule-change-requests', scheduleChangeRoutes);
+app.use(API_PREFIX + '/constraints', constraintRoutes);
 app.use(API_PREFIX + '/subject-requires-equipments', subjectRequiresEquipmentRoutes);
 app.use(API_PREFIX + '/subjects', subjectRoutes);
 app.use(API_PREFIX + '/teachings', teachingRoutes);
