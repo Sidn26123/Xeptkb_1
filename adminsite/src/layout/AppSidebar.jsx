@@ -71,7 +71,7 @@ const navItems = [
     subItems: [
       { name: "Day Management", path: "/day-management", pro: false },
       { name: "Periods Management", path: "/time-slot-management", pro: false },
-      { name: "Fixed Periods", path: "/fixed-periods", pro: false },
+      { name: "Constraint Management", path: "/constraint-management", pro: false },
     ],
   },
   {

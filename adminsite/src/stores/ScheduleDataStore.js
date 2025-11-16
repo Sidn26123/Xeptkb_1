@@ -85,6 +85,7 @@ const useSchedulerStore = create((set) => ({
     selected_semester: null,
     schedules: {},
 
+    selected_constraints: [],
 
     // --- NEW DATA (from sampleData) ---
     departments: [
@@ -183,7 +184,7 @@ const useSchedulerStore = create((set) => ({
         updateCourse: (id, course) =>
             set((state) => ({
                 courses: state.courses.map((c) =>
-                    c.id === id ? { ...c, ...course } : c
+                    c.id === id ? {...c, ...course} : c
                 ),
             })),
 
@@ -211,7 +212,7 @@ const useSchedulerStore = create((set) => ({
         updateTeacher: (id, teacher) =>
             set((state) => ({
                 teachers: state.teachers.map((t) =>
-                    t.id === id ? { ...t, ...teacher } : t
+                    t.id === id ? {...t, ...teacher} : t
                 ),
             })),
 
@@ -240,7 +241,7 @@ const useSchedulerStore = create((set) => ({
         updateRoom: (id, room) =>
             set((state) => ({
                 rooms: state.rooms.map((r) =>
-                    r.id === id ? { ...r, ...room } : r
+                    r.id === id ? {...r, ...room} : r
                 ),
             })),
 
@@ -269,7 +270,7 @@ const useSchedulerStore = create((set) => ({
          * Thêm một khóa học vào danh sách được chọn.
          * @param {Object} course - Object khóa học (phải có id).
          */
-        selectCourse: (course) =>{
+        selectCourse: (course) => {
             console.log("Selecting course:", course);
             set((state) => {
                 if (!state.selected_courses.some((c) => c.id === course.id)) {
@@ -390,11 +391,39 @@ const useSchedulerStore = create((set) => ({
                     ...config,
                 },
             })),
+
+        addConstraint: (constraint) => {
+            if (!constraint) return;
+
+            set((state) => {
+                // tránh trùng id
+                const exists = state.selected_constraints.some(c => c.id === constraint.id);
+                if (exists) return state;
+
+                return {
+                    selected_constraints: [...state.selected_constraints, constraint],
+                };
+            });
+        },
+
+        removeConstraint: (constraintId) => {
+            set((state) => ({
+                selected_constraints: state.selected_constraints.filter(
+                    (c) => c.id !== constraintId
+                ),
+            }));
+        },
+
+        setConstraints: (constraints) =>
+            set(() => ({
+                selected_constraints: Array.isArray(constraints) ? constraints : [],
+            })),
     },
 }));
 export const useCourses = () => useSchedulerStore((state) => state.courses);
 export const useTeachers = () => useSchedulerStore((state) => state.teachers);
 export const useRooms = () => useSchedulerStore((state) => state.rooms);
+export const useConstraints = () => useSchedulerStore((state) => state.selected_constraints);
 export const useSemesterConfig = () =>
     useSchedulerStore((state) => state.semester_config);
 export const useSchedules = () => useSchedulerStore((state) => state.schedules);
@@ -424,3 +453,9 @@ export const setSemesters = (semesters) =>
     useSchedulerStore.getState().actions.setSemesters(semesters);
 export const updateSemesterConfig = (config) =>
     useSchedulerStore.getState().actions.updateSemesterConfig(config);
+export const addConstraint = (constraint) =>
+    useSchedulerStore.getState().actions.addConstraint(constraint);
+export const removeConstraint = (constraintId) =>
+    useSchedulerStore.getState().actions.removeConstraint(constraintId);
+export const setConstraints = (constraints) =>
+    useSchedulerStore.getState().actions.setConstraints(constraints);

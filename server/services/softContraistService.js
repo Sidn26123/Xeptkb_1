@@ -1,4 +1,4 @@
-const SoftContraist = require('../models/SoftContraist');
+const SoftContraist = require('../models/Constraints');
 
 async function getSoftContraistById(id) {
   return await SoftContraist.findByPk(id);
