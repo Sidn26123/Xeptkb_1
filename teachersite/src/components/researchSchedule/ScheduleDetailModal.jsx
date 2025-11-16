@@ -1,6 +1,84 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { createScheduleChangeRequest, getRequestsByInstance } from '../../services/scheduleChangeService';
 
-export default function ScheduleDetailModal({ open = false, onClose = () => {}, detail = null }) {
+export default function ScheduleDetailModal({ open = false, onClose = () => {}, detail = null, onRequestSubmit = () => {} }) {
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
+  const [hasAnyRequest, setHasAnyRequest] = useState(false);
+  const isCancellationRequested = (d) => {
+    if (!d) return false;
+    if (d.hasCancellationRequest || d.cancellationRequested) return true;
+    if (Array.isArray(d.existing_requests) && d.existing_requests.some(r => r.request_type === 'cancellation' && r.status !== 'rejected')) return true;
+    if (Array.isArray(d.requests) && d.requests.some(r => r.request_type === 'cancellation' && r.status !== 'rejected')) return true;
+    if (d.raw) {
+      if (Array.isArray(d.raw.requests) && d.raw.requests.some(r => r.request_type === 'cancellation' && r.status !== 'rejected')) return true;
+      if (d.raw.request_type === 'cancellation' && d.raw.status !== 'rejected') return true;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const resolveCancelState = async () => {
+      // do nothing when modal is closed
+      if (!open) {
+        if (mounted) {
+          setCancelled(false);
+          setHasAnyRequest(false);
+        }
+        return;
+      }
+
+      if (isCancellationRequested(detail)) {
+        if (mounted) {
+          setCancelled(true);
+          setHasAnyRequest(true);
+        }
+        return;
+      }
+
+      const scheduleInstanceId =
+        detail?.id ||
+        detail?.schedule_instance_id ||
+        detail?.scheduleInstanceId ||
+        detail?.raw?.id ||
+        detail?.raw?.instanceId ||
+        detail?.raw?.schedule_instance_id ||
+        null;
+
+      if (!scheduleInstanceId) {
+        if (mounted) {
+          setCancelled(false);
+          setHasAnyRequest(false);
+        }
+        return;
+      }
+
+      try {
+        console.debug('ScheduleDetailModal: checking requests for instance', scheduleInstanceId);
+        const all = await getRequestsByInstance(scheduleInstanceId);
+        console.debug('ScheduleDetailModal: requests returned count=', (all || []).length, all);
+        if (!mounted) return;
+        const has = (all || []).length > 0;
+        const foundCancel = (all || []).some(r => r.request_type === 'cancellation' && r.status !== 'rejected');
+        if (mounted) {
+          setHasAnyRequest(Boolean(has));
+          setCancelled(Boolean(foundCancel));
+        }
+      } catch (err) {
+        console.debug('Failed to fetch requests by instance', err);
+        if (mounted) {
+          setCancelled(false);
+          setHasAnyRequest(false);
+        }
+      }
+    };
+
+    resolveCancelState();
+    return () => { mounted = false; };
+  }, [open, detail]);
+
   if (!open) return null;
   
   return (
@@ -107,6 +185,26 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
               >
                 Đóng
               </button>
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  disabled={hasAnyRequest || cancelled}
+                  onClick={() => { if (!hasAnyRequest && !cancelled) setShowRequestModal(true); }}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                    hasAnyRequest || cancelled
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {hasAnyRequest || cancelled ? (
+                    cancelled ? 'Đã yêu cầu hủy lịch' : 'Đã có yêu cầu chỉnh sửa đang chờ xử lý'
+                  ) : (
+                    'Yêu cầu chỉnh sửa'
+                  )}
+                </button>
+              </div>
               <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -114,6 +212,17 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
                 Xuất PDF
               </button>
             </div>
+            {showRequestModal && (
+              <RequestChangeModal
+                detail={detail}
+                onClose={() => setShowRequestModal(false)}
+                onSubmit={(payload) => {
+                  // forward to parent handler (if provided)
+                  onRequestSubmit(payload);
+                  setShowRequestModal(false);
+                }}
+              />
+            )}
           </div>
         ) : (
           <div className="text-center py-12">
@@ -123,6 +232,160 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
             <p className="mt-4 text-gray-500 dark:text-gray-400">Không có dữ liệu</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function RequestChangeModal({ detail = null, onClose = () => {}, onSubmit = () => {} }) {
+  // request types: room_change, teacher_change, time_change
+  const [type, setType] = useState('room_change');
+  const [newDate, setNewDate] = useState('');
+  const [reason, setReason] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const scheduleInstanceId =
+      detail?.id ||
+      detail?.schedule_instance_id ||
+      detail?.scheduleInstanceId ||
+      detail?.raw?.id ||
+      detail?.raw?.instanceId ||
+      detail?.raw?.schedule_instance_id ||
+      null;
+    // coerce to number when possible
+    const coercedScheduleInstanceId = scheduleInstanceId ? Number(scheduleInstanceId) : null;
+    const payload = {
+      schedule_instance_id: coercedScheduleInstanceId,
+      request_type: type,
+      reason: reason || null,
+    };
+    // normalize dates to DATEONLY (YYYY-MM-DD)
+    const toDateOnly = (v) => {
+      if (!v) return null;
+      if (v instanceof Date) return v.toISOString().slice(0,10);
+      if (typeof v !== 'string') return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+      if (/^\d{4}-\d{2}-\d{2}T/.test(v)) return v.slice(0,10);
+      const m = v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) {
+        const dd = m[1].padStart(2,'0');
+        const mm = m[2].padStart(2,'0');
+        const yyyy = m[3];
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      const m2 = v.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
+      return null;
+    };
+
+    if (type === 'time_change') {
+      payload.new_date = toDateOnly(newDate) || null;
+    }
+
+    // include old values for reference (read-only fields shown in UI)
+    if (detail) {
+      payload.old_room_id = detail.roomId || null;
+      payload.old_time_slot_id = detail.timeSlotId || null;
+      payload.old_date = toDateOnly(detail.dateISO || detail.date || detail.raw?.date || detail.raw?.start) || null;
+      payload.old_teacher_id = detail.teacherId || null;
+    }
+
+    // Client-side validation: require schedule_instance_id for now
+    if (!coercedScheduleInstanceId) {
+      alert('Không tìm thấy id buổi học (schedule_instance_id). Vui lòng mở chi tiết buổi học từ lịch để gửi yêu cầu.');
+      return;
+    }
+
+    // submit via service, then forward to parent
+    // debug: print payload to browser console so we can verify what's sent
+    console.debug('RequestChangeModal: sending payload', payload);
+
+    (async () => {
+      try {
+        // also log the network-friendly copy (helps debugging when payload has undefined)
+        const networkPayload = JSON.parse(JSON.stringify(payload));
+        console.debug('RequestChangeModal: network payload', networkPayload);
+
+        await createScheduleChangeRequest(networkPayload);
+        // notify parent and close
+        onSubmit && onSubmit(payload);
+        onClose && onClose();
+        // simple feedback, can be replaced with toast
+        alert('Gửi yêu cầu thành công');
+      } catch (err) {
+        console.error(err);
+        alert('Gửi yêu cầu thất bại: ' + (err.message || 'Lỗi'));
+      }
+    })();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[110000] flex items-center justify-center bg-black/40">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl p-6 m-4">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Yêu cầu chỉnh sửa lịch</h4>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Loại yêu cầu</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} className="mt-1 block w-full rounded-md border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm p-2">
+              <option value="room_change">Đổi phòng</option>
+              <option value="teacher_change">Đổi giáo viên</option>
+              <option value="time_change">Đổi ngày</option>
+            </select>
+          </div>
+
+          {/* Read-only old fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Old room */}
+            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <p className="text-xs text-gray-500">Phòng hiện tại</p>
+              <p className="text-sm font-semibold mt-1">{detail?.room || '-'}</p>
+            </div>
+
+            {/* Old teacher */}
+            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <p className="text-xs text-gray-500">Giáo viên hiện tại</p>
+              <p className="text-sm font-semibold mt-1">{detail?.teacher || '-'}</p>
+            </div>
+
+            {/* Old date */}
+            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <p className="text-xs text-gray-500">Ngày hiện tại</p>
+              <p className="text-sm font-semibold mt-1">{detail?.date || '-'}</p>
+            </div>
+
+            {/* Old timeslot */}
+            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <p className="text-xs text-gray-500">Tiết hiện tại</p>
+              <p className="text-sm font-semibold mt-1">{detail?.time || '-'}</p>
+            </div>
+          </div>
+
+          {type === 'time_change' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Ngày mới</label>
+              <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="mt-1 block w-full rounded-md border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm p-2" />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300">Lý do</label>
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} className="mt-1 block w-full rounded-md border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm p-2" placeholder="Nêu rõ lý do"></textarea>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg">Hủy</button>
+            <button type="submit" className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg">Gửi yêu cầu</button>
+          </div>
+        </form>
       </div>
     </div>
   );

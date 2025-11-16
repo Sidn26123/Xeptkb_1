@@ -122,14 +122,20 @@ export default function Schedule() {
     setModal({
       open: true,
       detail: {
+        id: event.id || event.raw?.id || event.raw?.instanceId || event.raw?.schedule_instance_id || null,
+        raw: event.raw || null,
         subject: event.title,
         teacher: event.teacher,
         room: event.room,
         className: event.className || event.class_name || event.group || event.class || event.courseClassName || '',
         time: `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`,
         date: format(event.start, 'EEEE, dd/MM/yyyy', {locale: viLocale}),
+        dateISO: event.start ? format(event.start, 'yyyy-MM-dd') : null,
         type: event.type === 'lecture' ? 'Lý thuyết' : event.type === 'lab' ? 'Thực hành' : 'Thi',
         code: event.subject,
+        timeSlotId: event.time_slot_id || event.timeSlotId || null,
+        teacherId: event.teacher_id || event.teacherId || null,
+        roomId: event.room_id || event.roomId || null,
       }
     });
   };

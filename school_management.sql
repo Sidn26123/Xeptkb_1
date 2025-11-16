@@ -500,6 +500,65 @@ CREATE TABLE `schedule_instances` (
   KEY `replaced_by_instance_id` (`replaced_by_instance_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================================
+-- TABLE: schedule_change_requests
+-- Mục đích: Lưu các yêu cầu thay đổi lịch học (đổi phòng, đổi giờ, hủy, đổi GV)
+-- ============================================================================
+
+CREATE TABLE `schedule_change_requests` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `schedule_instance_id` int(11) NOT NULL,
+  `request_type` varchar(50) NOT NULL,
+  `status` varchar(50) DEFAULT 'pending',
+  `requested_by_user_id` int(11) NOT NULL,
+  `requested_by_role` varchar(50) NOT NULL,
+  `reason` text NOT NULL,
+
+  `old_room_id` int(11) DEFAULT NULL,
+  `old_time_slot_id` int(11) DEFAULT NULL,
+  `old_date` date DEFAULT NULL,
+  `old_teacher_id` int(11) DEFAULT NULL,
+
+  `new_room_id` int(11) DEFAULT NULL,
+  `new_time_slot_id` int(11) DEFAULT NULL,
+  `new_date` date DEFAULT NULL,
+  `new_teacher_id` int(11) DEFAULT NULL,
+
+  `change_from_date` date DEFAULT NULL,
+  `change_to_date` date DEFAULT NULL,
+
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (`id`),
+  KEY `idx_schedule_instance` (`schedule_instance_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_request_type` (`request_type`),
+  KEY `idx_requested_by` (`requested_by_user_id`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_new_room` (`new_room_id`),
+  KEY `idx_new_teacher` (`new_teacher_id`),
+
+  CONSTRAINT `scr_fk_schedule_instance`
+    FOREIGN KEY (`schedule_instance_id`) REFERENCES `schedule_instances` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `scr_fk_requested_by`
+    FOREIGN KEY (`requested_by_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `scr_fk_old_room`
+    FOREIGN KEY (`old_room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `scr_fk_new_room`
+    FOREIGN KEY (`new_room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `scr_fk_old_teacher`
+    FOREIGN KEY (`old_teacher_id`) REFERENCES `teachers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `scr_fk_new_teacher`
+    FOREIGN KEY (`new_teacher_id`) REFERENCES `teachers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `scr_fk_old_timeslot`
+    FOREIGN KEY (`old_time_slot_id`) REFERENCES `timeslots` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `scr_fk_new_timeslot`
+    FOREIGN KEY (`new_time_slot_id`) REFERENCES `timeslots` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `scr_chk_request_type` CHECK (`request_type` IN ('room_change','time_change','teacher_change','cancellation')),
+  CONSTRAINT `scr_chk_status` CHECK (`status` IN ('pending','under_review','approved','rejected','applied','cancelled'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Table structure for table `teachings`
 --
 
@@ -1042,8 +1101,10 @@ ALTER TABLE `trainingtypes`
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
---
--- Constraints for dumped tables
+-- AUTO_INCREMENT for table `schedule_change_requests`
+ALTER TABLE `schedule_change_requests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 --
 
 --

@@ -35,6 +35,7 @@ const timeSlotRoutes = require('./routes/timeSlot');
 const dayRoutes = require('./routes/day');
 const reportRoutes = require('./routes/report');
 const scheduleInstanceRoutes = require('./routes/scheduleInstance');
+const scheduleChangeRoutes = require('./routes/scheduleChange');
 const mailRoutes = require('./routes/mail');
 const app = express();
 app.use(express.json());
@@ -66,6 +67,8 @@ app.use(API_PREFIX + '/rooms', roomRoutes);
 app.use(API_PREFIX + '/schedules', scheduleRoutes);
 app.use(API_PREFIX + '/semesters', semesterRoutes);
 app.use(API_PREFIX + '/soft-contraists', softContraistRoutes);
+// Schedule change requests (teacher/admin)
+app.use(API_PREFIX + '/schedule-change-requests', scheduleChangeRoutes);
 app.use(API_PREFIX + '/subject-requires-equipments', subjectRequiresEquipmentRoutes);
 app.use(API_PREFIX + '/subjects', subjectRoutes);
 app.use(API_PREFIX + '/teachings', teachingRoutes);
