@@ -68,5 +68,4 @@ router.get('/:id', verifyToken, authorize('admin'), scheduleController.getSchedu
 router.post('/', verifyToken, authorize('admin'), scheduleController.createSchedule);
 router.put('/:id', verifyToken, authorize('admin'), scheduleController.updateSchedule);
 router.delete('/:id', verifyToken, authorize('admin'), scheduleController.deleteSchedule);
-
 module.exports = router;

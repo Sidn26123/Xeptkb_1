@@ -9,6 +9,12 @@ const ScheduleGeneration = require('../models/ScheduleGenerations');
 const ScheduleInstance = require('../models/ScheduleInstances');
 const Day = require('../models/Days');
 const Room = require('../models/Rooms');
+const Subject = require('../models/Subjects');
+const SubjectRequireEquipment = require('../models/SubjectRequiresEquipment');
+const Class = require('../models/Classes');
+const Student = require('../models/Students');
+const RoomEquipment = require('../models/RoomEquipment');
+const Equipment = require('../models/Equipments');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
 const sequelize = require('../config/initSequelize');
 const {getStartOfWeek} = require("../utils/dateHelper");
@@ -896,9 +902,6 @@ function transformInstancesToEvents(instances) {
         const instanceTimeSlot = instance.timeSlot || schedule?.timeSlot || null;
 
         // --- Tính toán Start/End ---
-        // Logic này được lấy TỪ file StudentSchedule.jsx của bạn
-        // (logic tính toán trong hàm convertSchedulesToUI #2)
-
         // QUAN TRỌNG: 'instance.date' là string 'YYYY-MM-DD'
         // new Date('2025-11-13') sẽ tạo ra ngày 13/11/2025 00:00:00 UTC
         // Thêm 'T00:00:00' để nó được parse là giờ địa phương
@@ -906,49 +909,42 @@ function transformInstancesToEvents(instances) {
 
         let start, end;
 
+        // Determine number of periods (prefer instance override, then schedule default)
+        const periods = instance.num_of_period || schedule?.num_of_period || 1;
+
         if (instanceTimeSlot && (instanceTimeSlot.start_hour !== undefined && instanceTimeSlot.start_min !== undefined)) {
             // Use explicit timeslot start/end when present
             start = setHours(setMinutes(eventDate, instanceTimeSlot.start_min), instanceTimeSlot.start_hour);
-            if (instanceTimeSlot.end_hour !== undefined && instanceTimeSlot.end_min !== undefined) {
-                end = setHours(setMinutes(eventDate, instanceTimeSlot.end_min), instanceTimeSlot.end_hour);
-            } else {
-                // fallback to num_of_period * 45 if timeslot has no end
-                const num_of_period = schedule?.num_of_period || 1;
-                end = addMinutes(start, num_of_period * 45);
-            }
+
+            // Calculate end time based on periods (assume 45 minutes per period)
+            end = addMinutes(start, periods * 45);
         } else {
             // QUAN TRỌNG: backward-compat fallback (old logic)
             // Giả định: 7:00 AM là tiết 1
             const baseStartTime = setHours(setMinutes(eventDate, 0), 7);
-            // Giả định: time_slot_id là index (1, 2, 3...)
             const startMinutesOffset = (instance.time_slot_id - 1) * 45; // 45 phút/tiết
             start = addMinutes(baseStartTime, startMinutesOffset);
-            const num_of_period = schedule?.num_of_period || 1;
-            end = addMinutes(start, num_of_period * 45);
+            end = addMinutes(start, periods * 45);
         }
-
-        // --- Trả về cấu trúc Event ---
         return {
             id: instance.id,
             title: courseClass?.name || subject?.name || 'N/A',
-            start: start, // JS Date object
-            end: end,     // JS Date object
+            start: start,
+            end: end, 
             teacher: teacher?.name || 'N/A',
             room: room ? `${room.code} - ${room.name}` : 'N/A',
             type: courseClass?.type || 'lecture',
-            subject: subject?.code || 'N/A', // Mã môn học
-            // Richer fields for UI detail (room view)
+            subject: subject?.code || 'N/A',
             subjectName: subject?.name || null,
-            // Provide explicit class name field for frontend
-            // Prefer the associated `Class` record on CourseClass (alias: 'class')
-            // We only send `className` to avoid requesting/unwrapping DB columns
-            // that may not exist in all environments.
             className: courseClass?.class?.name || courseClass?.name || null,
             teacherName: teacher?.name || null,
             date: instance.date || null,
-            // Provide timeslot index if possible for frontend grid placement
             time_slot_id: instance.time_slot_id || null,
             time_slot_idx: (instance.timeSlot && instance.timeSlot.idx) || instance.time_slot_idx || null,
+            num_of_period: periods,
+            // Provide course class id so frontends can request suitable rooms
+            course_class_id: instance.course_class_id || schedule?.course_class_id || null,
+            courseClassId: instance.course_class_id || schedule?.course_class_id || null,
         };
     });
 }
@@ -964,5 +960,194 @@ module.exports = {
     updateScheduleInstance,
     cancelScheduleInstance,
     rescheduleInstance,
-    transformInstancesToEvents
+    transformInstancesToEvents,
+
+    /**
+     * Kiểm tra các ràng buộc khi override một ScheduleInstance.
+     * @param {number} instanceId - ID của ScheduleInstance cần override.
+     * @param {object} overrides - Object chứa các trường override (ví dụ: { teacher_id: 123, room_id: 456, time_slot_id: 789 }).
+     * @returns {object} - { isValid: boolean, errors: array } - isValid = true nếu không vi phạm, errors chứa danh sách lỗi nếu có.
+     */
+    validateOverride: async function(instanceId, overrides) {
+        const errors = [];
+
+        try {
+            // Lấy instance hiện tại và thông tin từ mẫu Schedule
+            const instance = await ScheduleInstance.findByPk(instanceId, {
+                include: [
+                    {
+                        model: Schedule,
+                        as: 'schedule',
+                        attributes: ['course_class_id', 'num_of_period', 'generation_id']
+                    }
+                ]
+            });
+
+            if (!instance) {
+                errors.push('ScheduleInstance không tồn tại.');
+                return { isValid: false, errors };
+            }
+
+            const { date, schedule } = instance;
+            const { course_class_id, num_of_period, generation_id } = schedule;
+
+            // Lấy các giá trị override (nếu không có, dùng từ mẫu hoặc instance)
+            const teacherId = overrides.teacher_id || instance.teacher_id || schedule.teacher_id;
+            const roomId = overrides.room_id || instance.room_id || schedule.room_id;
+            const timeSlotId = overrides.time_slot_id || instance.time_slot_id || schedule.time_slot_id;
+
+            // 1. Kiểm tra giảng viên không bị trùng lịch
+            if (teacherId) {
+                // Use range-overlap check: consider instance overrides (si.time_slot_id) or pattern (s.time_slot_id)
+                const teacherConflictQuery = `
+                    SELECT si.id
+                    FROM schedule_instances si
+                    LEFT JOIN schedules s ON si.schedule_id = s.id
+                    LEFT JOIN timeslots start_ts ON start_ts.id = COALESCE(si.time_slot_id, s.time_slot_id)
+                    WHERE si.date = :date
+                      AND si.status IN ('scheduled','rescheduled')
+                      AND (si.teacher_id = :teacherId OR (si.teacher_id IS NULL AND s.teacher_id = :teacherId))
+                      AND start_ts.idx IS NOT NULL
+                      AND (
+                        start_ts.idx <= :reqEndIdx
+                        AND (start_ts.idx + s.num_of_period - 1) >= :reqStartIdx
+                      )
+                    LIMIT 1
+                `;
+
+                // Determine requested period range from available timeSlotId (from overrides or schedule)
+                let reqStartIdx = null;
+                const _tsId = timeSlotId || instance.time_slot_id || schedule.time_slot_id;
+                if (_tsId) {
+                    const _ts = await TimeSlot.findByPk(_tsId);
+                    reqStartIdx = _ts ? _ts.idx : null;
+                }
+
+                // If we couldn't determine requested start idx, skip this overlap check (fall back to simple check)
+                if (reqStartIdx) {
+                    const reqEndIdx = reqStartIdx + (schedule?.num_of_period || 1) - 1;
+                    const teacherConflict = await sequelize.query(teacherConflictQuery, {
+                        replacements: { date, teacherId, reqStartIdx, reqEndIdx },
+                        type: QueryTypes.SELECT
+                    });
+                    if (teacherConflict && teacherConflict.length > 0) {
+                        const conflictId = teacherConflict[0].id;
+                        if (conflictId !== instanceId) {
+                            errors.push(`Giảng viên ${teacherId} đã có lịch vào ngày ${date}.`);
+                        }
+                    }
+                } else {
+                    // Fallback: basic check (same as before)
+                    const conflictingTeacher = await ScheduleInstance.findOne({
+                        where: {
+                            date: date,
+                            teacher_id: teacherId,
+                            status: ['scheduled', 'rescheduled']
+                        },
+                        include: [
+                            {
+                                model: Schedule,
+                                as: 'schedule',
+                                where: { generation_id: generation_id },
+                                required: true
+                            }
+                        ]
+                    });
+                    if (conflictingTeacher && conflictingTeacher.id !== instanceId) {
+                        errors.push(`Giảng viên ${teacherId} đã có lịch vào ngày ${date}.`);
+                    }
+                }
+            }
+
+            // 2. Kiểm tra phòng không bị trùng lịch
+            if (roomId) {
+                // Use range-overlap check for rooms similar to teacher check
+                const roomConflictQuery = `
+                    SELECT si.id
+                    FROM schedule_instances si
+                    LEFT JOIN schedules s ON si.schedule_id = s.id
+                    LEFT JOIN timeslots start_ts ON start_ts.id = COALESCE(si.time_slot_id, s.time_slot_id)
+                    WHERE si.date = :date
+                      AND si.status IN ('scheduled','rescheduled')
+                      AND (
+                        si.room_id = :roomId
+                        OR (si.room_id IS NULL AND s.room_id = :roomId)
+                      )
+                      AND start_ts.idx IS NOT NULL
+                      AND (
+                        start_ts.idx <= :reqEndIdx
+                        AND (start_ts.idx + s.num_of_period - 1) >= :reqStartIdx
+                      )
+                    LIMIT 1
+                `;
+
+                let reqStartIdx = null;
+                const _tsId2 = timeSlotId || instance.time_slot_id || schedule.time_slot_id;
+                if (_tsId2) {
+                    const _ts2 = await TimeSlot.findByPk(_tsId2);
+                    reqStartIdx = _ts2 ? _ts2.idx : null;
+                }
+
+                if (reqStartIdx) {
+                    const reqEndIdx = reqStartIdx + (schedule?.num_of_period || 1) - 1;
+                    const roomConflict = await sequelize.query(roomConflictQuery, {
+                        replacements: { date, roomId, reqStartIdx, reqEndIdx },
+                        type: QueryTypes.SELECT
+                    });
+                    if (roomConflict && roomConflict.length > 0) {
+                        const conflictId = roomConflict[0].id;
+                        if (conflictId !== instanceId) {
+                            errors.push(`Phòng ${roomId} đã được sử dụng vào ngày ${date}.`);
+                        }
+                    }
+                } else {
+                    // Fallback: basic check
+                    const conflictingRoom = await ScheduleInstance.findOne({
+                        where: {
+                            date: date,
+                            room_id: roomId,
+                            status: ['scheduled', 'rescheduled']
+                        },
+                        include: [
+                            {
+                                model: Schedule,
+                                as: 'schedule',
+                                where: { generation_id: generation_id },
+                                required: true
+                            }
+                        ]
+                    });
+                    if (conflictingRoom && conflictingRoom.id !== instanceId) {
+                        errors.push(`Phòng ${roomId} đã được sử dụng vào ngày ${date}.`);
+                    }
+                }
+            }
+
+            // 3. Kiểm tra timeslot hợp lệ (nếu có timeSlotId)
+            if (timeSlotId) {
+                const timeSlot = await TimeSlot.findByPk(timeSlotId);
+                if (!timeSlot) {
+                    errors.push(`TimeSlot ${timeSlotId} không tồn tại.`);
+                } else {
+                    // Kiểm tra xem timeslot có đủ cho num_of_period không (giả định timeslot có start_time, end_time)
+                    // Logic này có thể mở rộng tùy theo cấu trúc TimeSlot
+                    // Ở đây, chỉ kiểm tra cơ bản: timeslot tồn tại
+                }
+            }
+
+            // 4. Kiểm tra thêm: Course class không bị trùng (nếu cần, nhưng thường không vì cùng instance)
+            // Có thể thêm kiểm tra khác như: Giáo viên có dạy môn này không, phòng có đủ sức chứa, v.v.
+            // Ví dụ: Kiểm tra teacher có liên quan đến course_class không
+            if (teacherId && course_class_id) {
+                // Giả định có bảng liên kết Teacher-CourseClass, hoặc kiểm tra từ logic khác
+                // Ở đây, bỏ qua nếu không có model cụ thể
+            }
+
+            // Nếu không có lỗi, trả về valid
+            return { isValid: errors.length === 0, errors };
+        } catch (error) {
+            errors.push(`Lỗi khi kiểm tra ràng buộc: ${error.message}`);
+            return { isValid: false, errors };
+        }
+    },
 };

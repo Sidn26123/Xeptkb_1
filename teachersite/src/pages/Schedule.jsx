@@ -1,16 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { startOfWeek, addDays, setHours, setMinutes, format } from "date-fns";
-import { vi as viLocale } from "date-fns/locale";
+import React, { useEffect, useState } from "react";
+
 import ModernTimeTable from "../components/researchSchedule/ModernTimeTable";
 import ScheduleDetailModal from "../components/researchSchedule/ScheduleDetailModal";
-import SemesterSchedule from "../components/researchSchedule/SemesterSchedule";
+import EditScheduleModal from "../components/researchSchedule/EditScheduleModal";
 import { getAllSemesters } from "../services/semesterService";
 import { getProfile } from "../services/authService";
-import { fetchScheduleEventsByTeacher } from "../services/scheduleService";
+import { fetchScheduleEventsByTeacher, getAllTimeSlots } from "../services/scheduleService";
 
 export default function Schedule() {
-  const [mode, setMode] = useState("week");
-
   const [teacher, setTeacher] = useState(null);
 
   const [events, setEvents] = useState([]);
@@ -20,6 +17,8 @@ export default function Schedule() {
   const [semesters, setSemesters] = useState([]);
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedWeekNumber, setSelectedWeekNumber] = useState(null);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -84,7 +83,7 @@ export default function Schedule() {
     return () => {
       mounted = false;
     };
-  }, [mode]);
+  }, []);
 
   // Fetch schedules when teacher or semester changes
   useEffect(() => {
@@ -113,31 +112,64 @@ export default function Schedule() {
     };
   }, [teacher, selectedSemester]);
 
+  // Fetch time slots once when the page mounts (or when teacher page is opened)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoadingTimeSlots(true);
+        const slots = await getAllTimeSlots();
+        const mapped = (slots || []).map(slot => ({
+          ...slot,
+          label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+          start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+          end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+        }));
+        if (!mounted) return;
+        setTimeSlots(mapped);
+      } catch (err) {
+        console.warn('Failed to load time slots in Schedule page:', err);
+        if (mounted) setTimeSlots([]);
+      } finally {
+        if (mounted) setLoadingTimeSlots(false);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, []);
+
   // In a real app we'd fetch teacher info from the API.
   // For now we keep teacher state from profile.
 
   const [modal, setModal] = useState({ open: false, detail: null });
+  const [editModal, setEditModal] = useState({ open: false, detail: null });
 
   const handleEventClick = (event) => {
     setModal({
       open: true,
       detail: {
         id: event.id || event.raw?.id || event.raw?.instanceId || event.raw?.schedule_instance_id || null,
-        raw: event.raw || null,
-        subject: event.title,
-        teacher: event.teacher,
-        room: event.room,
-        className: event.className || event.class_name || event.group || event.class || event.courseClassName || '',
-        time: `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`,
-        date: format(event.start, 'EEEE, dd/MM/yyyy', {locale: viLocale}),
-        dateISO: event.start ? format(event.start, 'yyyy-MM-dd') : null,
-        type: event.type === 'lecture' ? 'Lý thuyết' : event.type === 'lab' ? 'Thực hành' : 'Thi',
-        code: event.subject,
-        timeSlotId: event.time_slot_id || event.timeSlotId || null,
-        teacherId: event.teacher_id || event.teacherId || null,
-        roomId: event.room_id || event.roomId || null,
       }
     });
+  };
+
+  const handleEdit = (detail) => {
+    setModal({ open: false, detail: null }); // Close detail modal
+    setEditModal({ open: true, detail }); // Open edit modal
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      // Refresh events after apply
+      if (teacher && selectedSemester) {
+        const fetched = await fetchScheduleEventsByTeacher(teacher.id, selectedSemester.id);
+        setEvents(Array.isArray(fetched) ? fetched : []);
+      }
+      alert('Cập nhật lịch học thành công!');
+    } catch (error) {
+      console.error('Failed to update schedule:', error);
+      throw error; // Re-throw to let the modal handle the error
+    }
   };
 
   // show loading placeholder while any of the core data is loading
@@ -158,34 +190,31 @@ export default function Schedule() {
     // limit page to single viewport height; inner content scrolls
     <div className="h-full bg-gray-100 overflow-hidden">
         <div className="space-y-4">
-          {mode === "week" ? (
-            // constrain timetable height so whole page fits a single screen comfortably
-            <div>
-              <ModernTimeTable
-                events={events}
-                viewMode={mode || "week"}
-                onEventClick={handleEventClick}
-                semesters={semesters}
-                selectedSemester={selectedSemester}
-                externalWeekNumber={selectedWeekNumber}
-                onSelectSemester={setSelectedSemester}
-              />
-            </div>
-          ) : mode === "semester" ? (
-            <div className="bg-white rounded-lg shadow overflow-auto max-h-[calc(100vh-12rem)] text-sm p-4">
-              <SemesterSchedule
-                events={events}
-                semesters={semesters}
-                selectedSemester={selectedSemester}
-                onSelectSemester={setSelectedSemester}
-              />
-            </div>
-          ) : null}
+          <div>
+            <ModernTimeTable
+              events={events}
+              viewMode="week"
+              onEventClick={handleEventClick}
+              semesters={semesters}
+              selectedSemester={selectedSemester}
+              externalWeekNumber={selectedWeekNumber}
+              externalTimeSlots={timeSlots}
+              externalLoadingTimeSlots={loadingTimeSlots}
+              onSelectSemester={setSelectedSemester}
+            />
+          </div>
         </div>
         <ScheduleDetailModal
           open={modal.open}
           onClose={() => setModal({ open: false, detail: null })}
+          onEdit={handleEdit}
           detail={modal.detail}
+        />
+        <EditScheduleModal
+          open={editModal.open}
+          onClose={() => setEditModal({ open: false, detail: null })}
+          onSave={handleSaveEdit}
+          detail={editModal.detail}
         />
     </div>
   );

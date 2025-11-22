@@ -1,25 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {format, addDays, startOfWeek, isSameDay} from 'date-fns';
 import {vi} from 'date-fns/locale';
+// Parent should provide time slots via props: externalTimeSlots, externalLoadingTimeSlots
 import './ModernTimeTable.blue.css';
-
-// 14 time slots: giờ chẵn, mỗi tiết 1 tiếng (07:00, 08:00, ...)
-const TIME_SLOTS = [
-    {id: 1, label: 'Tiết 1', start: '07:00', end: '08:00'},
-    {id: 2, label: 'Tiết 2', start: '08:00', end: '09:00'},
-    {id: 3, label: 'Tiết 3', start: '09:00', end: '10:00'},
-    {id: 4, label: 'Tiết 4', start: '10:00', end: '11:00'},
-    {id: 5, label: 'Tiết 5', start: '11:00', end: '12:00'},
-    {id: 6, label: 'Tiết 6', start: '12:00', end: '13:00'},
-    {id: 7, label: 'Tiết 7', start: '13:00', end: '14:00'},
-    {id: 8, label: 'Tiết 8', start: '14:00', end: '15:00'},
-    {id: 9, label: 'Tiết 9', start: '15:00', end: '16:00'},
-    {id: 10, label: 'Tiết 10', start: '16:00', end: '17:00'},
-    {id: 11, label: 'Tiết 11', start: '17:00', end: '18:00'},
-    {id: 12, label: 'Tiết 12', start: '18:00', end: '19:00'},
-    {id: 13, label: 'Tiết 13', start: '19:00', end: '20:00'},
-    {id: 14, label: 'Tiết 14', start: '20:00', end: '21:00'},
-];
 
 const WEEKDAYS = [
     {id: 1, label: 'Thứ 2', short: 'T2'},
@@ -36,10 +19,13 @@ export default function ModernTimeTable({
                                             onEventClick,
                                             semesters = [],
                                             selectedSemester = null,
-                                            onSelectSemester = () => {
-                                            }
+                                            onSelectSemester = () => {},
+                                            externalTimeSlots = null,
+                                            externalLoadingTimeSlots = null,
                                         }) {
     const [currentWeek, setCurrentWeek] = useState(() => startOfWeek(new Date(), {weekStartsOn: 1}));
+    const [timeSlots, setTimeSlots] = useState(externalTimeSlots || []);
+    const [loadingTimeSlots, setLoadingTimeSlots] = useState(externalLoadingTimeSlots != null ? externalLoadingTimeSlots : true);
     // Update current week when semester changes
     useEffect(() => {
         if (selectedSemester) {
@@ -65,6 +51,20 @@ export default function ModernTimeTable({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedSemester]);
+
+    // Map externalTimeSlots when provided by parent
+    useEffect(() => {
+        if (externalTimeSlots == null) return;
+        const mapped = (externalTimeSlots || []).map(slot => ({
+            ...slot,
+            label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+            start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+            end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+        }));
+        setTimeSlots(mapped);
+        if (externalLoadingTimeSlots != null) setLoadingTimeSlots(externalLoadingTimeSlots);
+        else setLoadingTimeSlots(false);
+    }, [externalTimeSlots, externalLoadingTimeSlots]);
 
     const weekStart = startOfWeek(currentWeek, {weekStartsOn: 1});
     const weekEnd = addDays(weekStart, 6);
@@ -151,7 +151,22 @@ export default function ModernTimeTable({
             if (event.time_slot_idx !== undefined && event.time_slot_idx !== null) {
                 return Number(event.time_slot_idx) === Number(slotId);
             }
-            // fallback: compute from start time
+            // fallback: infer slot from start time using actual time slots data
+            if (timeSlots.length > 0) {
+                const slot = timeSlots.find(s => s.id === slotId);
+                if (slot) {
+                    const slotStart = new Date(targetDate);
+                    const [hours, minutes] = slot.start.split(':').map(Number);
+                    slotStart.setHours(hours, minutes, 0, 0);
+
+                    const slotEnd = new Date(targetDate);
+                    const [endHours, endMinutes] = slot.end.split(':').map(Number);
+                    slotEnd.setHours(endHours, endMinutes, 0, 0);
+
+                    return eventStart >= slotStart && eventStart < slotEnd;
+                }
+            }
+            // final fallback: use old logic if no time slots data
             const inferred = computeSlotFromStart(eventStart);
             return Number(inferred) === Number(slotId);
         });
@@ -293,54 +308,103 @@ export default function ModernTimeTable({
 
             {/* Timetable Grid */}
             <div className="timetable-table-container">
-                <table className="timetable-table border-collapse border border-blue-200"
-                       style={{tableLayout: 'fixed', width: '100%'}}>
-                    <thead>
-                    <tr>
-                        <th className="border border-blue-200" style={{width: '80px'}}>Tiết</th>
-                        {weekDays.map((day) => (
-                            <th key={day.id} className="border border-blue-200"
-                                style={{width: `${100 / weekDays.length}%`, minWidth: '80px'}}>
-                                {day.label}
-                            </th>
-                        ))}
-                        <th className="border border-blue-200" style={{width: '80px'}}>Giờ bắt đầu</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {TIME_SLOTS.map((slot) => (
-                        <tr key={slot.id}>
-                            <td className="time-slot-cell border border-blue-200">{slot.label}</td>
-                            {weekDays.map((day, dayIndex) => {
-                                const cellEvents = getEventsForCell(dayIndex, slot.id);
-                                const isTodayCol = isToday(day.date);
-
-                                return (
-                                    <td
-                                        key={day.id}
-                                        className={`schedule-table-cell border border-blue-200 ${isTodayCol ? 'today-col' : ''}`}
-                                    >
-                                        {cellEvents.map((event) => (
-                                            <div
-                                                key={event.id}
-                                                className={`cell-event ${event.subject || 'event-default'}`}
-                                                onClick={() => handleEventClick(event)}
-                                            >
-                                                <div className="event-title">{event.title || event.name || event.course_name || event.subjectName || ''}</div>
-                                                <div className="event-details">
-                                                    <span>{event.teacher}</span>
-                                                    <span>{event.room}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </td>
-                                );
-                            })}
-                            <td className="time-start-cell border border-blue-200">{slot.start}</td>
+                {loadingTimeSlots ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="text-center">
+                            <svg className="mx-auto h-8 w-8 animate-spin text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <p className="mt-2 text-gray-600 dark:text-gray-400">Đang tải thời khóa biểu...</p>
+                        </div>
+                    </div>
+                ) : (
+                    <table className="timetable-table border-collapse border border-blue-200"
+                           style={{tableLayout: 'fixed', width: '100%'}}>
+                        <thead>
+                        <tr>
+                            <th className="border border-blue-200" style={{width: '80px'}}>Tiết</th>
+                            {weekDays.map((day) => (
+                                <th key={day.id} className="border border-blue-200"
+                                    style={{width: `${100 / weekDays.length}%`, minWidth: '80px'}}>
+                                    {day.label}
+                                </th>
+                            ))}
+                            <th className="border border-blue-200" style={{width: '80px'}}>Giờ bắt đầu</th>
                         </tr>
-                    ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                        {(() => {
+                            const occupiedSlots = {};
+                            for (let d = 0; d < weekDays.length; d++) occupiedSlots[d] = new Set();
+
+                            return timeSlots.map((slot, slotIdx) => (
+                                <tr key={slot.id}>
+                                    <td className="time-slot-cell border border-blue-200">{slot.label}</td>
+                                    {weekDays.map((day, dayIndex) => {
+                                        if (occupiedSlots[dayIndex].has(slot.id)) return null;
+
+                                        const cellEvents = getEventsForCell(dayIndex, slot.id) || [];
+                                        const isTodayCol = isToday(day.date);
+
+                                        if (cellEvents.length === 1) {
+                                            const ev = cellEvents[0];
+                                            const periods = ev.num_of_period ?? ev.number_of_period ?? 1;
+                                            const span = Math.max(1, Number(periods) || 1);
+
+                                            for (let k = 1; k < span; k++) {
+                                                const nextSlot = timeSlots[slotIdx + k];
+                                                if (nextSlot) occupiedSlots[dayIndex].add(nextSlot.id);
+                                            }
+
+                                            return (
+                                                <td
+                                                    key={day.id}
+                                                    rowSpan={span}
+                                                    className={`schedule-table-cell border border-blue-200 align-top ${isTodayCol ? 'today-col' : ''}`}
+                                                >
+                                                    <div
+                                                        key={ev.id}
+                                                        className={`cell-event ${ev.subject || 'event-default'}`}
+                                                        onClick={() => handleEventClick(ev)}
+                                                    >
+                                                        <div className="event-title">{ev.title || ev.name || ev.course_name || ev.subjectName || ''}</div>
+                                                        <div className="event-details">
+                                                            <span>{ev.teacher}</span>
+                                                            <span>{ev.room}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            );
+                                        }
+
+                                        return (
+                                            <td
+                                                key={day.id}
+                                                className={`schedule-table-cell border border-blue-200 ${isTodayCol ? 'today-col' : ''}`}
+                                            >
+                                                {cellEvents.map((event) => (
+                                                    <div
+                                                        key={event.id}
+                                                        className={`cell-event ${event.subject || 'event-default'}`}
+                                                        onClick={() => handleEventClick(event)}
+                                                    >
+                                                        <div className="event-title">{event.title || event.name || event.course_name || event.subjectName || ''}</div>
+                                                        <div className="event-details">
+                                                            <span>{event.teacher}</span>
+                                                            <span>{event.room}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </td>
+                                        );
+                                    })}
+                                    <td className="time-start-cell border border-blue-200">{slot.start}</td>
+                                </tr>
+                            ));
+                        })()}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );

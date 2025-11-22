@@ -7,11 +7,14 @@ import RoomScheduleDetailModal from './RoomScheduleDetailModal';
 import { getAllSemesters } from '../../services/semesterService';
 import { getAllRooms } from '../../services/roomService';
 import { fetchScheduleEventsByRoom } from '../../services/scheduleService';
+import { getAllTimeSlots } from '../../services/timeSlotService';
 
 export default function RoomSchedule({ events: initialEvents = null, fetchEventsByRoom = null }) {
   const [query, setQuery] = React.useState('');
   const [mode, setMode] = React.useState('week');
   const [events, setEvents] = React.useState(initialEvents || []);
+  const [timeSlots, setTimeSlots] = React.useState([]);
+  const [loadingTimeSlots, setLoadingTimeSlots] = React.useState(true);
   const [modal, setModal] = React.useState({ open: false, detail: null });
   const [semesters, setSemesters] = React.useState([]);
   const [selectedSemester, setSelectedSemester] = React.useState(null);
@@ -75,6 +78,32 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
       }
     }
     fetchRooms();
+    return () => { mounted = false; };
+  }, []);
+
+  // Load time slots once for ModernTimeTable
+  React.useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoadingTimeSlots(true);
+        const slots = await getAllTimeSlots();
+        if (!mounted) return;
+        const mapped = (slots || []).map(slot => ({
+          ...slot,
+          label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+          start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+          end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+        }));
+        setTimeSlots(mapped);
+      } catch (err) {
+        console.error('Failed to load time slots in RoomSchedule:', err);
+        setTimeSlots([]);
+      } finally {
+        if (mounted) setLoadingTimeSlots(false);
+      }
+    };
+    load();
     return () => { mounted = false; };
   }, []);
 
@@ -290,6 +319,8 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
               semesters={semesters}
               selectedSemester={selectedSemester}
               onSelectSemester={setSelectedSemester}
+              externalTimeSlots={timeSlots}
+              externalLoadingTimeSlots={loadingTimeSlots}
             />
           ) : mode === 'semester' ? (
             <SemesterSchedule
@@ -313,6 +344,8 @@ export default function RoomSchedule({ events: initialEvents = null, fetchEvents
                 semesters={semesters}
                 selectedSemester={selectedSemester}
                 onSelectSemester={setSelectedSemester}
+                externalTimeSlots={timeSlots}
+                externalLoadingTimeSlots={loadingTimeSlots}
               />
             ) : mode === 'semester' ? (
               <SemesterSchedule

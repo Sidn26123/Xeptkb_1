@@ -102,6 +102,10 @@ Schedule.associate = (models) => {
     foreignKey: 'generation_id',
     as: 'generation'
   });
+  Schedule.belongsTo(models.Teacher, {
+    foreignKey: 'teacher_id',
+    as: 'teacher'
+  });
   Schedule.hasMany(models.ScheduleInstance, {
     foreignKey: 'schedule_id',
     as: 'instances'

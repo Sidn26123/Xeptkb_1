@@ -36,7 +36,6 @@ export default function NavBar({ teacher = { name: '—' }, onLogout = () => {} 
                 <div className="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                   <div className="py-1">
                     <Link to="/schedule" onClick={() => setShowScheduleMenu(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Xem thời khóa biểu</Link>
-                    <Link to="/schedule-change" onClick={() => setShowScheduleMenu(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Yêu cầu chỉnh sửa thời khóa biểu</Link>
                   </div>
                 </div>
               )}

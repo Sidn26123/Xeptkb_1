@@ -10,9 +10,12 @@ import {getAllRooms} from '../../services/roomService.js';
 import {getAllCourseClasses} from '../../services/courseClassService.js';
 import {getAllSchedules} from "../../services/scheduleService.js";
 import {fetchScheduleEvents} from "../../services/scheduleService.js";
+import { getAllTimeSlots } from '../../services/timeSlotService';
 
 export default function ClassSchedule() {
     const [events, setEvents] = React.useState([]);
+    const [timeSlots, setTimeSlots] = React.useState([]);
+    const [loadingTimeSlots, setLoadingTimeSlots] = React.useState(true);
     const [_filter, setFilter] = React.useState({});
     const [_classes, setClasses] = React.useState([]);
     const [modal, setModal] = React.useState({open: false, detail: null});
@@ -100,6 +103,32 @@ export default function ClassSchedule() {
             mounted = false;
         };
     }, []);
+
+        // Load time slots once for ModernTimeTable
+        React.useEffect(() => {
+            let mounted = true;
+            const load = async () => {
+                try {
+                    setLoadingTimeSlots(true);
+                    const slots = await getAllTimeSlots();
+                    if (!mounted) return;
+                    const mapped = (slots || []).map(slot => ({
+                        ...slot,
+                        label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+                        start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+                        end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+                    }));
+                    setTimeSlots(mapped);
+                } catch (err) {
+                    console.error('Failed to load time slots in ClassSchedule:', err);
+                    setTimeSlots([]);
+                } finally {
+                    if (mounted) setLoadingTimeSlots(false);
+                }
+            };
+            load();
+            return () => { mounted = false; };
+        }, []);
 
     // When the selected semester changes (or selected class changes), refetch
     // schedule events for the currently selected class so the view matches the
@@ -432,6 +461,8 @@ export default function ClassSchedule() {
                             semesters={semesters}
                             selectedSemester={selectedSemester}
                             onSelectSemester={setSelectedSemester}
+                            externalTimeSlots={timeSlots}
+                            externalLoadingTimeSlots={loadingTimeSlots}
                         />
                     ) : mode === 'semester' ? (
                         <SemesterSchedule
@@ -456,6 +487,8 @@ export default function ClassSchedule() {
                                 semesters={semesters}
                                 selectedSemester={selectedSemester}
                                 onSelectSemester={setSelectedSemester}
+                                externalTimeSlots={timeSlots}
+                                externalLoadingTimeSlots={loadingTimeSlots}
                             />
                         ) : mode === 'semester' ? (
                             <SemesterSchedule

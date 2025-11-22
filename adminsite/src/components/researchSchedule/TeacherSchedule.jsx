@@ -5,6 +5,7 @@ import TeacherScheduleDetailModal from './TeacherScheduleDetailModal';
 import { getAllSemesters } from '../../services/semesterService';
 import { getAllTeachers } from '../../services/teacherService';
 import { fetchScheduleEventsByTeacher } from '../../services/scheduleService';
+import { getAllTimeSlots } from '../../services/timeSlotService';
 import ModernTimeTable from './ModernTimeTable';
 import SemesterSchedule from './SemesterSchedule';
 
@@ -17,6 +18,8 @@ export default function TeacherSchedule() {
   const [semesters, setSemesters] = React.useState([]);
   const [selectedSemester, setSelectedSemester] = React.useState(null);
   const [events, setEvents] = React.useState([]);
+  const [timeSlots, setTimeSlots] = React.useState([]);
+  const [loadingTimeSlots, setLoadingTimeSlots] = React.useState(true);
   const [modal, setModal] = React.useState({open: false, detail: null});
   const [hasSearched, setHasSearched] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -65,6 +68,32 @@ export default function TeacherSchedule() {
       }
     }
     loadData();
+    return () => { mounted = false; };
+  }, []);
+
+  // Load time slots once and provide to ModernTimeTable
+  React.useEffect(() => {
+    let mounted = true;
+    const loadSlots = async () => {
+      try {
+        setLoadingTimeSlots(true);
+        const slots = await getAllTimeSlots();
+        if (!mounted) return;
+        const mapped = (slots || []).map(slot => ({
+          ...slot,
+          label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+          start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+          end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+        }));
+        setTimeSlots(mapped);
+      } catch (err) {
+        console.error('Failed to load time slots in TeacherSchedule:', err);
+        setTimeSlots([]);
+      } finally {
+        if (mounted) setLoadingTimeSlots(false);
+      }
+    };
+    loadSlots();
     return () => { mounted = false; };
   }, []);
 
@@ -215,7 +244,7 @@ export default function TeacherSchedule() {
         {hasSearched ? (
           selectedTeacherId ? (
             mode === 'week' ? (
-              <ModernTimeTable events={events} viewMode={mode} onEventClick={handleEventClick} semesters={semesters} selectedSemester={selectedSemester} onSelectSemester={setSelectedSemester} />
+              <ModernTimeTable events={events} viewMode={mode} onEventClick={handleEventClick} semesters={semesters} selectedSemester={selectedSemester} onSelectSemester={setSelectedSemester} externalTimeSlots={timeSlots} externalLoadingTimeSlots={loadingTimeSlots} />
             ) : (
               <SemesterSchedule events={events} semesters={semesters} selectedSemester={selectedSemester} onSelectSemester={setSelectedSemester} />
             )
@@ -226,7 +255,7 @@ export default function TeacherSchedule() {
               </div>
             ) : (
               mode === 'week' ? (
-                <ModernTimeTable events={events} viewMode={mode} onEventClick={handleEventClick} semesters={semesters} selectedSemester={selectedSemester} onSelectSemester={setSelectedSemester} />
+                <ModernTimeTable events={events} viewMode={mode} onEventClick={handleEventClick} semesters={semesters} selectedSemester={selectedSemester} onSelectSemester={setSelectedSemester} externalTimeSlots={timeSlots} externalLoadingTimeSlots={loadingTimeSlots} />
               ) : (
                 <SemesterSchedule events={events} semesters={semesters} selectedSemester={selectedSemester} onSelectSemester={setSelectedSemester} />
               )

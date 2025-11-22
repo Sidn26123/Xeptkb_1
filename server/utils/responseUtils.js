@@ -32,9 +32,19 @@ class ValidationResponse {
 class ErrorResponse extends Error {
   constructor(message, statusCode) {
     super(message);
+    console.log("ErrorResponse created with message:", message, "and statusCode:", statusCode);
+    this.message = message;
     this.statusCode = statusCode;
     this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
+  }
+  toJSON() {
+    return {
+      success: false,
+      message: this.message,
+      statusCode: this.statusCode,
+      isOperational: this.isOperational
+    };
   }
 }
 

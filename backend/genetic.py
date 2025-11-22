@@ -1747,10 +1747,7 @@ if __name__ == "__main__":
         if result['best_schedule']:
             print(f"\n   Valid Schedule Found: {result['success']}")
             print(f"   Final Fitness (Penalty): {result['fitness']:.0f}")
-            print(f"   Generations Run (Total): "
-                  f"{len(validity_result['fitness_history']) + 
-                   len(structure_result['fitness_history']) + 
-                   len(final_result['fitness_history'])}")
+            print(f"   Generations Run (Total): {len(validity_result['fitness_history']) + len(structure_result['fitness_history']) + len(final_result['fitness_history'])}")
             
             print(f"\n📏 Quality Metrics / Penalty Breakdown (Cuối cùng):")
             if not result['penalty_breakdown']:

@@ -284,22 +284,31 @@ exports.getInstancesBySchedule = async (req, res) => {
 
 /**
  * Lấy chi tiết một instance
- * GET /api/schedules/instances/:instanceId
+ * GET /api/schedules/instances/:instanceId or /api/schedule-instances/:id
  */
 exports.getInstanceById = async (req, res) => {
     try {
-        const instance = await ScheduleInstance.findByPk(req.params.instanceId, {
-            include: [{
-                model: Schedule,
-                as: 'schedule',
-                include: [
-                    { model: require('../models/CourseClasses'), as: 'courseClass' },
-                    { model: require('../models/Rooms'), as: 'room' },
-                    { model: require('../models/TimeSlot'), as: 'timeSlot' },
-                    { model: require('../models/Days'), as: 'day' },
-                    { model: require('../models/Teachers'), as: 'teacher' }
-                ]
-            }]
+        const instanceId = req.params.id || req.params.instanceId;
+        const instance = await ScheduleInstance.findByPk(instanceId, {
+            include: [
+                {
+                    model: Schedule,
+                    as: 'schedule',
+                    include: [
+                        { model: require('../models/CourseClasses'), as: 'courseClass', include: [ { model: require('../models/Classes'), as: 'class' } ] },
+                        { model: require('../models/Rooms'), as: 'room' },
+                        { model: require('../models/TimeSlot'), as: 'timeSlot' },
+                        { model: require('../models/Days'), as: 'day' },
+                        { model: require('../models/Teachers'), as: 'teacher' }
+                    ]
+                },
+                // Include instance-level associations so overrides (room/timeSlot/teacher)
+                // are present directly on the returned object. Frontend should prefer
+                // these when they exist (they represent manual/instance overrides).
+                { model: require('../models/Rooms'), as: 'room' },
+                { model: require('../models/TimeSlot'), as: 'timeSlot' },
+                { model: require('../models/Teachers'), as: 'teacher' }
+            ]
         });
 
         if (!instance) {
@@ -327,28 +336,72 @@ exports.updateInstance = async (req, res) => {
     try {
         const { instanceId } = req.params;
         const updates = req.body;
+        const userRole = req.user.role;
+        const userId = req.user.id;
 
-        // Validate allowed fields
-        const allowedFields = [
-            'room_id',
-            'teacher_id',
-            'time_slot_id',
-            'status',
-            'cancel_reason',
-            'metadata'
-        ];
+        // If user is teacher, they can only update their own instances
+        if (userRole === 'teacher') {
+            const instance = await ScheduleInstance.findByPk(instanceId, {
+                include: [{
+                    model: Schedule,
+                    as: 'schedule',
+                    attributes: ['teacher_id']
+                }]
+            });
 
-        const updateData = {};
-        for (const field of allowedFields) {
-            if (updates[field] !== undefined) {
-                updateData[field] = updates[field];
+            if (!instance) {
+                return res.status(404).json(
+                    new ErrorResponse('Không tìm thấy instance', 404)
+                );
             }
-        }
 
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json(
-                new ErrorResponse('Không có dữ liệu để cập nhật', 400)
-            );
+            // Check if teacher is assigned to this instance
+            const isAssignedTeacher = instance.teacher_id === userId ||
+                (instance.teacher_id === null && instance.schedule?.teacher_id === userId);
+
+            if (!isAssignedTeacher) {
+                return res.status(403).json(
+                    new ErrorResponse('Bạn không có quyền chỉnh sửa buổi học này', 403)
+                );
+            }
+
+            // Teachers can only update certain fields
+            const teacherAllowedFields = ['room_id', 'time_slot_id', 'status'];
+            const updateData = {};
+            for (const field of teacherAllowedFields) {
+                if (updates[field] !== undefined) {
+                    updateData[field] = updates[field];
+                }
+            }
+
+            if (Object.keys(updateData).length === 0) {
+                return res.status(400).json(
+                    new ErrorResponse('Không có dữ liệu để cập nhật', 400)
+                );
+            }
+        } else {
+            // Admin can update all allowed fields
+            const allowedFields = [
+                'room_id',
+                'teacher_id',
+                'time_slot_id',
+                'status',
+                'cancel_reason',
+                'metadata'
+            ];
+
+            const updateData = {};
+            for (const field of allowedFields) {
+                if (updates[field] !== undefined) {
+                    updateData[field] = updates[field];
+                }
+            }
+
+            if (Object.keys(updateData).length === 0) {
+                return res.status(400).json(
+                    new ErrorResponse('Không có dữ liệu để cập nhật', 400)
+                );
+            }
         }
 
         const result = await updateScheduleInstance(instanceId, updateData);
@@ -651,4 +704,5 @@ exports.getInstancesForUser = async (req, res) => {
         res.status(500).json(new ErrorResponse(err.message, 500));
     }
 };
+
 module.exports = exports;

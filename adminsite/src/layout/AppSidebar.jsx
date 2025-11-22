@@ -52,7 +52,6 @@ const navItems = [
       { name: "Quản lý nguồn lực đầu vào", path: "/scheduler/inputs", pro: false },
       { name: "Quản lý lịch xếp phòng", path: "/scheduler/schedule", pro: false },
       { name: "Research Schedule", path: "/research-schedule", pro: false },
-      { name: "Schedule Change Requests", path: "/schedule-change-requests", pro: false },
     ],
   },
   // {

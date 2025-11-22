@@ -7,14 +7,14 @@ const { verifyToken, authorize } = require('../middleware/auth');
 router.get(
     '',
     verifyToken,
-    authorize('admin'),
+    authorize('admin', 'teacher', 'student'),
     timeSlotController.getAll
 );
 
 router.get(
     '/:id',
     verifyToken,
-    authorize('admin'),
+    authorize('admin', 'teacher', 'student'),
     timeSlotController.getById
 );
 

@@ -6,7 +6,6 @@ import Home from "../pages/Home";
 import Schedule from "../pages/Schedule";
 import Profile from "../pages/Profile";
 import ChangePassword from "../pages/ChangePassword";
-import RequestChange from "../pages/RequestChange";
 
 export default function AppRoutes() {
   return (
@@ -15,7 +14,6 @@ export default function AppRoutes() {
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
       <Route path="/teacher-home" element={<Home />} />
       <Route path="/schedule" element={<Schedule />} />
-      <Route path="/schedule-change" element={<RequestChange />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/change-password" element={<ChangePassword />} />
       </Route>

@@ -223,8 +223,13 @@ exports.getHolidayRuleTemplatesForRange = async (req, res) => {
 
       // Thử yearStart trước
       let result = tryYear(yearStart);
-      
-      // Nếu không overlap, thử yearStart - 1 (cho trường hợp HK2 có rule tháng 9-12 năm trước)
+
+      // Nếu không overlap, thử yearStart + 1 (cover holidays in next calendar year, e.g., 01/01 falls in next year for semester spanning new year)
+      if (!result) {
+        result = tryYear(yearStart + 1);
+      }
+
+      // Nếu vẫn không overlap, thử yearStart - 1 (cho trường hợp HK2 có rule tháng 9-12 năm trước)
       if (!result) {
         result = tryYear(yearStart - 1);
       }

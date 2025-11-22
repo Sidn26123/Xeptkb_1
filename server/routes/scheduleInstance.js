@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const scheduleInstanceController = require('../controller/scheduleInstanceController');
+const scheduleChangeController = require('../controller/scheduleChangeController');
 const { verifyToken, authorize } = require('../middleware/auth');
+const { validateProposeChange, validateProposeRoomChange, validateApplyChange } = require('../validators/scheduleChangeValidator');
 const {getScheduleInstancesByQuery} = require("../controller/scheduleInstanceController");
 
 /**
@@ -52,9 +54,9 @@ router.get('/instances/:instanceId', verifyToken, authorize('admin', 'teacher', 
 /**
  * @route   PUT /api/schedules/instances/:instanceId
  * @desc    Cập nhật một instance
- * @access  Admin only
+ * @access  Admin, Teacher
  */
-router.put('/instances/:instanceId', verifyToken, authorize('admin'), scheduleInstanceController.updateInstance);
+router.put('/instances/:instanceId', verifyToken, authorize('admin', 'teacher'), scheduleInstanceController.updateInstance);
 
 /**
  * @route   POST /api/schedules/instances/:instanceId/cancel
@@ -77,11 +79,18 @@ router.post('/instances/:instanceId/reschedule', verifyToken, authorize('admin')
  */
 router.post('/instances/:instanceId/complete', verifyToken, authorize('admin', 'teacher'), scheduleInstanceController.completeInstance);
 
-/**
- * @route   DELETE /api/schedules/instances/:instanceId
- * @desc    Xóa một instance
- * @access  Admin only
- */
-router.delete('/instances/:instanceId', verifyToken, authorize('admin'), scheduleInstanceController.deleteInstance);
+// New endpoints split by mode:
+// - /propose-change/room : find alternative rooms at a fixed timeslot
+router.post('/propose-change/room', verifyToken, authorize('admin', 'teacher'), validateProposeRoomChange, scheduleChangeController.proposeRoomChange);
+// - /propose-change/time : find time+room alternatives (same as existing behavior)
+router.post('/propose-change/time', verifyToken, authorize('admin', 'teacher'), validateProposeChange, scheduleChangeController.proposeTimeChange);
 
+/**
+ * @route   POST /api/schedule-instances/apply-change
+ * @desc    Áp dụng thay đổi lịch đã chọn
+ * @access  Admin, Teacher (chỉ đổi lớp của mình)
+ */
+router.post('/apply-change', verifyToken, authorize('admin', 'teacher'), validateApplyChange, scheduleChangeController.applyScheduleChange);
+
+router.get('/:id', verifyToken, authorize('admin', 'teacher', 'student'), scheduleInstanceController.getInstanceById);
 module.exports = router;

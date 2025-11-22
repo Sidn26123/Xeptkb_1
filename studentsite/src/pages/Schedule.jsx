@@ -6,12 +6,15 @@ import ScheduleDetailModal from "../components/researchSchedule/ScheduleDetailMo
 import SemesterSchedule from "../components/researchSchedule/SemesterSchedule";
 import { getAllSemesters } from "../services/semesterService";
 import { getProfile } from "../services/authService";
+import { getAllTimeSlots } from "../services/timeSlotService";
 
 export default function Schedule() {
   const [mode] = useState("week");
 
   const [student, setStudent] = useState(null);
   const [events, setEvents] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
   const [loadingSemesters, setLoadingSemesters] = useState(false);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
@@ -80,6 +83,31 @@ export default function Schedule() {
       mounted = false;
     };
   }, [mode]);
+
+  // Load time slots once and pass to ModernTimeTable
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoadingTimeSlots(true);
+        const slots = await getAllTimeSlots();
+        if (!mounted) return;
+        const mapped = (slots || []).map(slot => ({
+          ...slot,
+          label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+          start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+          end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+        }));
+        setTimeSlots(mapped);
+      } catch (err) {
+        console.error('Failed to load time slots in Student Schedule:', err);
+        setTimeSlots([]);
+      } finally {
+        if (mounted) setLoadingTimeSlots(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   // Fetch schedules when student or semester changes
   useEffect(() => {
@@ -165,6 +193,8 @@ export default function Schedule() {
               selectedSemester={selectedSemester}
               externalWeekNumber={selectedWeekNumber}
               onSelectSemester={setSelectedSemester}
+              externalTimeSlots={timeSlots}
+              externalLoadingTimeSlots={loadingTimeSlots}
             />
           </div>
         ) : mode === "semester" ? (
