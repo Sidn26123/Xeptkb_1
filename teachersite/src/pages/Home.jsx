@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import authService from '../services/authService';
-import { fetchScheduleForTeacherOnDate } from '../services/scheduleService';
+import { fetchScheduleForUserOnDate } from '../services/scheduleService';
 import { Link } from 'react-router-dom';
+import { getNowInVN } from '../utils/timeUtils';
 
 // --- Small presentational icons (Heroicon-style SVGs inline) ---
 const IconClock = (props) => (
@@ -103,14 +104,14 @@ function InfoGroups({ profile }) {
             <div className="font-medium">{profile?.faculty?.name || profile?.faculty_name || '—'}</div>
           </div>
 
-          <div className="sm:col-span-2">
+                <div className="sm:col-span-2">
             <div className="text-xs text-gray-400">Email trường</div>
-            <div className="font-medium break-words">{profile?.email_school || profile?.user?.username || '—'}</div>
+            <div className="font-medium wrap-break-word">{profile?.email_school || profile?.user?.username || '—'}</div>
           </div>
 
           <div className="sm:col-span-2">
             <div className="text-xs text-gray-400">Email cá nhân</div>
-            <div className="font-medium break-words">{profile?.email_personal || '—'}</div>
+            <div className="font-medium wrap-break-word">{profile?.email_personal || '—'}</div>
           </div>
 
           <div className="sm:col-span-2">
@@ -133,32 +134,60 @@ function NextClassCard({ scheduleToday, nextClassDisplay }) {
             <IconClock className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xs text-gray-400">Next Class Today</div>
-            <div className="text-lg font-semibold text-gray-800">{hasClass ? (nextClassDisplay.course || 'Môn học') : 'Hôm nay không có lớp'}</div>
-            <div className="text-sm text-gray-500 mt-1">{hasClass ? (nextClassDisplay.time || '') : 'Chúc bạn một ngày tốt lành!'}</div>
+            <div className="text-xs text-gray-400">Buổi tiếp theo</div>
+            <div className="text-lg font-semibold text-gray-800">{hasClass ? (nextClassDisplay.className || nextClassDisplay.course || 'Môn học') : 'Tuần này không có lớp'}</div>
+            { hasClass && nextClassDisplay.course && (
+              <div className="text-sm text-gray-500 mt-0.5">Môn: <span className="text-base font-semibold text-gray-800">{nextClassDisplay.course}</span></div>
+            )}
+            <div className="text-sm text-gray-500 mt-1">{hasClass ? (nextClassDisplay.time || '') : 'Chúc bạn một tuần tốt lành!'}</div>
+            { hasClass && nextClassDisplay.date && (
+              <div className="text-sm text-gray-500 mt-1">{new Date(nextClassDisplay.date).toLocaleDateString('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+            )}
             {/* Room code moved below summary */}
-            { hasClass && (
+            { hasClass && nextClassDisplay.teacher?.name &&  (
               <div className="mt-3 text-sm text-gray-600 border-t pt-3">
-                <div className="text-xs text-gray-400">Phòng</div>
-                <div className="text-lg font-semibold text-gray-800">{nextClassDisplay.room?.code || '—'}</div>
+                <div className="text-xs text-gray-400">Giảng viên</div>
+                <div className="text-lg font-semibold text-gray-800">{nextClassDisplay.teacher.name}</div>
+                {nextClassDisplay.teacher.teacher_identifier && (
+                  <div className="text-xs text-gray-500 mt-1">Mã GV: <span className="font-medium text-gray-700">{nextClassDisplay.teacher.teacher_identifier}</span></div>
+                )}
               </div>
             )}
           </div>
         </div>
 
         <div className="text-sm text-gray-600 text-right">
-          <div className="mb-1"><span className="text-xs text-gray-400">Tầng</span>
-            <div className="font-medium">{(nextClassDisplay.room?.floor_number === 0) ? 'Tầng trệt' : (nextClassDisplay.room?.floor_number ?? '—')}</div>
-          </div>
-          <div className="mb-1"><span className="text-xs text-gray-400">Tòa</span><div className="font-medium">{nextClassDisplay.room?.building?.name || '—'}</div></div>
-          <div><span className="text-xs text-gray-400">Cơ sở</span><div className="font-medium">{nextClassDisplay.room?.building?.campus?.name || '—'}</div></div>
+          {/* Room code moved below summary */}
+          { hasClass && (
+            <>
+              <div className="mt-3 text-sm text-gray-600 border-t pt-3">
+                <div className="text-xs text-gray-400">Phòng</div>
+                <div className="text-lg font-semibold text-gray-800">{nextClassDisplay.room?.code || '—'}</div>
+              </div>
+
+              <div className="mb-1 mt-3"><span className="text-xs text-gray-400">Tầng</span>
+                <div className="font-medium">{
+                  nextClassDisplay.room?.floor_number === 0 ? 'Tầng trệt' :
+                  nextClassDisplay.room?.floor_number ? `Tầng ${nextClassDisplay.room.floor_number}` : '—'
+                }</div>
+              </div>
+
+              <div className="mb-1"><span className="text-xs text-gray-400">Tòa</span>
+                <div className="font-medium">{
+                  // Prefer building.name, fall back to extracting from room.name
+                  nextClassDisplay.room?.building?.name ||
+                  (nextClassDisplay.room?.name ? nextClassDisplay.room.name.split(' - ')[0]?.replace('Phòng ', '') : '—')
+                }</div>
+              </div>
+            </>
+          )}
         </div>
         </div>
 
 
       { !hasClass && (
         <div className="mt-4 text-sm text-gray-500 border-t pt-4">
-          <div>Không có lịch hôm nay. Bạn có thể xem lịch đầy đủ để lên kế hoạch.</div>
+          <div>Không có lịch tuần này. Bạn có thể xem lịch đầy đủ để lên kế hoạch.</div>
           <div className="mt-3">
             <Link to="/schedule" className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded text-sm">
               <IconCalendar className="w-4 h-4" /> Xem thời khóa biểu
@@ -188,15 +217,20 @@ function UpcomingClasses({ upcoming, scheduleToday }) {
                   <IconClock className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="font-medium text-gray-800">{u.course}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{u.time || ''}</div>
+                  <div className="font-medium text-gray-800">{u.className || u.subject?.name || u.course || 'Môn học'}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{u.date} · {u.time || u.timeslot?.name || ''}</div>
+                  <div className="text-xs text-gray-500 mt-1">{u.teacher?.name || ''} {u.teacher?.teacher_identifier ? `· ${u.teacher.teacher_identifier}` : ''}</div>
+                  <div className="text-xs text-gray-500">Phòng: {u.room?.code || '—'} · {u.room?.floor_number === 0 ? 'Tầng trệt' : (u.room?.floor_number ? `Tầng ${u.room.floor_number}` : '—')} · {u.room?.building?.name || (u.room?.name ? u.room.name.split(' - ')[0]?.replace('Phòng ', '') : '—')}</div>
                 </div>
+              </div>
+              <div className="text-base font-semibold text-gray-800 text-right ml-4">
+                {u.subject?.name || u.course || ''}
               </div>
             </div>
           ))
         ) : (
           <div className="text-center text-sm text-gray-500 py-6">
-            <div className="font-medium mb-1">Hôm nay bạn không có lớp</div>
+            <div className="font-medium mb-1">Tuần này bạn không có lớp</div>
             <div>Xem lịch đầy đủ để kiểm tra các lớp trong tuần.</div>
           </div>
         )}
@@ -265,43 +299,70 @@ export default function Home() {
 
   // UI state
   const [profile, setProfile] = useState(null);
-  const [scheduleToday, setScheduleToday] = useState([]);
+  const [scheduleWeek, setScheduleWeek] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // (removed unused stats cards)
 
-  // helper: try to parse start time from timeslot name like "07:30-09:00"
-  const parseStartTime = (timeslotName) => {
-    if (!timeslotName) return null;
-    const m = timeslotName.match(/(\d{1,2}:\d{2})/);
-    return m ? m[1] : null;
-  };
+  // (time parsing handled by getInstanceStartMinutes)
 
-  // compute next class from scheduleToday (attempt best-effort)
-  const computeNextClass = (list) => {
-    if (!list || list.length === 0) return null;
-    // Try sort by timeslot.idx if present, else by parsed time
-    const items = [...list];
-    items.sort((a, b) => {
-      const ai = a.timeslot?.idx ?? 0;
-      const bi = b.timeslot?.idx ?? 0;
-      if (ai !== bi) return ai - bi;
-      const at = parseStartTime(a.timeslot?.name) || '00:00';
-      const bt = parseStartTime(b.timeslot?.name) || '00:00';
-      return at.localeCompare(bt);
-    });
-    const now = new Date();
-    const nowStr = now.toTimeString().slice(0,5);
-    for (const it of items) {
-      const start = parseStartTime(it.timeslot?.name) || '00:00';
-      if (start >= nowStr) return it;
+  // helper: get current date/time in VN timezone (delegated to utils)
+  // use getNowInVN() from ../utils/timeUtils
+
+  // helper: get instance start time in minutes since midnight
+  const getInstanceStartMinutes = (inst) => {
+    if (!inst) return 0;
+    // Prefer numeric fields from raw.timeSlot or raw.schedule.timeSlot
+    const raw = inst.raw || {};
+    const slot = raw.timeSlot || (raw.schedule && raw.schedule.timeSlot) || inst.timeslot || null;
+    const coalesce = (o, keys) => {
+      for (const k of keys) {
+        if (o && o[k] !== undefined && o[k] !== null) return o[k];
+      }
+      return null;
+    };
+    const startHour = coalesce(slot, ['start_hour', 'startHour', 'start_h', 'start']) ;
+    const startMin = coalesce(slot, ['start_min', 'startMin', 'start_m', 'startMinute']) ;
+    if (startHour !== null && startMin !== null && !isNaN(startHour) && !isNaN(startMin)) {
+      return Number(startHour) * 60 + Number(startMin);
     }
-    // fallback: return first
-    return items[0];
+
+    // fallback: parse from timeslot name or inst.time string like "07:30-09:00"
+    const timeStr = inst.time || inst.timeslot?.name || '';
+    const m = (timeStr || '').match(/(\d{1,2}):(\d{2})/);
+    if (m) return Number(m[1]) * 60 + Number(m[2]);
+    return 0;
+  };
+  
+  // Use the first instance after current ICT time as the "next class" display
+  const getNextClassFromSchedule = (schedule) => {
+    if (!Array.isArray(schedule) || schedule.length === 0) return null;
+    const now = getNowInVN();
+    // sort schedule by date and numeric start time (minutes)
+    const sorted = [...schedule].sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      const am = getInstanceStartMinutes(a);
+      const bm = getInstanceStartMinutes(b);
+      return am - bm;
+    });
+
+    // compute now in minutes and find first instance that is at/after now
+    for (const inst of sorted) {
+      if (!inst || !inst.date) continue;
+      if (inst.date > now.dateStr) return inst;
+      if (inst.date === now.dateStr) {
+        const instMinutes = getInstanceStartMinutes(inst);
+        const [h, m] = (now.timeStr || '00:00').split(':').map(s => Number(s));
+        const nowMinutes = (Number.isNaN(h) ? 0 : h) * 60 + (Number.isNaN(m) ? 0 : m);
+        if (instMinutes >= nowMinutes) return inst;
+      }
+    }
+    // fallback: return first item (could be previous week) or null
+    return sorted[0] || null;
   };
 
-  const nextClass = computeNextClass(scheduleToday);
+  const nextClass = getNextClassFromSchedule(scheduleWeek);
   const noClassDisplay = {
     course: 'Hôm nay không có lớp',
     time: '',
@@ -315,13 +376,37 @@ export default function Home() {
         time: nextClass.time || nextClass.timeslot?.name || '',
         room: nextClass.room || noClassDisplay.room,
         teacher: nextClass.teacher || noClassDisplay.teacher,
+        className: nextClass.className || (nextClass.class && nextClass.class.name) || '',
+        class: nextClass.class || null,
       }
     : noClassDisplay;
 
   // derive display values
-  const teacher = profile || { name: '—', faculty: '-', academic_title: '-' };
-  const upcoming = (scheduleToday && scheduleToday.length > 0)
-    ? scheduleToday.slice(0, 5).map(s => ({ id: s.id, course: s.subject?.name || s.course_class_name || s.course?.name || s.courseName || s.name || 'Môn học', time: s.timeslot?.name || s.time || '' }))
+  // upcoming: show items from now (ICT) forward, sorted and limited
+  const upcoming = (scheduleWeek && scheduleWeek.length > 0)
+    ? (() => {
+        const now = getNowInVN();
+        const [nh, nm] = (now.timeStr || '00:00').split(':').map(s => Number(s));
+        const nowMinutes = (Number.isNaN(nh) ? 0 : nh) * 60 + (Number.isNaN(nm) ? 0 : nm);
+        const filtered = scheduleWeek.filter(inst => {
+          if (!inst || !inst.date) return false;
+          if (inst.date > now.dateStr) return true;
+          if (inst.date === now.dateStr) {
+            const instMinutes = getInstanceStartMinutes(inst);
+            return instMinutes >= nowMinutes;
+          }
+          return false;
+        });
+        return filtered
+          .sort((a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            const am = getInstanceStartMinutes(a);
+            const bm = getInstanceStartMinutes(b);
+            return am - bm;
+          })
+          .slice(0, 5)
+          .map(s => ({ ...s }));
+      })()
     : [];
 
   // For now we mock the backend responses locally. The mocked objects
@@ -337,23 +422,52 @@ export default function Home() {
         const res = await authService.getProfile();
         const teacherRes = res?.data || res || null;
         if (!cancelled) setProfile(teacherRes);
-        // after profile loaded, fetch today's schedule for this teacher
+        // after profile loaded, fetch this week's schedule for this teacher
         if (!cancelled && teacherRes && teacherRes.id) {
           try {
-            const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
-            const todays = await fetchScheduleForTeacherOnDate(teacherRes.id, today);
-            if (!cancelled && Array.isArray(todays) && todays.length > 0) {
-              setScheduleToday(todays.map(it => ({
-                id: it.id,
-                timeslot: { name: it.timeslot?.name, idx: it.timeslot?.idx },
-                subject: { name: it.subject?.name || it.title },
-                teacher: { name: it.teacher?.name },
-                room: { code: it.room?.code || (it.room || {}).code, building: it.room?.building || {} },
-                time: it.timeslot?.name || '',
-              })));
+            const weekSchedule = await fetchScheduleForUserOnDate(teacherRes.id, 'teacher');
+            if (!cancelled && Array.isArray(weekSchedule) && weekSchedule.length > 0) {
+              const mapped = weekSchedule.map(it => {
+                // prefer instance-level timeSlot, fallback to schedule.timeSlot
+                const slot = (it.raw && (it.raw.timeSlot || it.raw.schedule?.timeSlot)) || null;
+                const formatTwo = (n) => (n === undefined || n === null) ? '00' : String(n).padStart(2, '0');
+                const timeRange = slot ? `${formatTwo(slot.start_hour)}:${formatTwo(slot.start_min)} - ${formatTwo(slot.end_hour)}:${formatTwo(slot.end_min)}` : (it.timeslot?.name || '');
+
+                // prefer courseClass name from schedule, then subject/title
+                const courseName = it.subject?.name || it.title || it.course || 'Môn học';
+
+                // room may be instance-level override (it.room) and include building/campus
+                const room = it.room || (it.raw && it.raw.room) || null;
+
+                const teacherObj = it.teacher || (it.raw && it.raw.teacher) || null;
+
+                // className: prefer top-level className, then nested class.name, then schedule.courseClass.name
+                const className = it.className
+                  || (it.class && it.class.name)
+                  || (it.raw && it.raw.schedule && it.raw.schedule.courseClass && (it.raw.schedule.courseClass.class?.name || it.raw.schedule.courseClass.name))
+                  || '';
+
+                return {
+                  id: it.id,
+                  course: courseName,
+                  className,
+                  timeslot: { name: it.timeslot?.name, idx: it.timeslot?.idx },
+                  time: timeRange,
+                  date: it.date,
+                  subject: { name: it.subject?.name || it.title },
+                  teacher: { name: teacherObj?.name, teacher_identifier: teacherObj?.teacher_identifier },
+                  class: it.class || (it.raw && it.raw.schedule && it.raw.schedule.courseClass && it.raw.schedule.courseClass.class) || null,
+                  room: room ? { code: room.code, name: room.name, floor_number: room.floor_number, building: room.building || {} } : null,
+                  raw: it.raw,
+                };
+              });
+              // set and debug
+              setScheduleWeek(mapped);
+              console.debug('Raw weekSchedule from API:', weekSchedule);
+              console.debug('Mapped scheduleWeek for UI:', mapped);
             }
           } catch (err) {
-            console.warn('Failed to fetch today schedule', err);
+            console.warn('Failed to fetch week schedule', err);
           }
         }
       } catch (err) {
@@ -368,6 +482,13 @@ export default function Home() {
     return () => { cancelled = true; };
   }, []);
 
+  // Debug: log the selected next class when scheduleWeek changes
+  useEffect(() => {
+    if (scheduleWeek && scheduleWeek.length > 0) {
+      console.debug('Selected nextClass (scheduleWeek[0]):', scheduleWeek[0]);
+    }
+  }, [scheduleWeek]);
+
   // Optional: placeholder notifications; no backend change
   const notifications = [];
 
@@ -378,6 +499,9 @@ export default function Home() {
           <div className="p-6 bg-white rounded-lg shadow-sm text-center">Đang tải dữ liệu...</div>
         ) : (
           <>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded">{error}</div>
+            )}
             {/* Header row: teacher card + next class */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
               <div className="lg:col-span-2">
@@ -388,7 +512,7 @@ export default function Home() {
               </div>
 
               <div className="lg:col-span-1 flex flex-col gap-4">
-                <NextClassCard scheduleToday={scheduleToday} nextClassDisplay={nextClassDisplay} />
+                <NextClassCard scheduleToday={scheduleWeek} nextClassDisplay={nextClassDisplay} />
                 <Notifications notifications={notifications} />
               </div>
             </div>
@@ -396,7 +520,7 @@ export default function Home() {
             {/* Main content grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-                <UpcomingClasses upcoming={upcoming} scheduleToday={scheduleToday} />
+                <UpcomingClasses upcoming={upcoming} scheduleToday={scheduleWeek} />
               </div>
 
               <aside className="space-y-6">

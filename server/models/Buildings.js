@@ -44,4 +44,17 @@ const Building = sequelize.define('Building', {
   ],
 });
 
+// Thiết lập association tới Campus (nếu cần)
+Building.associate = (models) => {
+  Building.belongsTo(models.Campus, {
+    foreignKey: 'campus_id',
+    as: 'campus'
+  });
+  // Optionally expose rooms for convenience
+  Building.hasMany(models.Room, {
+    foreignKey: 'buildings_id',
+    as: 'rooms'
+  });
+};
+
 module.exports = Building;

@@ -181,6 +181,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             Thời Khóa Biểu
           </h1>
         </div>
+        <div className="top-bar-right" />
       </div>
 
       {/* Filters Row */}
@@ -243,8 +244,9 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
         </button>
       </div>
 
-      {/* Week Navigation */}
-      <div className="week-navigation">
+      {/* Week Navigation (only shown in week view) */}
+      (
+        <div className="week-navigation">
         <button 
           className="week-nav-btn" 
           onClick={handlePrevWeek} 
@@ -255,9 +257,9 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="week-info">
-          Tuần {weekNumber}: {format(weekStart, 'dd/MM', { locale: vi })} - {format(weekEnd, 'dd/MM/yyyy', { locale: vi })}
-        </span>
+          <span className="week-info">
+            Tuần {weekNumber}: {format(weekStart, 'dd/MM', { locale: vi })} - {format(weekEnd, 'dd/MM/yyyy', { locale: vi })}
+          </span>
         <button 
           className="week-nav-btn" 
           onClick={handleNextWeek} 
@@ -268,9 +270,10 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
-      </div>
+        </div>
+      )
 
-      {/* Timetable Grid */}
+      {/* Timetable / Month Grid */}
       <div className="timetable-table-container">
         {loadingTimeSlots ? (
           <div className="flex items-center justify-center py-12">
@@ -359,7 +362,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
                             >
                               <div className="event-title">{event.title}</div>
                               <div className="event-details">
-                                <span>{event.teacher}</span>
+                                <span>{event.className}</span>
                                 <span>{event.room}</span>
                               </div>
                             </div>

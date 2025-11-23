@@ -193,9 +193,24 @@ exports.getAllInstances = async (req, res) => {
                 {
                     model: require('../models/CourseClasses'),
                     as: 'courseClass',
-                    ...(courseClassId && { where: { id: courseClassId } })
+                    ...(courseClassId && { where: { id: courseClassId } }),
+                    include: [
+                        { model: require('../models/Subjects'), as: 'subject' },
+                        { model: require('../models/Classes'), as: 'class', attributes: ['id', 'name'] }
+                    ]
                 },
-                { model: require('../models/Rooms'), as: 'room' },
+                // Include schedule's room and nested building->campus
+                {
+                    model: require('../models/Rooms'),
+                    as: 'room',
+                    include: [
+                        {
+                            model: require('../models/Buildings'),
+                            as: 'building',
+                            include: [ { model: require('../models/Campus'), as: 'campus' } ]
+                        }
+                    ]
+                },
                 { model: require('../models/TimeSlot'), as: 'timeSlot' },
                 {
                     model: require('../models/Days'),
@@ -305,7 +320,8 @@ exports.getInstanceById = async (req, res) => {
                 // Include instance-level associations so overrides (room/timeSlot/teacher)
                 // are present directly on the returned object. Frontend should prefer
                 // these when they exist (they represent manual/instance overrides).
-                { model: require('../models/Rooms'), as: 'room' },
+                // include instance-level associations; ensure room includes building->campus
+                { model: require('../models/Rooms'), as: 'room', include: [ { model: require('../models/Buildings'), as: 'building', include: [ { model: require('../models/Campus'), as: 'campus' } ] } ] },
                 { model: require('../models/TimeSlot'), as: 'timeSlot' },
                 { model: require('../models/Teachers'), as: 'teacher' }
             ]
@@ -599,7 +615,7 @@ exports.getScheduleInstancesByQuery = async (req, res) => {
             where: whereClause,
             include: [
                 scheduleInclude,
-                { model: Room, as: 'room' },
+                { model: Room, as: 'room', include: [ { model: require('../models/Buildings'), as: 'building', include: [ { model: require('../models/Campus'), as: 'campus' } ] } ] },
                 { model: Teacher, as: 'teacher' },
                 { model: require('../models/TimeSlot'), as: 'timeSlot' }
             ],
@@ -608,9 +624,7 @@ exports.getScheduleInstancesByQuery = async (req, res) => {
 
         // Chuyển đổi dữ liệu về dạng Frontend
         const events = transformInstancesToEvents(instances);
-
-        res.status(200).json(events);
-
+        res.status(200).json(new SuccessResponse(events, 'Lấy thời khóa biểu thành công'));
     } catch (error) {
         console.error('Lỗi khi lấy schedule instances:', error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
@@ -650,8 +664,8 @@ exports.getInstancesForUser = async (req, res) => {
                 model: Schedule,
                 as: 'schedule',
                 required: true,
-                include: [
-                    { model: require('../models/CourseClasses'), as: 'courseClass' },
+                    include: [
+                    { model: require('../models/CourseClasses'), as: 'courseClass', include: [ { model: require('../models/Subjects'), as: 'subject' }, { model: require('../models/Classes'), as: 'class', attributes: ['id', 'name'] } ] },
                     { model: require('../models/Rooms'), as: 'room' },
                     { model: require('../models/TimeSlot'), as: 'timeSlot' },
                     { model: require('../models/Days'), as: 'day' }
@@ -691,7 +705,7 @@ exports.getInstancesForUser = async (req, res) => {
             where: whereClause,
             include: [
                 ...includeClause,
-                { model: Room, as: 'room' },
+                { model: Room, as: 'room', include: [ { model: require('../models/Buildings'), as: 'building', include: [ { model: require('../models/Campus'), as: 'campus' } ] } ] },
                 { model: Teacher, as: 'teacher' },
                 { model: require('../models/TimeSlot'), as: 'timeSlot' }
             ],

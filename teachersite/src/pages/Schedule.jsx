@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 
 import ModernTimeTable from "../components/researchSchedule/ModernTimeTable";
+import MonthView from "../components/researchSchedule/MonthView";
+import { startOfWeek, addDays, setHours, setMinutes, addMinutes } from 'date-fns';
 import ScheduleDetailModal from "../components/researchSchedule/ScheduleDetailModal";
 import EditScheduleModal from "../components/researchSchedule/EditScheduleModal";
 import { getAllSemesters } from "../services/semesterService";
@@ -9,6 +11,8 @@ import { fetchScheduleEventsByTeacher, getAllTimeSlots } from "../services/sched
 
 export default function Schedule() {
   const [teacher, setTeacher] = useState(null);
+  const [viewMode, setViewMode] = useState('week'); // 'week' or 'month'
+  const [monthCursor, setMonthCursor] = useState(null); // Date for current month in month view
 
   const [events, setEvents] = useState([]);
   const [loadingSemesters, setLoadingSemesters] = useState(false);
@@ -19,6 +23,26 @@ export default function Schedule() {
   const [selectedWeekNumber, setSelectedWeekNumber] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
+
+  // compute an initial date for MonthView based on selected semester + selectedWeekNumber
+  const initialMonthDate = useMemo(() => {
+    try {
+      if (!selectedSemester) return new Date();
+      const semStart = new Date(selectedSemester.start);
+      const weekStart = startOfWeek(semStart, { weekStartsOn: 1 });
+      const offsetWeeks = Math.max(1, selectedWeekNumber || 1) - 1;
+      return addDays(weekStart, offsetWeeks * 7);
+    } catch {
+      return new Date();
+    }
+  }, [selectedSemester, selectedWeekNumber]);
+
+  // Set monthCursor when initialMonthDate changes
+  useEffect(() => {
+    setMonthCursor(initialMonthDate);
+  }, [initialMonthDate]);
+
+  
 
   useEffect(() => {
     let mounted = true;
@@ -95,9 +119,27 @@ export default function Schedule() {
       }
       setLoadingSchedules(true);
       try {
-        const fetched = await fetchScheduleEventsByTeacher(teacher.id, selectedSemester.id);
+        let fetched = [];
+        fetched = await fetchScheduleEventsByTeacher(teacher.id, selectedSemester.id);
+        // Enrich with start/end
+        const enriched = fetched.map(ev => {
+          const slot = timeSlots.find(ts => ts.id === ev.time_slot_id);
+          if (!slot) return { ...ev, start: new Date(ev.date + 'T00:00:00'), end: new Date(ev.date + 'T00:00:00') }; // fallback
+          const eventDate = new Date(ev.date + 'T00:00:00');
+          let start, end;
+          if (slot.start_hour !== undefined && slot.start_min !== undefined) {
+            start = setHours(setMinutes(eventDate, slot.start_min), slot.start_hour);
+            end = addMinutes(start, ev.num_of_period * 45);
+          } else {
+            const baseStartTime = setHours(setMinutes(eventDate, 0), 7);
+            const startMinutesOffset = (ev.time_slot_id - 1) * 45;
+            start = addMinutes(baseStartTime, startMinutesOffset);
+            end = addMinutes(start, ev.num_of_period * 45);
+          }
+          return { ...ev, start, end };
+        });
         if (mounted) {
-          setEvents(Array.isArray(fetched) ? fetched : []);
+          setEvents(Array.isArray(enriched) ? enriched : []);
         }
       } catch (err) {
         console.warn('Failed to load schedules', err);
@@ -110,7 +152,7 @@ export default function Schedule() {
     return () => {
       mounted = false;
     };
-  }, [teacher, selectedSemester]);
+  }, [teacher, selectedSemester, viewMode, monthCursor, timeSlots]);
 
   // Fetch time slots once when the page mounts (or when teacher page is opened)
   useEffect(() => {
@@ -160,10 +202,28 @@ export default function Schedule() {
 
   const handleSaveEdit = async () => {
     try {
-      // Refresh events after apply
+      // Refresh events after apply, based on current viewMode
       if (teacher && selectedSemester) {
-        const fetched = await fetchScheduleEventsByTeacher(teacher.id, selectedSemester.id);
-        setEvents(Array.isArray(fetched) ? fetched : []);
+        let fetched = [];
+        fetched = await fetchScheduleEventsByTeacher(teacher.id, selectedSemester.id);
+        // Enrich with start/end
+        const enriched = fetched.map(ev => {
+          const slot = timeSlots.find(ts => ts.id === ev.time_slot_id);
+          if (!slot) return { ...ev, start: new Date(ev.date + 'T00:00:00'), end: new Date(ev.date + 'T00:00:00') }; // fallback
+          const eventDate = new Date(ev.date + 'T00:00:00');
+          let start, end;
+          if (slot.start_hour !== undefined && slot.start_min !== undefined) {
+            start = setHours(setMinutes(eventDate, slot.start_min), slot.start_hour);
+            end = addMinutes(start, ev.num_of_period * 45);
+          } else {
+            const baseStartTime = setHours(setMinutes(eventDate, 0), 7);
+            const startMinutesOffset = (ev.time_slot_id - 1) * 45;
+            start = addMinutes(baseStartTime, startMinutesOffset);
+            end = addMinutes(start, ev.num_of_period * 45);
+          }
+          return { ...ev, start, end };
+        });
+        setEvents(Array.isArray(enriched) ? enriched : []);
       }
       alert('Cập nhật lịch học thành công!');
     } catch (error) {
@@ -191,17 +251,38 @@ export default function Schedule() {
     <div className="h-full bg-gray-100 overflow-hidden">
         <div className="space-y-4">
           <div>
-            <ModernTimeTable
-              events={events}
-              viewMode="week"
-              onEventClick={handleEventClick}
-              semesters={semesters}
-              selectedSemester={selectedSemester}
-              externalWeekNumber={selectedWeekNumber}
-              externalTimeSlots={timeSlots}
-              externalLoadingTimeSlots={loadingTimeSlots}
-              onSelectSemester={setSelectedSemester}
-            />
+            <div className="mb-3 flex items-center justify-end">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setViewMode('week')} className={`px-2 py-1 rounded ${viewMode === 'week' ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-600'}`}>Tuần</button>
+                <button onClick={() => setViewMode('month')} className={`px-2 py-1 rounded ${viewMode === 'month' ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-600'}`}>Tháng</button>
+              </div>
+            </div>
+
+            {viewMode === 'month' ? (
+              <MonthView
+                currentMonth={monthCursor}
+                onMonthChange={setMonthCursor}
+                events={events}
+                onEventClick={handleEventClick}               
+                semesters={semesters}
+                selectedSemester={selectedSemester}
+                externalWeekNumber={selectedWeekNumber}
+                externalTimeSlots={timeSlots}
+                externalLoadingTimeSlots={loadingTimeSlots}
+                onSelectSemester={setSelectedSemester}
+                />
+            ) : (
+              <ModernTimeTable
+                events={events}
+                onEventClick={handleEventClick}
+                semesters={semesters}
+                selectedSemester={selectedSemester}
+                externalWeekNumber={selectedWeekNumber}
+                externalTimeSlots={timeSlots}
+                externalLoadingTimeSlots={loadingTimeSlots}
+                onSelectSemester={setSelectedSemester}
+              />
+            )}
           </div>
         </div>
         <ScheduleDetailModal

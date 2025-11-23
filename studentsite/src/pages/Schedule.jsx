@@ -1,26 +1,47 @@
-import React, { useEffect, useState } from "react";
-import { startOfWeek, addDays, format } from "date-fns";
-import { vi as viLocale } from "date-fns/locale";
+import React, { useEffect, useState, useMemo } from "react";
+
 import ModernTimeTable from "../components/researchSchedule/ModernTimeTable";
+import MonthView from "../components/researchSchedule/MonthView";
+import { startOfWeek, addDays, setHours, setMinutes, addMinutes } from 'date-fns';
 import ScheduleDetailModal from "../components/researchSchedule/ScheduleDetailModal";
-import SemesterSchedule from "../components/researchSchedule/SemesterSchedule";
 import { getAllSemesters } from "../services/semesterService";
 import { getProfile } from "../services/authService";
-import { getAllTimeSlots } from "../services/timeSlotService";
+import { fetchScheduleEventsByStudent, getAllTimeSlots } from "../services/scheduleService";
 
 export default function Schedule() {
-  const [mode] = useState("week");
-
   const [student, setStudent] = useState(null);
+  const [viewMode, setViewMode] = useState('week'); // 'week' or 'month'
+  const [monthCursor, setMonthCursor] = useState(null); // Date for current month in month view
+
   const [events, setEvents] = useState([]);
-  const [timeSlots, setTimeSlots] = useState([]);
-  const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
   const [loadingSemesters, setLoadingSemesters] = useState(false);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [semesters, setSemesters] = useState([]);
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedWeekNumber, setSelectedWeekNumber] = useState(null);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
+
+  // compute an initial date for MonthView based on selected semester + selectedWeekNumber
+  const initialMonthDate = useMemo(() => {
+    try {
+      if (!selectedSemester) return new Date();
+      const semStart = new Date(selectedSemester.start);
+      const weekStart = startOfWeek(semStart, { weekStartsOn: 1 });
+      const offsetWeeks = Math.max(1, selectedWeekNumber || 1) - 1;
+      return addDays(weekStart, offsetWeeks * 7);
+    } catch {
+      return new Date();
+    }
+  }, [selectedSemester, selectedWeekNumber]);
+
+  // Set monthCursor when initialMonthDate changes
+  useEffect(() => {
+    setMonthCursor(initialMonthDate);
+  }, [initialMonthDate]);
+
+  
 
   useEffect(() => {
     let mounted = true;
@@ -34,7 +55,7 @@ export default function Schedule() {
           setSemesters(sems);
           if (sems.length > 0) {
             const now = new Date();
-            const currentSemester = sems.find((s) => {
+            const currentSemester = sems.find(s => {
               try {
                 return new Date(s.start) <= now && now <= new Date(s.end);
               } catch {
@@ -43,6 +64,7 @@ export default function Schedule() {
             });
             setSelectedSemester(currentSemester || sems[0]);
             if (currentSemester) {
+              // Calculate current week number
               const startDate = new Date(currentSemester.start);
               const diffTime = now - startDate;
               const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -72,41 +94,18 @@ export default function Schedule() {
           setStudent(null);
         }
       } catch (err) {
-        console.warn("Failed to load student profile", err);
+        console.warn("Failed to load Student profile", err);
         if (mounted) setStudent(null);
       } finally {
         if (mounted) setLoadingClasses(false);
       }
+
+      // fetch schedules will be done after student is loaded
     })();
 
     return () => {
       mounted = false;
     };
-  }, [mode]);
-
-  // Load time slots once and pass to ModernTimeTable
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setLoadingTimeSlots(true);
-        const slots = await getAllTimeSlots();
-        if (!mounted) return;
-        const mapped = (slots || []).map(slot => ({
-          ...slot,
-          label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
-          start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
-          end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
-        }));
-        setTimeSlots(mapped);
-      } catch (err) {
-        console.error('Failed to load time slots in Student Schedule:', err);
-        setTimeSlots([]);
-      } finally {
-        if (mounted) setLoadingTimeSlots(false);
-      }
-    })();
-    return () => { mounted = false; };
   }, []);
 
   // Fetch schedules when student or semester changes
@@ -119,24 +118,30 @@ export default function Schedule() {
       }
       setLoadingSchedules(true);
       try {
-        // Try to use a dedicated API if available; otherwise fallback to getAllSchedules and filter by student/class
-        const svc = await import("../services/scheduleService");
-        if (svc.fetchScheduleEventsByStudent) {
-          // fetchScheduleEventsByStudent expects a classId (server filters by class)
-          const classId = student.class_id || student.class?.id || student.classId || null;
-          const fetched = await svc.fetchScheduleEventsByStudent(classId, selectedSemester.id);
-          if (mounted) setEvents(Array.isArray(fetched) ? fetched : []);
-        } else if (svc.getAllSchedules) {
-          const all = await svc.getAllSchedules();
-          const filtered = Array.isArray(all)
-            ? all.filter((e) => String(e.student_id) === String(student.id) || String(e.course_class_id) === String(student.class_id))
-            : [];
-          if (mounted) setEvents(filtered);
-        } else {
-          if (mounted) setEvents([]);
+        let fetched = [];
+        fetched = await fetchScheduleEventsByStudent(student.class.id, selectedSemester.id);
+        // Enrich with start/end
+        const enriched = fetched.map(ev => {
+          const slot = timeSlots.find(ts => ts.id === ev.time_slot_id);
+          if (!slot) return { ...ev, start: new Date(ev.date + 'T00:00:00'), end: new Date(ev.date + 'T00:00:00') }; // fallback
+          const eventDate = new Date(ev.date + 'T00:00:00');
+          let start, end;
+          if (slot.start_hour !== undefined && slot.start_min !== undefined) {
+            start = setHours(setMinutes(eventDate, slot.start_min), slot.start_hour);
+            end = addMinutes(start, ev.num_of_period * 45);
+          } else {
+            const baseStartTime = setHours(setMinutes(eventDate, 0), 7);
+            const startMinutesOffset = (ev.time_slot_id - 1) * 45;
+            start = addMinutes(baseStartTime, startMinutesOffset);
+            end = addMinutes(start, ev.num_of_period * 45);
+          }
+          return { ...ev, start, end };
+        });
+        if (mounted) {
+          setEvents(Array.isArray(enriched) ? enriched : []);
         }
       } catch (err) {
-        console.warn("Failed to load schedules", err);
+        console.warn('Failed to load schedules', err);
         if (mounted) setEvents([]);
       } finally {
         if (mounted) setLoadingSchedules(false);
@@ -146,7 +151,36 @@ export default function Schedule() {
     return () => {
       mounted = false;
     };
-  }, [student, selectedSemester]);
+  }, [student, selectedSemester, viewMode, monthCursor, timeSlots]);
+
+  // Fetch time slots once when the page mounts (or when student page is opened)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoadingTimeSlots(true);
+        const slots = await getAllTimeSlots();
+        const mapped = (slots || []).map(slot => ({
+          ...slot,
+          label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+          start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+          end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+        }));
+        if (!mounted) return;
+        setTimeSlots(mapped);
+      } catch (err) {
+        console.warn('Failed to load time slots in Schedule page:', err);
+        if (mounted) setTimeSlots([]);
+      } finally {
+        if (mounted) setLoadingTimeSlots(false);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, []);
+
+  // In a real app we'd fetch student info from the API.
+  // For now we keep student state from profile.
 
   const [modal, setModal] = useState({ open: false, detail: null });
 
@@ -154,15 +188,8 @@ export default function Schedule() {
     setModal({
       open: true,
       detail: {
-        subject: event.title,
-        teacher: event.teacher,
-        room: event.room,
-        className: event.className || event.class_name || event.group || event.class || event.courseClassName || '',
-        time: `${format(event.start, "HH:mm")} - ${format(event.end, "HH:mm")}`,
-        date: format(event.start, "EEEE, dd/MM/yyyy", { locale: viLocale }),
-        type: event.type === 'lecture' ? 'Lý thuyết' : event.type === 'lab' ? 'Thực hành' : 'Thi',
-        code: event.subject,
-      },
+        id: event.id || event.raw?.id || event.raw?.instanceId || event.raw?.schedule_instance_id || null,
+      }
     });
   };
 
@@ -181,38 +208,49 @@ export default function Schedule() {
   }
 
   return (
+    // limit page to single viewport height; inner content scrolls
     <div className="h-full bg-gray-100 overflow-hidden">
-      <div className="space-y-4">
-        {mode === "week" ? (
+        <div className="space-y-4">
           <div>
-            <ModernTimeTable
-              events={events}
-              viewMode={mode || "week"}
-              onEventClick={handleEventClick}
-              semesters={semesters}
-              selectedSemester={selectedSemester}
-              externalWeekNumber={selectedWeekNumber}
-              onSelectSemester={setSelectedSemester}
-              externalTimeSlots={timeSlots}
-              externalLoadingTimeSlots={loadingTimeSlots}
-            />
+            <div className="mb-3 flex items-center justify-end">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setViewMode('week')} className={`px-2 py-1 rounded ${viewMode === 'week' ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-600'}`}>Tuần</button>
+                <button onClick={() => setViewMode('month')} className={`px-2 py-1 rounded ${viewMode === 'month' ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-600'}`}>Tháng</button>
+              </div>
+            </div>
+
+            {viewMode === 'month' ? (
+              <MonthView
+                currentMonth={monthCursor}
+                onMonthChange={setMonthCursor}
+                events={events}
+                onEventClick={handleEventClick}               
+                semesters={semesters}
+                selectedSemester={selectedSemester}
+                externalWeekNumber={selectedWeekNumber}
+                externalTimeSlots={timeSlots}
+                externalLoadingTimeSlots={loadingTimeSlots}
+                onSelectSemester={setSelectedSemester}
+                />
+            ) : (
+              <ModernTimeTable
+                events={events}
+                onEventClick={handleEventClick}
+                semesters={semesters}
+                selectedSemester={selectedSemester}
+                externalWeekNumber={selectedWeekNumber}
+                externalTimeSlots={timeSlots}
+                externalLoadingTimeSlots={loadingTimeSlots}
+                onSelectSemester={setSelectedSemester}
+              />
+            )}
           </div>
-        ) : mode === "semester" ? (
-          <div className="bg-white rounded-lg shadow overflow-auto max-h-[calc(100vh-12rem)] text-sm p-4">
-            <SemesterSchedule
-              events={events}
-              semesters={semesters}
-              selectedSemester={selectedSemester}
-              onSelectSemester={setSelectedSemester}
-            />
-          </div>
-        ) : null}
-      </div>
-      <ScheduleDetailModal
-        open={modal.open}
-        onClose={() => setModal({ open: false, detail: null })}
-        detail={modal.detail}
-      />
+        </div>
+        <ScheduleDetailModal
+          open={modal.open}
+          onClose={() => setModal({ open: false, detail: null })}
+          detail={modal.detail}
+        />
     </div>
   );
 }

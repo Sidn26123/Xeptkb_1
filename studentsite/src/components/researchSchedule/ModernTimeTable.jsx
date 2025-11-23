@@ -18,20 +18,6 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
   const [timeSlots, setTimeSlots] = useState(externalTimeSlots || []);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(externalLoadingTimeSlots != null ? externalLoadingTimeSlots : true);
 
-  // Map externalTimeSlots when provided by parent
-  useEffect(() => {
-    if (externalTimeSlots == null) return;
-    const mapped = (externalTimeSlots || []).map(slot => ({
-      ...slot,
-      label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
-      start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
-      end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
-    }));
-    setTimeSlots(mapped);
-    if (externalLoadingTimeSlots != null) setLoadingTimeSlots(externalLoadingTimeSlots);
-    else setLoadingTimeSlots(false);
-  }, [externalTimeSlots, externalLoadingTimeSlots]);
-
   // Update current week when semester changes
   useEffect(() => {
     if (selectedSemester) {
@@ -45,6 +31,22 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSemester]);
+
+  // Do not fetch here; parent must supply `externalTimeSlots`.
+
+  // Map externalTimeSlots when provided by parent
+  useEffect(() => {
+    if (externalTimeSlots == null) return;
+    const mapped = (externalTimeSlots || []).map(slot => ({
+      ...slot,
+      label: slot.name || slot.label || `Tiết ${slot.idx || slot.id}`,
+      start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min||0).padStart(2, '0')}` : null),
+      end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min||0).padStart(2, '0')}` : null),
+    }));
+    setTimeSlots(mapped);
+    if (externalLoadingTimeSlots != null) setLoadingTimeSlots(externalLoadingTimeSlots);
+    else setLoadingTimeSlots(false);
+  }, [externalTimeSlots, externalLoadingTimeSlots]);
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -120,7 +122,23 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
         return Number(event.time_slot_idx) === Number(slotId);
       }
 
-      // Fallback: infer slot from start time using base 07:00 and 60 minutes/period
+      // Fallback: infer slot from start time using actual time slots data
+      if (timeSlots.length > 0) {
+        const slot = timeSlots.find(s => s.id === slotId);
+        if (slot) {
+          const slotStart = new Date(targetDate);
+          const [hours, minutes] = slot.start.split(':').map(Number);
+          slotStart.setHours(hours, minutes, 0, 0);
+
+          const slotEnd = new Date(targetDate);
+          const [endHours, endMinutes] = slot.end.split(':').map(Number);
+          slotEnd.setHours(endHours, endMinutes, 0, 0);
+
+          return eventStart >= slotStart && eventStart < slotEnd;
+        }
+      }
+
+      // Final fallback: use old logic if no time slots data
       const minutes = eventStart.getHours() * 60 + eventStart.getMinutes();
       const base = 7 * 60; // 07:00
       if (minutes < base) return false;
@@ -163,6 +181,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             Thời Khóa Biểu
           </h1>
         </div>
+        <div className="top-bar-right" />
       </div>
 
       {/* Filters Row */}
@@ -225,8 +244,9 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
         </button>
       </div>
 
-      {/* Week Navigation */}
-      <div className="week-navigation">
+      {/* Week Navigation (only shown in week view) */}
+      (
+        <div className="week-navigation">
         <button 
           className="week-nav-btn" 
           onClick={handlePrevWeek} 
@@ -237,9 +257,9 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="week-info">
-          Tuần {weekNumber}: {format(weekStart, 'dd/MM', { locale: vi })} - {format(weekEnd, 'dd/MM/yyyy', { locale: vi })}
-        </span>
+          <span className="week-info">
+            Tuần {weekNumber}: {format(weekStart, 'dd/MM', { locale: vi })} - {format(weekEnd, 'dd/MM/yyyy', { locale: vi })}
+          </span>
         <button 
           className="week-nav-btn" 
           onClick={handleNextWeek} 
@@ -250,9 +270,10 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
-      </div>
+        </div>
+      )
 
-      {/* Timetable Grid */}
+      {/* Timetable / Month Grid */}
       <div className="timetable-table-container">
         {loadingTimeSlots ? (
           <div className="flex items-center justify-center py-12">
@@ -278,6 +299,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             </thead>
             <tbody>
               {(() => {
+                // occupiedSlots[dayIndex] = Set of slot ids that are covered by a previously rendered rowspan
                 const occupiedSlots = {};
                 for (let d = 0; d < weekDays.length; d++) occupiedSlots[d] = new Set();
 
@@ -285,16 +307,21 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
                   <tr key={slot.id}>
                     <td className="time-slot-cell border border-blue-200">{slot.label}</td>
                     {weekDays.map((day, dayIndex) => {
-                      if (occupiedSlots[dayIndex].has(slot.id)) return null;
+                      // If this slot is covered by a previous multi-period event, skip rendering this cell
+                      if (occupiedSlots[dayIndex].has(slot.id)) {
+                        return null;
+                      }
 
                       const cellEvents = getEventsForCell(dayIndex, slot.id) || [];
                       const isTodayCol = isToday(day.date);
 
+                      // If there's exactly one event and it has multiple periods, render with rowSpan
                       if (cellEvents.length === 1) {
                         const ev = cellEvents[0];
                         const periods = ev.num_of_period ?? ev.number_of_period ?? 1;
                         const span = Math.max(1, Number(periods) || 1);
 
+                        // Mark subsequent slots as occupied
                         for (let k = 1; k < span; k++) {
                           const nextSlot = timeSlots[slotIdx + k];
                           if (nextSlot) occupiedSlots[dayIndex].add(nextSlot.id);
@@ -313,7 +340,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
                             >
                               <div className="event-title">{ev.title}</div>
                               <div className="event-details">
-                                <span>{ev.teacher}</span>
+                                <span>{ev.className}</span>
                                 <span>{ev.room}</span>
                               </div>
                             </div>
@@ -321,6 +348,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
                         );
                       }
 
+                      // Multiple or zero events: render normal cell and list all events (no spanning)
                       return (
                         <td
                           key={day.id}
@@ -334,7 +362,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
                             >
                               <div className="event-title">{event.title}</div>
                               <div className="event-details">
-                                <span>{event.teacher}</span>
+                                <span>{event.className}</span>
                                 <span>{event.room}</span>
                               </div>
                             </div>

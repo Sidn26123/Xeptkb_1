@@ -4,7 +4,7 @@ const scheduleInstanceController = require('../controller/scheduleInstanceContro
 const scheduleChangeController = require('../controller/scheduleChangeController');
 const { verifyToken, authorize } = require('../middleware/auth');
 const { validateProposeChange, validateProposeRoomChange, validateApplyChange } = require('../validators/scheduleChangeValidator');
-const {getScheduleInstancesByQuery} = require("../controller/scheduleInstanceController");
+const {getScheduleInstancesByQuery, getScheduleInstancesByMonth} = require("../controller/scheduleInstanceController");
 
 /**
 * @route   POST /api/schedules/:scheduleId/instances/generate
@@ -14,7 +14,7 @@ const {getScheduleInstancesByQuery} = require("../controller/scheduleInstanceCon
 router.post('/:scheduleId/instances/generate', verifyToken, authorize('admin'), scheduleInstanceController.generateInstancesForSchedule);
 router.post('/:generationId/instances/generate-all', verifyToken, authorize('admin'), scheduleInstanceController.generateInstancesForGeneration);
 
-router.get('/query', getScheduleInstancesByQuery);
+router.get('/query',verifyToken, authorize('admin', 'teacher', 'student'), getScheduleInstancesByQuery);
 
 // Unified endpoint for student/teacher to fetch their schedule
 router.post('/instances/daily', verifyToken, authorize('admin', 'teacher', 'student'), scheduleInstanceController.getInstancesForUser);

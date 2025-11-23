@@ -74,6 +74,11 @@ Room.associate = (models) => {
     foreignKey: 'room_id',
     as: 'instances',
   });
+  // Liên kết tới Building (nếu có)
+  Room.belongsTo(models.Building, {
+    foreignKey: 'buildings_id',
+    as: 'building'
+  });
 
 };
 module.exports = Room;

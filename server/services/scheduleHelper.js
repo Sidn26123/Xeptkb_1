@@ -31,11 +31,11 @@ async function loadCachedData() {
 }
 
 async function proposeOptions({ date, teacherId, courseClassId, prefer = 'room', maxCandidates = null, semesterId = null, excludeInstanceId = null }) {
-  if (!date || !courseClassId) return { success: false, reason: 'invalid_input' };
+  if (!date || !courseClassId) return { success: false, reason: 'dữ liệu đầu vào không hợp lệ' };
 
   // Past date
   const now = new Date();
-  if (new Date(date) < new Date(now.toDateString())) return { success: false, reason: 'date_in_past' };
+  if (new Date(date) < new Date(now.toDateString())) return { success: false, reason: 'ngày của quá khứ' };
 
   const { timeslots, rooms, roomEquipMap, timeslotIdxMap } = await loadCachedData();
   const maxIdx = Math.max(...timeslots.map(t => t.idx));
@@ -43,7 +43,7 @@ async function proposeOptions({ date, teacherId, courseClassId, prefer = 'room',
 
   // course class data
   const courseClass = await db.CourseClass.findByPk(courseClassId, { include: [ { model: db.Class, as: 'class' }, { model: db.Subject, as: 'subject' } ] });
-  if (!courseClass) return { success: false, reason: 'invalid_courseclass' };
+  if (!courseClass) return { success: false, reason: 'lớp học không hợp lệ' };
   const duration = courseClass.duration_per_session || 2;
   const subjectId = courseClass.subject_id;
   const targetClassId = courseClass.class_id;
@@ -84,11 +84,11 @@ async function proposeOptions({ date, teacherId, courseClassId, prefer = 'room',
   // holiday check (try semester-specific first, then global)
   if (semesterId) {
     const holiday = await db.HolidayActual.findOne({ where: { semester_id: semesterId, start_date: { [Op.lte]: date }, end_date: { [Op.gte]: date } } });
-    if (holiday) return { success: false, reason: 'date_is_holiday', holiday: holiday.name };
+    if (holiday) return { success: false, reason: 'ngày là ngày lễ', holiday: holiday.name };
   }
   // also check global holidays (cover cases where semesterId is not provided)
   const globalHoliday = await db.HolidayActual.findOne({ where: { start_date: { [Op.lte]: date }, end_date: { [Op.gte]: date } } });
-  if (globalHoliday) return { success: false, reason: 'date_is_holiday', holiday: globalHoliday.name };
+  if (globalHoliday) return { success: false, reason: 'ngày là ngày lễ', holiday: globalHoliday.name };
 
   // teacher recurring availability: map date -> day_id
   const d = new Date(date);
@@ -97,7 +97,7 @@ async function proposeOptions({ date, teacherId, courseClassId, prefer = 'room',
 
   // Disallow Sundays (day_id = 7)
   if (dayId === 7) {
-    return { success: false, reason: 'sunday_not_allowed' };
+    return { success: false, reason: 'chủ nhật không được phép' };
   }
 
   const teacherUnavailableSlots = await db.InstructorUnavailableTime.findAll({ where: { teacher_id: teacherId, day_id: dayId } });
@@ -232,23 +232,23 @@ async function proposeOptions({ date, teacherId, courseClassId, prefer = 'room',
     if (maxCandidates && proposals.length >= maxCandidates) break;
   }
 
-  if (proposals.length === 0) return { success: false, reason: 'no_available_slots', details: { date, checked_rooms: scanned.rooms, checked_slots: scanned.slots } };
+  if (proposals.length === 0) return { success: false, reason: 'không có slot trống', details: { date, checked_rooms: scanned.rooms, checked_slots: scanned.slots } };
   return { success: true, summary: { total_found: proposals.length, scanned_rooms: scanned.rooms, scanned_slots: scanned.slots, duration_per_session: duration }, proposals };
 }
 
 async function proposeRoomAlternatives({ date, teacherId, courseClassId, fixedTimeSlotId = null, excludeInstanceId = null, excludeRoomId = null, maxCandidates = null, semesterId = null }) {
-  if (!date || !courseClassId) return { success: false, reason: 'invalid_input' };
+  if (!date || !courseClassId) return { success: false, reason: 'dữ liệu đầu vào không hợp lệ' };
 
   // Past date
   const now = new Date();
-  if (new Date(date) < new Date(now.toDateString())) return { success: false, reason: 'date_in_past' };
+  if (new Date(date) < new Date(now.toDateString())) return { success: false, reason: 'ngày của quá khứ' };
 
   const { timeslots, rooms, roomEquipMap, timeslotIdxMap } = await loadCachedData();
   const breakSlotIdxs = timeslots.filter(t => t.is_break).map(t => t.idx);
 
   // course class data
   const courseClass = await db.CourseClass.findByPk(courseClassId, { include: [ { model: db.Class, as: 'class' }, { model: db.Subject, as: 'subject' } ] });
-  if (!courseClass) return { success: false, reason: 'invalid_courseclass' };
+  if (!courseClass) return { success: false, reason: 'lớp học không hợp lệ' };
   const duration = courseClass.duration_per_session || 2;
   const subjectId = courseClass.subject_id;
   const targetClassId = courseClass.class_id;
@@ -282,20 +282,20 @@ async function proposeRoomAlternatives({ date, teacherId, courseClassId, fixedTi
     }
   }
 
-  if (!fixedTimeSlotId) return { success: false, reason: 'invalid_timeslot' };
+  if (!fixedTimeSlotId) return { success: false, reason: 'thời gian không hợp lệ' };
 
   // holiday checks
   if (semesterId) {
     const holiday = await db.HolidayActual.findOne({ where: { semester_id: semesterId, start_date: { [Op.lte]: date }, end_date: { [Op.gte]: date } } });
-    if (holiday) return { success: false, reason: 'date_is_holiday', holiday: holiday.name };
+    if (holiday) return { success: false, reason: 'ngày là ngày lễ', holiday: holiday.name };
   }
   const globalHoliday = await db.HolidayActual.findOne({ where: { start_date: { [Op.lte]: date }, end_date: { [Op.gte]: date } } });
-  if (globalHoliday) return { success: false, reason: 'date_is_holiday', holiday: globalHoliday.name };
+  if (globalHoliday) return { success: false, reason: 'ngày là ngày lễ', holiday: globalHoliday.name };
 
   const d = new Date(date);
   const jsDay = d.getDay();
   const dayId = jsDay === 0 ? 7 : jsDay;
-  if (dayId === 7) return { success: false, reason: 'sunday_not_allowed' };
+  if (dayId === 7) return { success: false, reason: 'chủ nhật không được phép' };
 
   const teacherUnavailableSlots = await db.InstructorUnavailableTime.findAll({ where: { teacher_id: teacherId, day_id: dayId } });
   const teacherUnavailableSlotIds = new Set(teacherUnavailableSlots.map(t => t.time_slot_id));
@@ -348,17 +348,17 @@ async function proposeRoomAlternatives({ date, teacherId, courseClassId, fixedTi
   }
 
   const startIdx = timeslotIdxMap[fixedTimeSlotId];
-  if (!startIdx && startIdx !== 0) return { success: false, reason: 'invalid_timeslot' };
+  if (!startIdx && startIdx !== 0) return { success: false, reason: 'thời gian không hợp lệ' };
   const overlap = getOccupiedSlots(startIdx, duration);
-  if (overlap.some(o => breakSlotIdxs.includes(o))) return { success: false, reason: 'timeslot_touches_break' };
+  if (overlap.some(o => breakSlotIdxs.includes(o))) return { success: false, reason: 'thời gian chạm vào giờ nghỉ' };
 
   const timeslotIdsInOverlap = timeslots.filter(t => overlap.includes(t.idx)).map(t => t.id);
   const hasTeacherUnavailable = timeslotIdsInOverlap.some(tsId => teacherUnavailableSlotIds.has(tsId));
-  if (hasTeacherUnavailable) return { success: false, reason: 'teacher_unavailable_at_this_time' };
+  if (hasTeacherUnavailable) return { success: false, reason: 'giảng viên không có sẵn vào thời điểm này' };
 
   // check teacher & class conflicts
-  if (hasConflict(startIdx, duration, teacherBusyMap.get(teacherId))) return { success: false, reason: 'teacher_busy_at_this_time' };
-  if (hasConflict(startIdx, duration, classBusyMap.get(targetClassId))) return { success: false, reason: 'class_busy_at_this_time' };
+  if (hasConflict(startIdx, duration, teacherBusyMap.get(teacherId))) return { success: false, reason: 'giảng viên bận vào thời điểm này' };
+  if (hasConflict(startIdx, duration, classBusyMap.get(targetClassId))) return { success: false, reason: 'lớp học bận vào thời điểm này' };
 
   // required equipment
   const reqEquipRows = await db.SubjectRequiresEquipment.findAll({ where: { subject_id: subjectId } });
@@ -381,7 +381,7 @@ async function proposeRoomAlternatives({ date, teacherId, courseClassId, fixedTi
     if (maxCandidates && proposals.length >= maxCandidates) break;
   }
 
-  if (proposals.length === 0) return { success: false, reason: 'no_available_rooms_at_this_time', details: { date, checked_time_slot: fixedTimeSlotId } };
+  if (proposals.length === 0) return { success: false, reason: 'không có phòng trống vào thời điểm này', details: { date, checked_time_slot: fixedTimeSlotId } };
   return { success: true, mode: 'room_only', fixed_time_slot_id: fixedTimeSlotId, summary: { total_found: proposals.length, duration_per_session: duration }, proposals };
 }
 

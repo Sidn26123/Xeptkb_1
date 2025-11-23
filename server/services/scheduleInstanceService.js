@@ -897,40 +897,10 @@ function transformInstancesToEvents(instances) {
         const subject = courseClass?.subject;
         const teacher = instance.teacher; // Từ FK trên ScheduleInstance
         const room = instance.room;       // Từ FK trên ScheduleInstance
-
-        // Try to prefer an actual TimeSlot record if available
-        const instanceTimeSlot = instance.timeSlot || schedule?.timeSlot || null;
-
-        // --- Tính toán Start/End ---
-        // QUAN TRỌNG: 'instance.date' là string 'YYYY-MM-DD'
-        // new Date('2025-11-13') sẽ tạo ra ngày 13/11/2025 00:00:00 UTC
-        // Thêm 'T00:00:00' để nó được parse là giờ địa phương
-        const eventDate = new Date(`${instance.date}T00:00:00`);
-
-        let start, end;
-
-        // Determine number of periods (prefer instance override, then schedule default)
         const periods = instance.num_of_period || schedule?.num_of_period || 1;
-
-        if (instanceTimeSlot && (instanceTimeSlot.start_hour !== undefined && instanceTimeSlot.start_min !== undefined)) {
-            // Use explicit timeslot start/end when present
-            start = setHours(setMinutes(eventDate, instanceTimeSlot.start_min), instanceTimeSlot.start_hour);
-
-            // Calculate end time based on periods (assume 45 minutes per period)
-            end = addMinutes(start, periods * 45);
-        } else {
-            // QUAN TRỌNG: backward-compat fallback (old logic)
-            // Giả định: 7:00 AM là tiết 1
-            const baseStartTime = setHours(setMinutes(eventDate, 0), 7);
-            const startMinutesOffset = (instance.time_slot_id - 1) * 45; // 45 phút/tiết
-            start = addMinutes(baseStartTime, startMinutesOffset);
-            end = addMinutes(start, periods * 45);
-        }
         return {
             id: instance.id,
             title: courseClass?.name || subject?.name || 'N/A',
-            start: start,
-            end: end, 
             teacher: teacher?.name || 'N/A',
             room: room ? `${room.code} - ${room.name}` : 'N/A',
             type: courseClass?.type || 'lecture',
@@ -939,12 +909,8 @@ function transformInstancesToEvents(instances) {
             className: courseClass?.class?.name || courseClass?.name || null,
             teacherName: teacher?.name || null,
             date: instance.date || null,
-            time_slot_id: instance.time_slot_id || null,
-            time_slot_idx: (instance.timeSlot && instance.timeSlot.idx) || instance.time_slot_idx || null,
+            time_slot_id: instance.time_slot_id,
             num_of_period: periods,
-            // Provide course class id so frontends can request suitable rooms
-            course_class_id: instance.course_class_id || schedule?.course_class_id || null,
-            courseClassId: instance.course_class_id || schedule?.course_class_id || null,
         };
     });
 }

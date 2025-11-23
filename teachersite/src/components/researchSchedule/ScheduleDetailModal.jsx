@@ -1,6 +1,6 @@
 import React from "react";
 import ExternalEditScheduleModal from './EditScheduleModal';
-import { getScheduleInstanceById } from '../../services/scheduleService';
+import { getScheduleInstanceById, getAllTimeSlots } from '../../services/scheduleService';
 
 export default function ScheduleDetailModal({ open = false, onClose = () => {}, onEdit = () => {}, detail = null }) {
   const [openExternalEditModal, setOpenExternalEditModal] = React.useState(false);
@@ -27,29 +27,32 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
     try {
       const data = await getScheduleInstanceById(detail.id);
       if (data) {
+        // Fetch time slots to calculate time range
+        const rawTimeSlots = await getAllTimeSlots();
+        const timeSlots = (rawTimeSlots || []).map(slot => ({
+          ...slot,
+          start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min || 0).padStart(2, '0')}` : null),
+          end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min || 0).padStart(2, '0')}` : null),
+        }));
+        const timeSlotId = data.timeSlot?.id || data.time_slot_id || data.schedule?.timeSlot?.id;
+        const numOfPeriod = data.num_of_period || data.schedule?.num_of_period || 1;
+        let timeDisplay = 'Thời gian';
+        if (timeSlotId && timeSlots.length > 0) {
+          const startSlot = timeSlots.find(ts => ts.id === timeSlotId);
+          const endSlotId = timeSlotId + numOfPeriod - 1;
+          const endSlot = timeSlots.find(ts => ts.id === endSlotId);
+          if (startSlot && endSlot && startSlot.start && endSlot.end) {
+            timeDisplay = `${startSlot.start} - ${endSlot.end}`;
+          } else if (startSlot && startSlot.start) {
+            timeDisplay = startSlot.start;
+          }
+        }
+
         // Some endpoints return room under `data.room`, others nest under `data.schedule.room`.
         const schedRoom = data.schedule?.room;
         const topRoom = data.room;
         const roomCode = topRoom?.code || topRoom?.room_code || schedRoom?.code || schedRoom?.room_code || null;
         const roomName = topRoom?.name || topRoom?.room_name || schedRoom?.name || schedRoom?.room_name || roomCode || null;
-
-        // format time slot (support both `start/end` and `start_hour` style)
-        const pad2 = (n) => (n === undefined || n === null) ? '00' : String(n).padStart(2, '0');
-        const formatSlot = (ts) => {
-          if (!ts) return null;
-          if (ts.start && ts.end) return `${ts.start} - ${ts.end}`;
-          if (ts.start_hour !== undefined) {
-            const sh = pad2(ts.start_hour);
-            const sm = pad2(ts.start_min);
-            const eh = pad2(ts.end_hour);
-            const em = pad2(ts.end_min);
-            return `${sh}:${sm} - ${eh}:${em}`;
-          }
-          return null;
-        };
-        const instTimeSlot = data.timeSlot;
-        const schedTimeSlot = data.schedule?.timeSlot;
-        const timeDisplay = formatSlot(instTimeSlot) || formatSlot(schedTimeSlot) || 'Thời gian';
 
         setFullDetail({
           id: data.id,
@@ -63,12 +66,12 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
           dateISO: data.date,
           type: data.type || data.schedule?.type || 'Lý thuyết',
           code: data.schedule?.courseClass?.code || data.subject_code,
-          timeSlotId: data.timeSlot?.id || data.time_slot_id || data.schedule?.timeSlot?.id,
-          timeSlotLabel: data.timeSlot?.name || data.schedule?.timeSlot?.name || `Tiết ${data.time_slot_id}`,
+          timeSlotId: timeSlotId,
+          timeSlotLabel: data.timeSlot?.name || data.schedule?.timeSlot?.name || `Tiết ${timeSlotId}`,
           teacherId: data.schedule?.teacher?.id || data.teacher_id,
           roomId: topRoom?.id || topRoom?.room_id || schedRoom?.id || schedRoom?.room_id,
           courseClassId: data.schedule?.courseClass?.id || data.course_class_id,
-          num_of_period: data.num_of_period || data.schedule?.num_of_period || 1,
+          num_of_period: numOfPeriod,
           raw: data
         });
       }
@@ -92,7 +95,7 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
         today.setHours(0, 0, 0, 0);
         d.setHours(0, 0, 0, 0);
         return d < today;
-      } catch (e) {
+      } catch {
         return false;
       }
     })();
