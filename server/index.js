@@ -142,6 +142,7 @@ process.on('uncaughtException', (err) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
 // sequelize.authenticate()
 //  .then(async () => {
 //    console.log('Kết nối database thành công!');
@@ -162,7 +163,7 @@ sequelize.authenticate()
     .then(async () => {
       console.log('✅ Kết nối database thành công!');
       await sequelize.sync({ alter: false, force: false });
-      server = app.listen(PORT, () => {
+      server = app.listen(HOST, PORT, () => {
         console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
       });
     })
