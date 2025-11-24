@@ -7,7 +7,7 @@ import json
 import time
 from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
-
+import os
 # Import genetic algorithm code
 # from genetic_scheduler_semester_new import (
 #     SemesterGeneticScheduler,
@@ -47,8 +47,8 @@ import time
 app = Flask(__name__)
 CORS(app)  # Cho phép React gọi API từ localhost khác
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+PORT = int(os.environ.get("PORT", 3000))
+HOST = os.environ.get("HOST", "0.0.0.0")
 
 # Map tên ràng buộc
 CONSTRAINT_CLASS_MAP = {
