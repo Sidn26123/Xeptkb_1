@@ -2,7 +2,7 @@ import React, {useState, useMemo} from 'react';
 import {Plus, X, BarChart3, Calendar} from 'lucide-react';
 import ScheduleAnalyzer from "./SchedulerAnalyzer.jsx";
 import {generateScheduleInstance, saveSchedule} from "../../services/scheduleService.js";
-import {showError, showSuccess} from "../../utils/toastUtils.js";
+import {showError, showSuccess} from "../../utils/ToastUtils.js";
 import {useSelectedSemester, useSemesterConfig} from "../../stores/ScheduleDataStore.js";
 
 const DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];

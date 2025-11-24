@@ -6,7 +6,7 @@ import * as yup from "yup";
 import PageMeta from "../components/common/PageMeta.jsx";
 import Button from "../components/ui/button/Button.jsx";
 import Modal from "../components/ui/modal/index.jsx";
-import { showError } from '../utils/toastUtils.js';
+import { showError } from '../utils/ToastUtils.js';
 import { getAllClasses } from "../services/classService.js";
 import {
   getAllStudents,

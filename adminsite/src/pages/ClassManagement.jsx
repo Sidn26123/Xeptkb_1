@@ -10,7 +10,7 @@ import {getAllFaculties} from '../services/facultyService.js';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {useForm} from 'react-hook-form';
-import {showError, showSuccess} from "../utils/toastUtils.js";
+import {showError, showSuccess} from "../utils/ToastUtils.js";
 
 // Schema cho Lớp học
 const classSchema = yup.object({

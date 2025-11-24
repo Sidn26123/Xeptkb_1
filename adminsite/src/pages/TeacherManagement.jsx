@@ -5,7 +5,7 @@ import Modal from "../components/ui/modal/index.jsx";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { showSuccess, showError } from '../utils/toastUtils.js'; // 👈 import helper (use correct casing)
+import { showSuccess, showError } from '../utils/ToastUtils.js'; // 👈 import helper (use correct casing)
 import { getAllFaculties } from '../services/facultyService.js';
 import { getAllTeachers, createTeacher, updateTeacher, deleteTeacher } from '../services/teacherService.js';
 

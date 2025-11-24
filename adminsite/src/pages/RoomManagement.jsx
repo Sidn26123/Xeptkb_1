@@ -9,7 +9,7 @@ import { getAllCampus } from '../services/campusService.js';
 import { getAllEquipments } from '../services/equipmentService.js';
 import { createRoomEquipment, getRoomEquipmentsByRoomId, deleteRoomEquipment } from '../services/roomEquipmentService.js';
 import parseRoomCode from '../utils/parseRoomCode.js';
-import {showError, showSuccess} from "../utils/toastUtils.js";
+import {showError, showSuccess} from "../utils/ToastUtils.js";
 
 export default function RoomManagement() {
   const [rooms, setRooms] = useState([]);
