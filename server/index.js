@@ -36,6 +36,7 @@ const dayRoutes = require('./routes/day');
 const reportRoutes = require('./routes/report');
 const scheduleInstanceRoutes = require('./routes/scheduleInstance');
 const mailRoutes = require('./routes/mail');
+
 const app = express();
 app.use(express.json());
 app.use(cors);
@@ -76,6 +77,14 @@ app.use(API_PREFIX + '/mail', mailRoutes);
 app.use(API_PREFIX + '/time-slots', timeSlotRoutes);
 app.use(API_PREFIX + '/days', dayRoutes);
 app.use(API_PREFIX + '/reports', reportRoutes);
+app.get('/', (req, res) => {
+  res.status(200).send('API Service is Running!');
+});
+
+// Hoặc thêm một route cho tiền tố API nếu Render ping /api/v1/
+app.get(API_PREFIX + '/', (req, res) => {
+  res.status(200).json({ status: 'success', message: 'API is ready' });
+});
 // 404 handler for unknown routes
 const ErrorResponse = require('./utils/responseUtils').ErrorResponse;
 const errorHandler = require("./middleware/errorHandler");
