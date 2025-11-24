@@ -2,6 +2,7 @@ import authService from './authService';
 import axios from "axios";
 
 const api = authService.apiClient;
+const FLASK_BASE_URL = import.meta.env.FLASK_API_URL || 'http://localhost:5001/api';
 
 export const getAllSchedules = async () => {
     const res = await api.get('/schedules');
@@ -19,7 +20,7 @@ export const filterSchedules = async (filters) => {
 }
 
 export const callGenerateSchedule = async (data) => {
-    const res = await axios.post('http://localhost:5001/api/schedule', data);
+    const res = await axios.post(FLASK_BASE_URL +'/schedule', data);
     return res?.data ?? null;
 }
 
