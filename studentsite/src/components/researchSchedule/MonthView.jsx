@@ -105,49 +105,30 @@ export default function MonthView({ events = [], onEventClick = () => {}, initia
   };
 
  return (
-  <div className="month-view card p-4 rounded-xl shadow-sm bg-white">
-    {/* Top Blue Header Bar (copied from ModernTimeTable) */}
-    <div className="timetable-top-bar">
-      <div className="top-bar-left">
-        <h1 className="top-bar-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          Thời Khóa Biểu
-        </h1>
-      </div>
-      <div className="top-bar-right" />
-    </div>
-
-    {/* HEADER - centered navigation like ModernTimeTable */}
-    <div className="flex items-center justify-center mb-4 px-2">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={goPrev}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition"
-        >
-          ‹
-        </button>
-
-        <h3 className="text-[18px] font-semibold tracking-wide mx-2">
-          {format(current, 'MMMM yyyy')}
-        </h3>
-
-        <button
-          onClick={goNext}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition"
-        >
-          ›
-        </button>
+  <div className="month-view card p-5 rounded-xl shadow-md bg-white">
+    {/* Top Header with blue gradient */}
+    <div className="w-full rounded-lg overflow-hidden mb-4" style={{ background: 'linear-gradient(90deg,#4A90E2 0%,#5BA3F5 100%)' }}>
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/10 rounded-md">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <div className="text-white text-sm font-bold uppercase">Thời Khóa Biểu</div>
+            <div className="text-white/80 text-xs">Lịch tháng</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    {/* Semester selector (like week view) */}
-    <div className="timetable-filters mb-4">
-      <div className="filter-group">
-        <label className="filter-label">Học kỳ</label>
+    {/* Semester selector: gentle filter row */}
+    <div className="mb-4 bg-[#f8f9fa] border-b" style={{ borderColor: '#dee2e6' }}>
+      <div className="flex items-center gap-3 px-3 py-3">
+        <label className="text-sm text-[#495057]">Học kỳ</label>
         <select
-          className="filter-select"
+          className="px-3 py-2 rounded-md border border-gray-300 bg-white text-sm text-[#495057] hover:border-[#4A90E2] focus:outline-none focus:ring-2 focus:ring-[#4A90E2]"
           value={selectedSemester?.id || ''}
           onChange={(e) => {
             const selectedId = e.target.value;
@@ -168,20 +149,43 @@ export default function MonthView({ events = [], onEventClick = () => {}, initia
       </div>
     </div>
 
-    {/* DAY LABELS */}
-    <div className="grid grid-cols-7 mb-1">
-      {['CN','T2','T3','T4','T5','T6','T7'].map(d => (
-        <div
-          key={d}
-          className="text-xs font-semibold text-gray-500 text-center py-1"
-        >
-          {d}
-        </div>
-      ))}
+    {/* Week Navigation (only shown in week view) */}
+    <div className="week-navigation flex items-center gap-3 justify-center my-2">
+      <button
+        onClick={goPrev}
+        disabled={!canGoPrev()}
+        title="Tuần trước"
+        className="week-nav-btn w-9 h-9 flex items-center justify-center rounded-md bg-white/20 hover:bg-white/30 text-white transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </button>
+      <span className="week-info text-white text-sm font-medium">{format(current, "MMMM yyyy")}</span>
+      <button
+        onClick={goNext}
+        disabled={!canGoNext()}
+        title="Tuần sau"
+        className="week-nav-btn w-9 h-9 flex items-center justify-center rounded-md bg-white/20 hover:bg-white/30 text-white transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </button>
     </div>
 
     {/* DAYS GRID */}
-    <div className="grid grid-cols-7 gap-1">
+    <div className="grid grid-cols-7 gap-3">
       {monthGrid.map((week, wi) => (
         <React.Fragment key={wi}>
           {week.map((day) => {
@@ -190,39 +194,33 @@ export default function MonthView({ events = [], onEventClick = () => {}, initia
             const isToday = isSameDay(day, new Date());
             const muted = !isSameMonth(day, current);
 
+            const baseCellClass = `p-3 rounded-lg min-h-[110px] border border-[#dee2e6] transition-colors duration-200 cursor-pointer`;
+            const mutedClass = muted ? 'bg-[#f8f9fa] text-gray-400' : 'bg-white text-[#333]';
+            const todayClass = isToday ? 'bg-[#fffbf0] border-yellow-200 ring-1 ring-yellow-100' : '';
+
             return (
               <div
                 key={iso}
-                className={`
-                  p-2 rounded-xl min-h-[90px] border bg-white 
-                  hover:shadow-sm hover:bg-gray-50 transition cursor-pointer
-
-                  ${muted ? 'text-gray-300 bg-gray-50 border-gray-100' : ''}
-                  ${isToday ? 'today-cell-month' : ''}
-                `}
+                className={`${baseCellClass} ${mutedClass} hover:bg-[#f0f7ff] ${todayClass}`}
               >
-                  {/* DAY NUMBER */}
-                <div className="flex items-center justify-between mb-1">
-                  <div className={`
-                    text-sm font-medium
-                    ${muted ? 'text-gray-300' : 'text-gray-700'}
-                  `}>
+                {/* DATE NUMBER */}
+                <div className="mb-2">
+                  <div className={`text-sm ${isToday ? 'font-bold text-[#333]' : 'font-medium text-[#495057]'}`}>
                     {format(day, 'd')}
                   </div>
                 </div>
 
                 {/* EVENTS */}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                   {dayEvents.map((ev, idx) => {
-                    const rawSubject = ev.subject || ev.subject_name || ev.code || 'default';
-                    const subjectSafe = String(rawSubject).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '') || 'default';
-                    const subjectClass = `event-${subjectSafe}`;
                     const key = ev.id || `${iso}-${idx}`;
                     return (
                       <div
                         key={key}
                         onClick={() => onEventClick(ev)}
-                        className={`text-xs px-2 py-1 rounded-full font-medium truncate cursor-pointer cell-event ${subjectClass}`}
+                        className="text-sm px-2 py-1 rounded-md border-l-4 border-[#28a745] text-[#333] shadow-sm truncate cursor-pointer transform transition-transform duration-150 hover:-translate-y-0.5"
+                        style={{ background: 'linear-gradient(180deg,#eefcf1 0%,#e1f7e8 100%)' }}
+                        title={ev.title}
                       >
                         {ev.title}
                       </div>
@@ -236,6 +234,6 @@ export default function MonthView({ events = [], onEventClick = () => {}, initia
       ))}
     </div>
   </div>
-);
+ );
 
 }

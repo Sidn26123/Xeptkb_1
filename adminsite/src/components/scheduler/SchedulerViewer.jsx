@@ -1,18 +1,137 @@
 import React, {useState, useMemo} from 'react';
 import {Plus, X, BarChart3, Calendar} from 'lucide-react';
-import {saveSchedule} from "../../services/scheduleService.js";
+import ScheduleAnalyzer from "../admin/SchedulerAnalyzer.jsx";
+import {generateScheduleInstance, saveSchedule} from "../../services/scheduleService.js";
 import {showError, showSuccess} from "../../utils/ToastUtils.js";
-// import ScheduleAnalyzer from "./SchedulerAnalyzer.jsx";
+import {useSelectedSemester, useSemesterConfig} from "../../stores/ScheduleDataStore.js";
 
 const DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
 const PERIODS = 12;
+
+// Sample data structure
+const scheduleData = {
+    success: true,
+    semester: {
+        start_week: 1,
+        end_week: 10,
+        max_concurrent: 4,
+    },
+    courses: [
+        {
+            course_id: 106,
+            class_id: 6,
+            teacher_id: 3,
+            room_id: 3,
+            start_week: 5,
+            end_week: 8,
+            duration: 4,
+            student_count: 35,
+            weekly_slots: [
+                {day: 6, period: 8, duration: 2},
+                {day: 3, period: 8, duration: 2},
+            ],
+        },
+        {
+            course_id: 103,
+            class_id: 3,
+            teacher_id: 2,
+            room_id: 4,
+            start_week: 1,
+            end_week: 5,
+            duration: 5,
+            student_count: 60,
+            weekly_slots: [
+                {day: 2, period: 2, duration: 2},
+                {day: 7, period: 6, duration: 2},
+                {day: 4, period: 6, duration: 2},
+            ],
+        },
+        {
+            course_id: 106,
+            class_id: 6,
+            teacher_id: 4,
+            room_id: 1,
+            start_week: 1,
+            end_week: 4,
+            duration: 4,
+            student_count: 35,
+            weekly_slots: [
+                {day: 7, period: 3, duration: 2},
+                {day: 2, period: 10, duration: 2},
+            ],
+        },
+        {
+            course_id: 105,
+            class_id: 5,
+            teacher_id: 3,
+            room_id: 4,
+            start_week: 1,
+            end_week: 3,
+            duration: 3,
+            student_count: 50,
+            weekly_slots: [
+                {day: 4, period: 9, duration: 2},
+                {day: 7, period: 3, duration: 2},
+            ],
+        },
+        {
+            course_id: 101,
+            class_id: 1,
+            teacher_id: 1,
+            room_id: 4,
+            start_week: 4,
+            end_week: 7,
+            duration: 4,
+            student_count: 50,
+            weekly_slots: [
+                {day: 3, period: 10, duration: 2},
+                {day: 5, period: 8, duration: 2},
+            ],
+        },
+        {
+            course_id: 104,
+            class_id: 4,
+            teacher_id: 2,
+            room_id: 2,
+            start_week: 5,
+            end_week: 8,
+            duration: 4,
+            student_count: 45,
+            weekly_slots: [
+                {day: 5, period: 3, duration: 2},
+                {day: 3, period: 4, duration: 2},
+            ],
+        },
+        {
+            course_id: 102,
+            class_id: 2,
+            teacher_id: 1,
+            room_id: 4,
+            start_week: 6,
+            end_week: 8,
+            duration: 3,
+            student_count: 40,
+            weekly_slots: [
+                {day: 2, period: 4, duration: 2},
+                {day: 4, period: 6, duration: 2},
+            ],
+        },
+    ],
+};
+
 const ScheduleViewer = ({courses, teachers, rooms, resultData}) => {
-    const [currentWeek, setCurrentWeek] = useState(1);
+
+    const [currentWeek, setCurrentWeek] = useState(resultData ? resultData.semester.start_week : 1);
     const [viewMode, setViewMode] = useState('schedule'); // 'schedule', 'overview', 'data'
     const [selectedCell, setSelectedCell] = useState(null);
     const [isAdmin] = useState(true); // Set to true for admin features
+    const semester_config = useSemesterConfig();
+    const selectedSemester = useSelectedSemester();
     const result = resultData || scheduleData;
-    console.log("ScheduleViewer result:", result);
+    console.log("courses: ", courses);
+    console.log("teachers: ", teachers);
+    console.log("rooms: ", rooms);
+    console.log('ScheduleViewer resultData:', resultData);
     // Get classes for a specific cell
     const getCellContent = (day, period) => {
         return result.courses.filter((course) => {
@@ -137,79 +256,49 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData}) => {
     }, [overviewStats]);
 
     const handleWeekChange = (delta) => {
+        console.log("Semester bounds:", result.semester);
+        console.log("Changing week by:", delta);
         const newWeek = currentWeek + delta;
+        console.log("Calculated new week:", newWeek);
         if (
             newWeek >= result.semester.start_week &&
             newWeek <= result.semester.end_week
         ) {
+            console.log("New week is valid:", newWeek);
             setCurrentWeek(newWeek);
         }
     };
+    const handleSave = () => {
 
-    const handleSemesterChange = (e) => {
-        const semesterId = e.target.value;
-        // Fetch and update schedule data based on selected semester
-        console.log("Selected semester ID:", semesterId);
+        result.semester = semester_config;
+        console.log("Selected Semester:", selectedSemester);
+        result.semester.semester_id = selectedSemester.id;
+        console.log("Saving schedule data:", result);
+        var a = {"schedule": result};
+        console.log("a:", a);
+        saveSchedule(a).then((r) => {
+            console.log('Lưu thời khóa biểu thành công', r);
+            generateScheduleInstance(r.generation_id).then(r => {
+                console.log('Tạo các instance thời khóa biểu thành công', r);
+            })
+            showSuccess('Lưu thời khóa biểu thành công!');
+        }).catch(
+            (err) => {
+                showError('Lưu thời khóa biểu thất bại: ' + err.message);
+            }
+        );
     }
-
     return (
         <div className="min-h-screen bg-gray-100 p-6">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-3xl font-bold mb-6 text-gray-800">
-                    Quản Lý Thời Khóa Biểus
+                    Quản Lý Thời Khóa Biểu
                 </h1>
-                <div className="p-6 bg-gray-50 min-h-screen">
-                    <h1 className="text-2xl font-bold mb-4 text-gray-800">Chọn học kỳ</h1>
-
-                    <div className="max-w-md">
-                        <label className="block mb-2 text-sm font-semibold text-gray-700">
-                            Học kỳ
-                        </label>
-                        <select
-                            onChange={handleSemesterChange}
-                            className="w-full border rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                            defaultValue=""
-                        >
-                            <option value="" disabled>
-                                -- Chọn học kỳ --
-                            </option>
-                            {semesters.map((s) => (
-                                <option
-                                    key={s.id}
-                                    value={s.id}
-                                    className={
-                                        s.status === "finished" ? "text-red-500 font-semibold" : ""
-                                    }
-                                >
-                                    {`${s.code} - ${s.name} (${s.start} → ${s.end})`}
-                                </option>
-                            ))}
-                        </select>
-
-                        {selectedSemester && (
-                            <div className="mt-4 p-3 rounded-lg border bg-white shadow-sm">
-                                <p>
-                                    <strong>Mã:</strong> {selectedSemester.code}
-                                </p>
-                                <p>
-                                    <strong>Tên:</strong> {selectedSemester.name}
-                                </p>
-                                <p>
-                                    <strong>Thời gian:</strong>{" "}
-                                    {selectedSemester.start} → {selectedSemester.end}
-                                </p>
-                                <p
-                                    className={
-                                        selectedSemester.status === "finished"
-                                            ? "text-red-500 font-semibold"
-                                            : "text-green-600 font-semibold"
-                                    }
-                                >
-                                    Trạng thái: {selectedSemester.status}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                <div>
+                    <button onClick={handleSave}
+                            className="mb-6 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Save Schedule
+                    </button>
                 </div>
                 {/* View Mode Selector */}
                 {isAdmin && (
@@ -588,7 +677,7 @@ const ScheduleViewer = ({courses, teachers, rooms, resultData}) => {
 
                 {viewMode === 'analysis' && (
                     <>
-                        {/*<ScheduleAnalyzer courses={courses} teachers={teachers} rooms={rooms} result={resultData}/>*/}
+                        <ScheduleAnalyzer courses={courses} teachers={teachers} rooms={rooms} result={resultData}/>
                     </>
                 )
                 }

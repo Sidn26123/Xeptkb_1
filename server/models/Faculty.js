@@ -11,7 +11,7 @@ const Faculty = sequelize.define('Faculty', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  faculty_id: {
+  code: {
     type: DataTypes.STRING(50),
     allowNull: false,
     unique: true,

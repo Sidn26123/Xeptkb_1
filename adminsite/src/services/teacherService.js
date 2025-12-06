@@ -27,10 +27,16 @@ export const deleteTeacher = async (id) => {
   return res?.data ?? null;
 };
 
+export const bulkImportTeachers = async (datalist) => {
+  const res = await api.post('/teachers/bulk-import', datalist);
+  return res?.response?.data ?? null;
+}
+
 export default {
   getAllTeachers,
   getTeacherById,
   createTeacher,
   updateTeacher,
   deleteTeacher,
+  bulkImportTeachers
 };

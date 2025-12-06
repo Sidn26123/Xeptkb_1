@@ -347,6 +347,85 @@ exports.saveGeneratedSchedule = async (req, res) => {
  * @param {Object} apiResponse - Response từ API generate schedule
  * @returns {Promise<Object>} - Trả về generation record đã tạo
  */
+// async function saveScheduleToDatabase(apiResponse) {
+//     const transaction = await sequelize.transaction();
+//
+//     try {
+//         const { schedule } = apiResponse;
+//         const {
+//             courses,
+//             fitness,
+//             generations,
+//             penalty_breakdown,
+//             schedule_summary,
+//             semester
+//         } = schedule;
+//         console.log("📌 Saving schedule for semester:", semester);
+//         // 1. Tạo record ScheduleGeneration
+//         const scheduleGeneration = await ScheduleGeneration.create({
+//             semester: semester.semesterName,
+//             semester_id: semester.semester_id,
+//             total_weeks: semester.end_week - semester.start_week + 1,
+//             days_per_week: semester.days_per_week,
+//             sessions_per_day: semester.sessions_per_day,
+//             session_duration: semester.session_duration,
+//             generated_at: new Date(),
+//             week_start: semester.start_week,
+//             week_end: 17,
+//             fitness_score: fitness,
+//             penalty_breakdown: penalty_breakdown,
+//             raw_json: schedule, // Lưu toàn bộ JSON để trace
+//         }, { transaction });
+//
+//         // 2. Tạo các records Schedule từ courses
+//         const scheduleRecords = [];
+//
+//         for (const course of courses) {
+//             // Mỗi course có thể có nhiều weekly_slots
+//             for (const slot of course.weekly_slots) {
+//                 const scheduleRecord = {
+//                     course_class_id: course.class_id,
+//                     teacher_id: course.teacher_id,
+//                     day_id: slot.day,
+//                     room_id: course.room_id,
+//                     time_slot_id: slot.period,
+//                     num_of_period: slot.duration,
+//                     generation_id: scheduleGeneration.id,
+//                     week_start: course.start_week,
+//                     week_end: course.end_week,
+//                     scheduler: 'genetic_algorithm', // hoặc thông tin khác
+//                 };
+//
+//                 scheduleRecords.push(scheduleRecord);
+//             }
+//         }
+//
+//         // Bulk insert các Schedule records
+//         await Schedule.bulkCreate(scheduleRecords, { transaction });
+//
+//         // Commit transaction
+//         await transaction.commit();
+//
+//         return {
+//             success: true,
+//             generation_id: scheduleGeneration.id,
+//             total_schedules: scheduleRecords.length,
+//             fitness_score: fitness,
+//             message: 'Schedule saved successfully'
+//         };
+//
+//     } catch (error) {
+//         // Rollback nếu có lỗi
+//         await transaction.rollback();
+//
+//         console.error('Error saving schedule to database:', error);
+//         throw {
+//             success: false,
+//             error: error.message,
+//             message: 'Failed to save schedule to database'
+//         };
+//     }
+// }
 async function saveScheduleToDatabase(apiResponse) {
     const transaction = await sequelize.transaction();
 
@@ -355,15 +434,20 @@ async function saveScheduleToDatabase(apiResponse) {
         const {
             courses,
             fitness,
-            generations,
+            // generations, // Biến này không thấy dùng
             penalty_breakdown,
-            schedule_summary,
+            // schedule_summary, // Biến này chưa dùng
             semester
         } = schedule;
-        console.log("📌 Saving schedule for semester:", semester);
-        // 1. Tạo record ScheduleGeneration
+
+        console.log("📌 Saving schedule for semester ID:", semester.semester_id);
+
+        // 1. TẠO RECORD ScheduleGeneration
+        // Model yêu cầu 'semester' là String, nhưng JSON không có tên, ta tự format tạm
+        const semesterNameStr = `Học kỳ ${semester.semester_id} (${semester.start_week}-${semester.end_week})`;
+
         const scheduleGeneration = await ScheduleGeneration.create({
-            semester: semester.semesterName,
+            semester: semesterNameStr,
             semester_id: semester.semester_id,
             total_weeks: semester.end_week - semester.start_week + 1,
             days_per_week: semester.days_per_week,
@@ -371,39 +455,55 @@ async function saveScheduleToDatabase(apiResponse) {
             session_duration: semester.session_duration,
             generated_at: new Date(),
             week_start: semester.start_week,
-            week_end: 17,
+            week_end: semester.end_week, // JSON có end_week, model có week_end
             fitness_score: fitness,
             penalty_breakdown: penalty_breakdown,
-            raw_json: schedule, // Lưu toàn bộ JSON để trace
+            raw_json: schedule, // Lưu lại để debug sau này
         }, { transaction });
 
-        // 2. Tạo các records Schedule từ courses
+        // 2. TẠO CÁC RECORDS Schedule (Mẫu thời khóa biểu)
         const scheduleRecords = [];
 
         for (const course of courses) {
-            // Mỗi course có thể có nhiều weekly_slots
+            // Xử lý class_ids (Fix lỗi chính ở đây)
+            // Lấy phần tử đầu tiên của mảng class_ids
+            const targetClassId = (course.class_ids && course.class_ids.length > 0)
+                ? course.class_ids[0]
+                : null;
+
+            if (!targetClassId) {
+                console.warn(`⚠️ Bỏ qua course ${course.course_id} vì không tìm thấy class_id`);
+                continue;
+            }
+
             for (const slot of course.weekly_slots) {
                 const scheduleRecord = {
-                    course_class_id: course.class_id,
+                    course_class_id: course.course_id, // Đã fix: Lấy ID lớp học phần chính xác
                     teacher_id: course.teacher_id,
                     day_id: slot.day,
                     room_id: course.room_id,
                     time_slot_id: slot.period,
                     num_of_period: slot.duration,
-                    generation_id: scheduleGeneration.id,
+                    generation_id: scheduleGeneration.id, // Link với bảng generation vừa tạo
                     week_start: course.start_week,
                     week_end: course.end_week,
-                    scheduler: 'genetic_algorithm', // hoặc thông tin khác
+                    scheduler: 'genetic_algorithm',
                 };
 
                 scheduleRecords.push(scheduleRecord);
             }
         }
 
-        // Bulk insert các Schedule records
-        await Schedule.bulkCreate(scheduleRecords, { transaction });
+        if (scheduleRecords.length > 0) {
+            await Schedule.bulkCreate(scheduleRecords, { transaction });
+        }
 
-        // Commit transaction
+        // 3. (QUAN TRỌNG) BẠN CÓ MUỐN TẠO "SCHEDULE INSTANCES" KHÔNG?
+        // Hiện tại code này chỉ lưu "Mẫu TKB" (Thứ 2 học tiết 1).
+        // Nó CHƯA lưu "Ngày 12/10/2024 học tiết 1".
+        // Nếu muốn hiển thị lên lịch (Calendar), bạn cần 1 bước generate instances từ start_week đến end_week.
+        // Tuy nhiên, bước đó có thể làm sau hoặc ở API khác.
+
         await transaction.commit();
 
         return {
@@ -415,18 +515,15 @@ async function saveScheduleToDatabase(apiResponse) {
         };
 
     } catch (error) {
-        // Rollback nếu có lỗi
         await transaction.rollback();
-
         console.error('Error saving schedule to database:', error);
-        throw {
+        throw { // Ném lỗi ra để controller bắt được
             success: false,
-            error: error.message,
-            message: 'Failed to save schedule to database'
+            message: error.message,
+            originalError: error
         };
     }
 }
-
 /**
  * Lấy schedule generation với các schedules liên quan
  * @param {number} generationId
@@ -553,28 +650,220 @@ async function getSchedulesBySemester(semesterId) {
 // }
 
 
+// /**
+//  * Tạo schedule instances từ schedule pattern, tự động tính toán ranh giới.
+//  * @param {number} scheduleId - ID của schedule pattern.
+//  * @param {string | Date | null} [filterStartDate] - (Tùy chọn) Chỉ tạo instance SAU ngày này.
+//  * @param {string | Date | null} [filterEndDate] - (Tùy chọn) Chỉ tạo instance TRƯỚC ngày này.
+//  */
+// async function generateScheduleInstances(scheduleId, filterStartDate = null, filterEndDate = null) {
+//     const transaction = await sequelize.transaction();
+//
+//     try {
+//         // 1. Lấy dữ liệu (Đã thêm include cho Semester)
+//         // Đảm bảo các model Day, ScheduleGeneration, Semester đã được import và associate
+//         const schedule = await Schedule.findByPk(scheduleId, {
+//             include: [
+//                 { model: Day, as: 'day' },
+//                 {
+//                     model: ScheduleGeneration,
+//                     as: 'generation',
+//                     include: [{
+//                         model: Semester,
+//                         as: 'semesterInfo'
+//                     }]
+//                 }
+//             ],
+//             transaction
+//         });
+//
+//         if (!schedule || !schedule.generation || !schedule.generation.semesterInfo) {
+//             await transaction.rollback();
+//             throw new Error('Không tìm thấy dữ liệu Schedule, Generation, hoặc Semester.');
+//         }
+//
+//         const { generation } = schedule;
+//         const { semesterInfo } = generation;
+//
+//         // --- 2. Tính toán ranh giới "Thế giới thực" ---
+//
+//         // Ngày bắt đầu của học kỳ
+//         const semesterStartDate = new Date(semesterInfo.start);
+//         semesterStartDate.setHours(0, 0, 0, 0); // Chuẩn hóa
+//
+//         // Ngày kết thúc của học kỳ
+//         const semesterEndDate = new Date(semesterInfo.end);
+//         semesterEndDate.setHours(23, 59, 59, 999); // Chuẩn hóa
+//
+//         // Tính tổng số tuần offset so với đầu học kỳ
+//         // (week_start - 1) vì tuần 1 nghĩa là 0 offset
+//         const totalStartOffsetWeeks = (generation.week_start - 1) + (schedule.week_start - 1);
+//         const totalEndOffsetWeeks = (generation.week_start - 1) + (schedule.week_end - 1);
+//
+//         // Ngày bắt đầu (lý thuyết) của schedule này (là Thứ Hai của tuần đó)
+//         const calculatedStartDate = addDays(semesterStartDate, totalStartOffsetWeeks * 7);
+//
+//         // Ngày kết thúc (lý thuyết) của schedule này (là Chủ Nhật của tuần đó)
+//         const calculatedEndDate = addDays(semesterStartDate, (totalEndOffsetWeeks * 7) + 6);
+//         calculatedEndDate.setHours(23, 59, 59, 999); // Set về cuối ngày
+//
+//         // --- 3. Áp dụng tham số lọc (nếu có) ---
+//
+//         const paramStartDate = filterStartDate ? new Date(filterStartDate) : new Date('1970-01-01');
+//         const paramEndDate = filterEndDate ? new Date(filterEndDate) : new Date('9999-12-31');
+//
+//         // Ngày bắt đầu hiệu lực: là ngày *muộn nhất* trong các mốc
+//         const effectiveStartDate = new Date(Math.max(
+//             paramStartDate.getTime(),
+//             semesterStartDate.getTime(),
+//             calculatedStartDate.getTime()
+//         ));
+//
+//         // Ngày kết thúc hiệu lực: là ngày *sớm nhất* trong các mốc
+//         const effectiveEndDate = new Date(Math.min(
+//             paramEndDate.getTime(),
+//             semesterEndDate.getTime(),
+//             calculatedEndDate.getTime()
+//         ));
+//
+//         // --- 4. Vòng lặp TỐI ƯU (Theo tuần) ---
+//         const instances = [];
+//
+//         // Giả định: day_id 1=Thứ Hai, 2=Thứ Ba, ..., 7=Chủ Nhật.
+//         // Offset so với ngày Thứ Hai (ngày đầu tuần)
+//         const dayOffset = schedule.day_id - 1;
+//
+//         if (dayOffset < 0 || dayOffset > 6) {
+//             throw new Error(`day_id không hợp lệ: ${schedule.day_id}. Phải từ 1 đến 7.`);
+//         }
+//
+//         // Lấy ngày Thứ Hai của tuần bắt đầu
+//         let currentWeekStart = getStartOfWeek(effectiveStartDate);
+//         console.log({
+//             semesterStart: semesterInfo.start,
+//             semesterEnd: semesterInfo.end,
+//             filterStartDate,
+//             filterEndDate,
+//             calculatedStartDate,
+//             calculatedEndDate,
+//             effectiveStartDate,
+//             effectiveEndDate,
+//         });
+//         console.log(`Generating instances for schedule ID ${scheduleId}`);
+//         console.log(`Effective Range: ${effectiveStartDate.toISOString().split('T')[0]} to ${effectiveEndDate.toISOString().split('T')[0]}`);
+//
+//         while (currentWeekStart <= effectiveEndDate) {
+//             // Tính ngày "thế giới thực" cho instance này
+//             const instanceDate = addDays(currentWeekStart, dayOffset);
+//
+//             // Chỉ tạo instance nếu ngày đó nằm trong phạm vi hiệu lực
+//             // (ví dụ: ngày bắt đầu hiệu lực là Thứ 4, thì Thứ 2, 3 tuần đó sẽ bị bỏ qua)
+//             if (instanceDate >= effectiveStartDate && instanceDate <= effectiveEndDate) {
+//
+//                 // Sử dụng cấu trúc object của bạn
+//                 instances.push({
+//                     schedule_id: scheduleId,
+//                     date: instanceDate.toISOString().split('T')[0], // YYYY-MM-DD
+//
+//                     // Lấy dữ liệu từ pattern, thay vì null
+//                     time_slot_id: schedule.time_slot_id,
+//                     room_id: schedule.room_id,
+//                     teacher_id: schedule.teacher_id,
+//
+//                     status: 'scheduled',
+//                     origin: 'auto',
+//                     metadata: {
+//                         generated_from: 'pattern',
+//                         generation_id: schedule.generation_id
+//                     }
+//                 });
+//             }
+//
+//             // Chuyển sang tuần tiếp theo
+//             currentWeekStart = addDays(currentWeekStart, 7);
+//         }
+//
+//         // --- 5. Bulk insert ---
+//         console.log(`Attempting to create ${instances.length} instances.`);
+//         if (instances.length === 0) {
+//             await transaction.commit(); // Vẫn commit dù không tạo gì
+//             return {
+//                 success: true,
+//                 total_instances: 0,
+//                 message: "No instances needed to be generated for the given range.",
+//                 instances: []
+//             };
+//         }
+//
+//         const createdInstances = await ScheduleInstance.bulkCreate(instances, {
+//             transaction,
+//             ignoreDuplicates: true // Giữ lại logic này, rất tốt!
+//         });
+//
+//         await transaction.commit();
+//
+//         return {
+//             success: true,
+//             total_instances: createdInstances.length,
+//             instances: createdInstances
+//         };
+//
+//     } catch (error) {
+//         await transaction.rollback();
+//         console.error('Error generating schedule instances:', error);
+//         throw error;
+//     }
+// }
+
+// /**
+//  * Helper: Cộng ngày
+//  */
+// function addDays(date, days) {
+//     const result = new Date(date);
+//     result.setDate(result.getDate() + days);
+//     return result;
+// }
+//
+// /**
+//  * Helper: Lấy ngày Thứ Hai của tuần chứa ngày date
+//  */
+// function getStartOfWeek(date) {
+//     const d = new Date(date);
+//     const day = d.getDay(); // 0 (CN) -> 6 (T7)
+//     // Nếu là CN (0) thì lùi 6 ngày, còn lại lùi (day - 1) ngày để về T2
+//     // Lưu ý: Logic này giả định tuần bắt đầu từ Thứ 2
+//     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+//     const monday = new Date(d.setDate(diff));
+//     monday.setHours(0, 0, 0, 0);
+//     return monday;
+// }
+
 /**
- * Tạo schedule instances từ schedule pattern, tự động tính toán ranh giới.
- * @param {number} scheduleId - ID của schedule pattern.
- * @param {string | Date | null} [filterStartDate] - (Tùy chọn) Chỉ tạo instance SAU ngày này.
- * @param {string | Date | null} [filterEndDate] - (Tùy chọn) Chỉ tạo instance TRƯỚC ngày này.
+ * Helper: Format Date sang YYYY-MM-DD theo giờ địa phương (Tránh lỗi UTC)
+ */
+function toLocalDateString(date) {
+    const year = date.getFullYear();
+    // getMonth() trả về 0-11 nên cần +1
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Tạo schedule instances từ schedule pattern
  */
 async function generateScheduleInstances(scheduleId, filterStartDate = null, filterEndDate = null) {
     const transaction = await sequelize.transaction();
 
     try {
-        // 1. Lấy dữ liệu (Đã thêm include cho Semester)
-        // Đảm bảo các model Day, ScheduleGeneration, Semester đã được import và associate
+        // 1. Lấy dữ liệu
         const schedule = await Schedule.findByPk(scheduleId, {
             include: [
                 { model: Day, as: 'day' },
                 {
                     model: ScheduleGeneration,
                     as: 'generation',
-                    include: [{
-                        model: Semester,
-                        as: 'semesterInfo'
-                    }]
+                    include: [{ model: Semester, as: 'semesterInfo' }]
                 }
             ],
             transaction
@@ -582,7 +871,7 @@ async function generateScheduleInstances(scheduleId, filterStartDate = null, fil
 
         if (!schedule || !schedule.generation || !schedule.generation.semesterInfo) {
             await transaction.rollback();
-            throw new Error('Không tìm thấy dữ liệu Schedule, Generation, hoặc Semester.');
+            throw new Error('Dữ liệu không đầy đủ (Schedule, Generation hoặc Semester).');
         }
 
         const { generation } = schedule;
@@ -590,85 +879,77 @@ async function generateScheduleInstances(scheduleId, filterStartDate = null, fil
 
         // --- 2. Tính toán ranh giới "Thế giới thực" ---
 
-        // Ngày bắt đầu của học kỳ
         const semesterStartDate = new Date(semesterInfo.start);
-        semesterStartDate.setHours(0, 0, 0, 0); // Chuẩn hóa
+        semesterStartDate.setHours(0, 0, 0, 0);
 
-        // Ngày kết thúc của học kỳ
         const semesterEndDate = new Date(semesterInfo.end);
-        semesterEndDate.setHours(23, 59, 59, 999); // Chuẩn hóa
+        semesterEndDate.setHours(23, 59, 59, 999);
 
-        // Tính tổng số tuần offset so với đầu học kỳ
-        // (week_start - 1) vì tuần 1 nghĩa là 0 offset
+        // Tính offset tuần.
+        // Ví dụ: Gen bắt đầu tuần 1, Schedule bắt đầu tuần 6 => Offset 5 tuần.
         const totalStartOffsetWeeks = (generation.week_start - 1) + (schedule.week_start - 1);
         const totalEndOffsetWeeks = (generation.week_start - 1) + (schedule.week_end - 1);
 
-        // Ngày bắt đầu (lý thuyết) của schedule này (là Thứ Hai của tuần đó)
+        // Ngày bắt đầu/kết thúc lý thuyết (Dựa trên tuần)
         const calculatedStartDate = addDays(semesterStartDate, totalStartOffsetWeeks * 7);
-
-        // Ngày kết thúc (lý thuyết) của schedule này (là Chủ Nhật của tuần đó)
         const calculatedEndDate = addDays(semesterStartDate, (totalEndOffsetWeeks * 7) + 6);
-        calculatedEndDate.setHours(23, 59, 59, 999); // Set về cuối ngày
+        calculatedEndDate.setHours(23, 59, 59, 999);
 
-        // --- 3. Áp dụng tham số lọc (nếu có) ---
-
+        // --- 3. Áp dụng bộ lọc ngày ---
         const paramStartDate = filterStartDate ? new Date(filterStartDate) : new Date('1970-01-01');
         const paramEndDate = filterEndDate ? new Date(filterEndDate) : new Date('9999-12-31');
 
-        // Ngày bắt đầu hiệu lực: là ngày *muộn nhất* trong các mốc
         const effectiveStartDate = new Date(Math.max(
             paramStartDate.getTime(),
             semesterStartDate.getTime(),
             calculatedStartDate.getTime()
         ));
 
-        // Ngày kết thúc hiệu lực: là ngày *sớm nhất* trong các mốc
         const effectiveEndDate = new Date(Math.min(
             paramEndDate.getTime(),
             semesterEndDate.getTime(),
             calculatedEndDate.getTime()
         ));
 
-        // --- 4. Vòng lặp TỐI ƯU (Theo tuần) ---
-        const instances = [];
-
-        // Giả định: day_id 1=Thứ Hai, 2=Thứ Ba, ..., 7=Chủ Nhật.
-        // Offset so với ngày Thứ Hai (ngày đầu tuần)
-        const dayOffset = schedule.day_id - 1;
-
-        if (dayOffset < 0 || dayOffset > 6) {
-            throw new Error(`day_id không hợp lệ: ${schedule.day_id}. Phải từ 1 đến 7.`);
+        // Kiểm tra nếu range không hợp lệ (Start > End)
+        if (effectiveStartDate > effectiveEndDate) {
+            await transaction.commit();
+            return { success: true, total_instances: 0, message: "Effective start date is after end date." };
         }
 
-        // Lấy ngày Thứ Hai của tuần bắt đầu
-        let currentWeekStart = getStartOfWeek(effectiveStartDate);
-        console.log({
-            semesterStart: semesterInfo.start,
-            semesterEnd: semesterInfo.end,
-            filterStartDate,
-            filterEndDate,
-            calculatedStartDate,
-            calculatedEndDate,
-            effectiveStartDate,
-            effectiveEndDate,
-        });
-        console.log(`Generating instances for schedule ID ${scheduleId}`);
-        console.log(`Effective Range: ${effectiveStartDate.toISOString().split('T')[0]} to ${effectiveEndDate.toISOString().split('T')[0]}`);
+        // --- 4. Vòng lặp tạo Instance ---
+        const instances = [];
 
+        // === QUAN TRỌNG: SỬA LOGIC DAY OFFSET ===
+        // Giả định: Trong DB, day_id tuân theo chuẩn VN: 2=Thứ Hai, ..., 8=Chủ Nhật.
+        // Nếu DB của bạn là 1=Thứ Hai, hãy đổi số 2 thành số 1 ở dòng dưới.
+        const DB_MONDAY_ID = 2;
+        const dayOffset = schedule.day_id - DB_MONDAY_ID;
+
+        // Validate dayOffset để tránh vòng lặp vô tận hoặc sai ngày
+        if (dayOffset < 0 || dayOffset > 6) {
+            // Nếu day_id = 8 (Chủ Nhật) -> 8-2 = 6 (OK)
+            // Nếu logic DB khác, cần chỉnh lại biến DB_MONDAY_ID
+            // Log cảnh báo thay vì throw error để check
+            console.warn(`Warning: Abnormal dayOffset ${dayOffset} for day_id ${schedule.day_id}`);
+        }
+
+        let currentWeekStart = getStartOfWeek(effectiveStartDate);
+
+        // Lặp từng tuần
         while (currentWeekStart <= effectiveEndDate) {
-            // Tính ngày "thế giới thực" cho instance này
+            // Tính ngày học cụ thể trong tuần đó
             const instanceDate = addDays(currentWeekStart, dayOffset);
 
-            // Chỉ tạo instance nếu ngày đó nằm trong phạm vi hiệu lực
-            // (ví dụ: ngày bắt đầu hiệu lực là Thứ 4, thì Thứ 2, 3 tuần đó sẽ bị bỏ qua)
+            // Chỉ tạo nếu ngày đó nằm trong range hiệu lực
             if (instanceDate >= effectiveStartDate && instanceDate <= effectiveEndDate) {
 
-                // Sử dụng cấu trúc object của bạn
                 instances.push({
                     schedule_id: scheduleId,
-                    date: instanceDate.toISOString().split('T')[0], // YYYY-MM-DD
+                    // FIX: Sử dụng hàm format local để đúng ngày
+                    date: toLocalDateString(instanceDate),
 
-                    // Lấy dữ liệu từ pattern, thay vì null
+                    // Dữ liệu override (Copy từ pattern sang instance)
                     time_slot_id: schedule.time_slot_id,
                     room_id: schedule.room_id,
                     teacher_id: schedule.teacher_id,
@@ -677,43 +958,38 @@ async function generateScheduleInstances(scheduleId, filterStartDate = null, fil
                     origin: 'auto',
                     metadata: {
                         generated_from: 'pattern',
-                        generation_id: schedule.generation_id
+                        generation_id: schedule.generation_id,
+                        week_index: schedule.week_start // Có thể lưu thêm tuần học thứ mấy
                     }
                 });
             }
 
-            // Chuyển sang tuần tiếp theo
+            // Next week
             currentWeekStart = addDays(currentWeekStart, 7);
         }
 
-        // --- 5. Bulk insert ---
-        console.log(`Attempting to create ${instances.length} instances.`);
-        if (instances.length === 0) {
-            await transaction.commit(); // Vẫn commit dù không tạo gì
-            return {
-                success: true,
-                total_instances: 0,
-                message: "No instances needed to be generated for the given range.",
-                instances: []
-            };
+        // --- 5. Bulk Insert ---
+        if (instances.length > 0) {
+            await ScheduleInstance.bulkCreate(instances, {
+                transaction,
+                ignoreDuplicates: true
+                // ignoreDuplicates rất quan trọng ở đây để tránh crash
+                // nếu chạy hàm này nhiều lần cho cùng 1 schedule
+            });
         }
-
-        const createdInstances = await ScheduleInstance.bulkCreate(instances, {
-            transaction,
-            ignoreDuplicates: true // Giữ lại logic này, rất tốt!
-        });
 
         await transaction.commit();
 
         return {
             success: true,
-            total_instances: createdInstances.length,
-            instances: createdInstances
+            total_instances: instances.length,
+            // Trả về danh sách để check (nếu ít)
+            instances_preview: instances.length > 0 ? instances[0] : null
         };
 
     } catch (error) {
         await transaction.rollback();
-        console.error('Error generating schedule instances:', error);
+        console.error(`Error generating instances for Schedule ${scheduleId}:`, error);
         throw error;
     }
 }

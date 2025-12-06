@@ -131,7 +131,7 @@ export async function fetchScheduleForTeacherOnDate(teacherId, startDate = null,
 }
 
 // Fetch schedule instances for a user (teacher or student) on a specific date range
-export async function fetchScheduleForUserOnDate(userId, role, startDate = null, endDate = null) {
+export async function fetchScheduleForUserOnDate(userId, role, startDate = null, endDate = null, classId = null) {
   // If caller supplies explicit startDate (and optional endDate) use them.
   // Otherwise compute a shrinking-week range: start = today (or Sunday if today
   // is Sunday), end = upcoming Sunday (the Sunday that ends this logical week).
@@ -169,6 +169,10 @@ export async function fetchScheduleForUserOnDate(userId, role, startDate = null,
       startDate,
       endDate,
     };
+    // For student role, classId is required
+    if (role === 'student' && classId) {
+      body.classId = classId;
+    }
     const response = await api.post('/schedule-instances/instances/daily', body);
     const instances = response?.data?.data ?? [];
 

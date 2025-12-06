@@ -323,9 +323,20 @@ export default function CourseClassManagement() {
                             Làm mới
                         </Button>
                     </div>
-                    <Button size="md" variant="primary" onClick={handleAddOpen}>
-                        Thêm LHP
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            size="sm"
+                            className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                        >
+                            Import Excel
+                        </Button>
+
+                        <Button size="md" variant="primary"
+                                className="!px-6 !py-2 font-semibold bg-green-600 hover:bg-green-700"
+                                onClick={handleAddOpen}>
+                            Thêm LHP
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Bảng dữ liệu */}

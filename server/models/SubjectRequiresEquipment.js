@@ -23,16 +23,17 @@ const SubjectRequiresEquipment = sequelize.define('SubjectRequiresEquipment', {
       key: 'id',
     }
   },
-  require_quantity_per_person: {
-    type: DataTypes.INTEGER,
-    defaultValue: 1,
+
+  type: {
+    type: DataTypes.STRING(3),
+    allowNull: true, // "lab", "lec"
   },
+
 }, {
   tableName: 'subjectrequiresequipment',
   timestamps: false,
   indexes: [
-    { fields: ['subject_id'] },
-    { fields: ['equipment_id'] }
+    { fields: ['subject_id', 'type'] }
   ],
 });
 

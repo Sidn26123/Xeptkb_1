@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 // ✅ Validator khi tạo mới lớp học
 exports.createClassValidator = [
     body('name')
+        .trim()
         .notEmpty().withMessage('Tên lớp học không được để trống')
         .isLength({ min: 3, max: 255 }).withMessage('Tên lớp học phải từ 3–255 ký tự'),
 

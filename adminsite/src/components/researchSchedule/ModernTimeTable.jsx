@@ -27,6 +27,7 @@ export default function ModernTimeTable({
     const [timeSlots, setTimeSlots] = useState(externalTimeSlots || []);
     const [loadingTimeSlots, setLoadingTimeSlots] = useState(externalLoadingTimeSlots != null ? externalLoadingTimeSlots : true);
     // Update current week when semester changes
+
     useEffect(() => {
         if (selectedSemester) {
             const semesterStart = new Date(selectedSemester.start);

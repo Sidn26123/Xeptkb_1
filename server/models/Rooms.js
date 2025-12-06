@@ -70,6 +70,7 @@ Room.associate = (models) => {
     foreignKey: 'room_id',
     as: 'schedules'
   });
+
   Room.hasMany(models.ScheduleInstance, {
     foreignKey: 'room_id',
     as: 'instances',
@@ -80,5 +81,17 @@ Room.associate = (models) => {
     as: 'building'
   });
 
+  // Thêm cái này
+  Room.belongsToMany(models.Equipment, {
+    through: models.RoomEquipment,
+    foreignKey: 'room_id',
+    otherKey: 'equipment_id',
+    as: 'equipments'
+  });
+
+  Room.hasMany(models.RoomEquipment, {
+    foreignKey: 'room_id',
+    as: 'roomEquipments'
+  });
 };
 module.exports = Room;

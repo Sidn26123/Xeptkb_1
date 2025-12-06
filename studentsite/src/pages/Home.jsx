@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import authService from '../services/authService';
-import { fetchScheduleForUserOnDate, fetchScheduleForClassOnDate } from '../services/scheduleService';
+import { fetchScheduleForUserOnDate, fetchScheduleForClassOnDate, getAllTimeSlots } from '../services/scheduleService';
 import { Link } from 'react-router-dom';
 import { getNowInVN } from '../utils/timeUtils';
 // NavBar is rendered globally by AppLayout
@@ -111,6 +111,7 @@ function InfoGroups({ profile }) {
 }
 
 function NextClassCard({ scheduleToday, nextClassDisplay }) {
+  console.error('NextClassCard render', { scheduleToday, nextClassDisplay });
   const hasClass = Array.isArray(scheduleToday) && scheduleToday.length > 0;
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-indigo-200">
@@ -121,11 +122,16 @@ function NextClassCard({ scheduleToday, nextClassDisplay }) {
           </div>
           <div>
             <div className="text-xs text-gray-400">Buổi tiếp theo</div>
-            <div className="text-lg font-semibold text-gray-800">{hasClass ? (nextClassDisplay.className || nextClassDisplay.course || 'Môn học') : 'Tuần này không có lớp'}</div>
             { hasClass && nextClassDisplay.course && (
               <div className="text-sm text-gray-500 mt-0.5">Môn: <span className="text-base font-semibold text-gray-800">{nextClassDisplay.course}</span></div>
             )}
-            <div className="text-sm text-gray-500 mt-1">{hasClass ? (nextClassDisplay.time || '') : 'Chúc bạn một tuần tốt lành!'}</div>
+            <div className="text-sm text-gray-500 mt-1">
+              {hasClass ? (
+                (nextClassDisplay.startTime && nextClassDisplay.endTime)
+                  ? `${nextClassDisplay.startTime} - ${nextClassDisplay.endTime}`
+                  : (nextClassDisplay.time || '')
+              ) : 'Chúc bạn một tuần tốt lành!'}
+            </div>
             { hasClass && nextClassDisplay.date && (
               <div className="text-sm text-gray-500 mt-1">{new Date(nextClassDisplay.date).toLocaleDateString('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
             )}
@@ -204,7 +210,13 @@ function UpcomingClasses({ upcoming, scheduleToday }) {
                 </div>
                 <div>
                   <div className="font-medium text-gray-800">{u.className || u.subject?.name || u.course || 'Môn học'}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{u.date} · {u.time || u.timeslot?.name || ''}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    {u.date ? new Date(u.date).toLocaleDateString('vi-VN', { day: '2-digit', month: 'short' }) : ''}
+                    { (u.startTime && u.endTime)
+                      ? ` · ${u.startTime} - ${u.endTime}`
+                      : ((u.time || u.timeslot?.name) ? ` · ${u.time || u.timeslot?.name}` : '')
+                    }
+                  </div>
                   <div className="text-xs text-gray-500 mt-1">{u.teacher?.name || ''} {u.teacher?.teacher_identifier ? `· ${u.teacher.teacher_identifier}` : ''}</div>
                   <div className="text-xs text-gray-500">Phòng: {u.room?.code || '—'} · {u.room?.floor_number === 0 ? 'Tầng trệt' : (u.room?.floor_number ? `Tầng ${u.room.floor_number}` : '—')} · {u.room?.building?.name || (u.room?.name ? u.room.name.split(' - ')[0]?.replace('Phòng ', '') : '—')}</div>
                 </div>
@@ -346,6 +358,8 @@ export default function Home() {
     ? {
         course: nextClass.subject?.name || nextClass.course || nextClass.title || 'Môn học',
         time: nextClass.time || nextClass.timeslot?.name || '',
+        startTime: nextClass.startTime || null,
+        endTime: nextClass.endTime || null,
         room: nextClass.room || noClassDisplay.room,
         teacher: nextClass.teacher || noClassDisplay.teacher,
       }
@@ -369,30 +383,110 @@ export default function Home() {
 
         // after we have the profile, fetch the shrinking-week schedule for this student
         try {
-          const weekSchedule = await fetchScheduleForUserOnDate(student?.id, 'student');
+          const classId = student?.course_class?.id || student?.class?.id || student?.class_id || student?.course_class_id;
+          const weekSchedule = await fetchScheduleForUserOnDate(student?.id, 'student', null, null, classId);
           if (!cancelled && Array.isArray(weekSchedule) && weekSchedule.length > 0) {
-            const mapped = weekSchedule.map(it => {
-              const slot = (it.raw && (it.raw.timeSlot || it.raw.schedule?.timeSlot)) || null;
-              const formatTwo = (n) => (n === undefined || n === null) ? '00' : String(n).padStart(2, '0');
-              const timeRange = slot ? `${formatTwo(slot.start_hour)}:${formatTwo(slot.start_min)} - ${formatTwo(slot.end_hour)}:${formatTwo(slot.end_min)}` : (it.timeslot?.name || '');
-              const room = it.room || (it.raw && it.raw.room) || null;
-              const teacherObj = it.teacher || (it.raw && it.raw.teacher) || null;
+            // fetch time slots and normalize week schedule
+            let rawTimeSlots = [];
+            try {
+              rawTimeSlots = await getAllTimeSlots();
+            } catch { rawTimeSlots = []; }
+
+            // helper functions scoped inside effect to avoid hook dependency issues
+            const normalizeTimeSlots = (rawTimeSlots = []) => {
+              return (rawTimeSlots || []).map(slot => ({
+                ...slot,
+                start: slot.start || (slot.start_hour !== undefined ? `${String(slot.start_hour).padStart(2, '0')}:${String(slot.start_min || 0).padStart(2, '0')}` : null),
+                end: slot.end || (slot.end_hour !== undefined ? `${String(slot.end_hour).padStart(2, '0')}:${String(slot.end_min || 0).padStart(2, '0')}` : null),
+              }));
+            };
+
+            const normalizeInstance = (it, timeSlots = []) => {
+              const scheduleObj = it.schedule || {};
+              const scheduleTimeSlot = scheduleObj.timeSlot || it.timeSlot || null;
+              const timeSlotId = scheduleTimeSlot?.id || it.time_slot_id || null;
+              const numOfPeriod = scheduleObj?.num_of_period ?? it.num_of_period ?? 1;
+
+              let startTime = null;
+              let endTime = null;
+
+              // Prefer normalized timeSlots (fetched globally) to compute exact start/end
+              if (timeSlotId && timeSlots.length > 0) {
+                const startSlot = timeSlots.find(ts => ts.id === timeSlotId);
+                const endSlotId = Number(timeSlotId) + Number(numOfPeriod) - 1;
+                const endSlot = timeSlots.find(ts => ts.id === endSlotId);
+                if (startSlot && startSlot.start) startTime = startSlot.start;
+                if (endSlot && endSlot.end) endTime = endSlot.end;
+              }
+
+              // Fallback to numeric fields on schedule.timeSlot
+              if ((!startTime || !endTime) && scheduleTimeSlot) {
+                if (!startTime && scheduleTimeSlot.start_hour !== undefined) {
+                  startTime = `${String(scheduleTimeSlot.start_hour).padStart(2, '0')}:${String(scheduleTimeSlot.start_min || 0).padStart(2, '0')}`;
+                }
+                if (!endTime && scheduleTimeSlot.end_hour !== undefined) {
+                  endTime = `${String(scheduleTimeSlot.end_hour).padStart(2, '0')}:${String(scheduleTimeSlot.end_min || 0).padStart(2, '0')}`;
+                }
+              }
+
+              // Fallback to explicit datetimes on instance
+              if ((!startTime || !endTime) && (it.start_datetime || it.end_datetime)) {
+                try {
+                  if (!startTime && it.start_datetime) {
+                    const s = new Date(it.start_datetime);
+                    startTime = s.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                  }
+                  if (!endTime && it.end_datetime) {
+                    const e = new Date(it.end_datetime);
+                    endTime = e.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+
+              // Last fallback: raw time string
+              const rawTimeStr = it.time || scheduleTimeSlot?.name || it.timeslot?.name || '';
+              if ((!startTime || !endTime) && rawTimeStr && rawTimeStr.includes('-')) {
+                const parts = rawTimeStr.split('-').map(s => s.trim());
+                if (!startTime) startTime = parts[0];
+                if (!endTime && parts[1]) endTime = parts[1];
+              }
+
+              const timeRange = startTime && endTime ? `${startTime} - ${endTime}` : (startTime || rawTimeStr || '');
+
+              // Class and subject live under schedule.courseClass
+              const courseClass = scheduleObj.courseClass || null;
+              const className = courseClass?.class?.name || courseClass?.name || it.class?.name || null;
+              const subjectName = courseClass?.subject?.name || it.subject?.name || null;
+
+              const room = it.room || scheduleObj.room || null;
+              const teacherObj = it.teacher || scheduleObj.teacher || null;
+
               return {
                 id: it.id,
-                course: it.subject?.name || it.title || it.course || 'Môn học',
-                timeslot: { name: it.timeslot?.name, idx: it.timeslot?.idx },
+                course: subjectName || courseClass?.name || 'Môn học',
+                className,
+                timeslot: { id: timeSlotId, name: scheduleTimeSlot?.name || it.timeslot?.name, idx: scheduleTimeSlot?.idx ?? it.timeslot?.idx },
                 time: timeRange,
+                startTime,
+                endTime,
                 date: it.date,
-                subject: { name: it.subject?.name || it.title },
+                subject: { name: subjectName },
                 teacher: { name: teacherObj?.name, teacher_identifier: teacherObj?.teacher_identifier },
-                class: it.class || null,
-                room: room ? { code: room.code, name: room.name, floor_number: room.floor_number, building: room.building || {} } : null,
-                raw: it.raw,
+                class: courseClass ? { id: courseClass?.class?.id ?? courseClass?.id, name: className } : null,
+                room: room ? { code: room.code || null, name: room.name || null, floor_number: room.floor_number ?? null, building: room.building || {} } : null,
+                raw: it,
               };
-            });
+            };
+
+            const normalizeWeekSchedule = (weekSchedule = [], rawTimeSlots = []) => {
+              const timeSlots = normalizeTimeSlots(rawTimeSlots);
+              return (weekSchedule || []).map(it => normalizeInstance(it, timeSlots));
+            };
+
+            const mapped = normalizeWeekSchedule(weekSchedule, rawTimeSlots);
             setScheduleToday(mapped);
-            console.debug('Studentsite Raw weekSchedule:', weekSchedule);
-            console.debug('Studentsite Mapped schedule for UI:', mapped);
           } else {
             // fallback: if user not present or API returned empty, try class-based daily fetch as before
             const classId = student?.course_class?.id || student?.class?.id || student?.class_id || student?.course_class_id;

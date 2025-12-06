@@ -76,8 +76,9 @@ const Schedule = sequelize.define('Schedule', {
   tableName: 'schedules',
   timestamps: false,
   indexes: [{
+    name: 'unique_schedule_idx_1',
     unique: true,
-    fields: ['generation_id', 'course_class_id', 'day_id', 'time_slot_id']
+    fields: ['generation_id', 'course_class_id', 'day_id', 'time_slot_id', 'week_start']
   }]
 });
 

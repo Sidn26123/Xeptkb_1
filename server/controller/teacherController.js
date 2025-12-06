@@ -1,9 +1,11 @@
-const { Teacher, User } = require('../models');
+const { Teacher, User, Faculty } = require('../models');
 const ErrorResponse = require('../utils/responseUtils').ErrorResponse;
 const { SuccessResponse } = require('../utils/responseUtils');
 const asyncHandler = require('../middleware/asyncHandler');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const {bulkImportStudents} = require("../services/studentService");
+const {bulkImportTeachers} = require("../services/teacherService");
 
 // Lấy tất cả giáo viên
 exports.getAllTeachers = asyncHandler(async (req, res, next) => {
@@ -208,3 +210,29 @@ exports.deleteTeacher = asyncHandler(async (req, res, next) => {
   await teacher.destroy();
   res.status(200).json(new SuccessResponse(null, 'Xóa giáo viên thành công'));
 });
+
+exports.bulkImport = async (req, res) => {
+  try {
+    const result = await bulkImportTeachers(req.body);
+
+    if (result.error === 'EMPTY_DATA')
+      return res.status(400).json(new ErrorResponse('Dữ liệu import trống', 400));
+
+    if (result.error === 'NO_VALID_ITEM')
+      return res.status(400).json(new ErrorResponse('Không có dữ liệu hợp lệ', 400));
+
+    if (result.error === 'VALIDATION_ERROR') {
+      return res.status(422).json({
+        error: 'Dữ liệu import có lỗi tham chiếu',
+        errors: result.errors
+      });
+    }
+
+    return res.status(201).json(
+        new SuccessResponse(result.data, `Đã import thành công ${result.data.length} lớp học`)
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(new ErrorResponse('Lỗi Server: ' + err.message, 500));
+  }
+};

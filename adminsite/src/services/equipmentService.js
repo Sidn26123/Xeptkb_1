@@ -27,10 +27,16 @@ export const deleteEquipment = async (id) => {
   return res?.data ?? null;
 };
 
+export const bulkImportEquipments = async (datalist) => {
+    const res = await api.post('/equipments/bulk', datalist);
+    return res?.response?.data ?? null;
+}
+
 export default {
   getAllEquipments,
   getEquipmentById,
   createEquipment,
   updateEquipment,
   deleteEquipment,
+  bulkImportEquipments
 };

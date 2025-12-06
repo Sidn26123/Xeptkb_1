@@ -26,6 +26,10 @@ export const deleteClass = async (id) => {
   const res = await api.delete(`/classes/${id}`);
   return res?.data ?? null;
 };
+export const bulkImportClasses = async (datalist) => {
+  const res = await api.post('/classes/bulk-import', datalist);
+  return res?.response?.data ?? null;
+}
 
 export default {
   getAllClasses,
@@ -33,4 +37,5 @@ export default {
   createClass,
   updateClass,
   deleteClass,
+  bulkImportClasses
 };

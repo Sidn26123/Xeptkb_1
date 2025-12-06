@@ -56,7 +56,19 @@ const ScheduleGeneration = sequelize.define("ScheduleGeneration", {
     type: DataTypes.JSON,
     defaultValue: {},
   },
-
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Ví dụ: Phương án 1 - Ưu tiên giáo viên', // Giúp người dùng phân biệt các lần chạy
+  },
+  status: {
+    type: DataTypes.ENUM('draft', 'published', 'archived'), // Thay vì chỉ is_active
+    defaultValue: 'draft',
+  },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false, // Chỉ true khi status = 'published'
+  },
   // Option: lưu luôn full JSON để trace
   raw_json: {
     type: DataTypes.JSON,

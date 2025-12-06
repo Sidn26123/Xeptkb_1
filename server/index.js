@@ -36,7 +36,7 @@ const dayRoutes = require('./routes/day');
 const reportRoutes = require('./routes/report');
 const scheduleInstanceRoutes = require('./routes/scheduleInstance');
 const mailRoutes = require('./routes/mail');
-
+// const scheduleGenerationRoutes = require('./routes/scheduleGenerationRoutes');
 const app = express();
 app.use(express.json());
 app.use(cors);
@@ -67,6 +67,8 @@ app.use(API_PREFIX + '/rooms', roomRoutes);
 app.use(API_PREFIX + '/schedules', scheduleRoutes);
 app.use(API_PREFIX + '/semesters', semesterRoutes);
 // app.use(API_PREFIX + '/soft-contraists', softContraistRoutes);
+app.use(API_PREFIX + '/soft-contraists', constraintRoutes);
+// Schedule change requests (teacher/admin)
 app.use(API_PREFIX + '/constraints', constraintRoutes);
 app.use(API_PREFIX + '/subject-requires-equipments', subjectRequiresEquipmentRoutes);
 app.use(API_PREFIX + '/subjects', subjectRoutes);
@@ -77,14 +79,7 @@ app.use(API_PREFIX + '/mail', mailRoutes);
 app.use(API_PREFIX + '/time-slots', timeSlotRoutes);
 app.use(API_PREFIX + '/days', dayRoutes);
 app.use(API_PREFIX + '/reports', reportRoutes);
-app.get('/', (req, res) => {
-  res.status(200).send('API Service is Running!');
-});
-
-// Hoặc thêm một route cho tiền tố API nếu Render ping /api/v1/
-app.get(API_PREFIX + '/', (req, res) => {
-  res.status(200).json({ status: 'success', message: 'API is ready' });
-});
+// app.use(API_PREFIX + '/schedule-generations', scheduleGenerationRoutes);
 // 404 handler for unknown routes
 const ErrorResponse = require('./utils/responseUtils').ErrorResponse;
 const errorHandler = require("./middleware/errorHandler");
@@ -171,9 +166,8 @@ sequelize.authenticate()
     .then(async () => {
       console.log('✅ Kết nối database thành công!');
       await sequelize.sync({ alter: false, force: false });
-
       server = app.listen(PORT, () => {
-        console.log(`🚀 Server đang chạy tại port ${PORT}`); // Optional: Updated the log message
+        console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
       });
     })
     .catch(err => {

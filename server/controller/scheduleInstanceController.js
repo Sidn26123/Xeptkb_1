@@ -7,15 +7,17 @@ const {
     rescheduleInstance, transformInstancesToEvents
 } = require('../services/scheduleInstanceService');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
-const ScheduleInstance = require('../models/ScheduleInstances');
-const Schedule = require('../models/Schedules');
-const ScheduleGeneration = require('../models/ScheduleGenerations');
+// const ScheduleInstance = require('../models/ScheduleInstances');
+// const Schedule = require('../models/Schedules');
+// const ScheduleGeneration = require('../models/ScheduleGenerations');
+const { ScheduleInstance, Schedule, CourseClass, Class, Subject, Room, Teacher, ScheduleGeneration } = require('../models');
+
 const { Op } = require('sequelize');
-const CourseClass = require('../models/CourseClasses');
-const Subject = require('../models/Subjects');
-const Room = require('../models/Rooms');
-const Teacher = require('../models/Teachers');
-const Class = require('../models/Classes');
+// const CourseClass = require('../models/CourseClasses');
+// const Subject = require('../models/Subjects');
+// const Room = require('../models/Rooms');
+// const Teacher = require('../models/Teachers');
+// const Class = require('../models/Classes');
 // ==================== INSTANCE GENERATION ====================
 
 /**
@@ -545,6 +547,8 @@ exports.deleteInstance = async (req, res) => {
         res.status(500).json(new ErrorResponse(err.message, 500));
     }
 };
+// Đảm bảo import đúng path models của bạn
+
 exports.getScheduleInstancesByQuery = async (req, res) => {
     try {
         const { classId, semesterId, roomId, teacherId } = req.query;
@@ -555,23 +559,32 @@ exports.getScheduleInstancesByQuery = async (req, res) => {
             });
         }
 
-        // Build include for Schedule with generation filter by semester
+        // 1. Cấu hình Include cho Class (Lớp sinh viên)
+        // Đây là điểm thay đổi quan trọng nhất cho quan hệ N-N
+        const classesInclude = {
+            model: Class,
+            as: 'classes', // Phải khớp với alias trong CourseClass.associate (belongsToMany)
+            attributes: ['id', 'name', 'code'],
+            through: { attributes: [] }, // Không lấy dữ liệu bảng trung gian cho gọn
+            required: false // Mặc định là false, sẽ bật lên true nếu có classId
+        };
+
+        // 2. Cấu hình Include cho CourseClass
         const courseClassInclude = {
             model: CourseClass,
             as: 'courseClass',
-            required: false,
+            required: true, // Instance phải thuộc về 1 lớp học phần nào đó
             include: [
                 { model: Subject, as: 'subject' },
-                // Only select `id` and `name` from Class to avoid
-                // requesting columns that may not exist in older DBs
-                { model: Class, as: 'class', attributes: ['id', 'name'] }
+                classesInclude // Nhúng cấu hình ở bước 1 vào đây
             ]
         };
 
+        // 3. Cấu hình Include cho Schedule
         const scheduleInclude = {
             model: Schedule,
             as: 'schedule',
-            attributes: ['num_of_period', 'room_id'],
+            attributes: ['num_of_period', 'room_id', 'teacher_id'], // Lấy thêm teacher_id để check
             required: true,
             include: [
                 {
@@ -585,52 +598,72 @@ exports.getScheduleInstancesByQuery = async (req, res) => {
             ]
         };
 
-        // Build where clause for ScheduleInstance
+        // 4. Xây dựng Where Clause cho bảng chính (ScheduleInstance)
         const whereClause = {};
 
+        // Filter by Room
         if (roomId) {
-            // filter instances by room OR schedule.room_id
             whereClause[Op.or] = [
                 { room_id: roomId },
                 { '$schedule.room_id$': roomId }
             ];
         }
 
-        // Filter by teacher (either override on instance or schedule.teacher_id)
+        // Filter by Teacher
         if (teacherId) {
             whereClause[Op.or] = [
-                ...(whereClause[Op.or] || []),
                 { teacher_id: teacherId },
                 { '$schedule.teacher_id$': teacherId }
             ];
         }
 
+        // 5. Xử lý logic lọc theo ClassId (N-N)
         if (classId) {
-            // restrict to instances whose schedule.courseClass.class_id matches
+            // Logic: Tìm Schedule -> CourseClass -> Classes (mà trong list Classes có id = classId)
+
+            // Bắt buộc phải tìm thấy CourseClass
             courseClassInclude.required = true;
-            courseClassInclude.where = { class_id: classId };
+
+            // Bắt buộc trong danh sách classes phải có classId này
+            classesInclude.required = true;
+            classesInclude.where = { id: classId };
         }
 
+        // 6. Query Database
         const instances = await ScheduleInstance.findAll({
             where: whereClause,
             include: [
                 scheduleInclude,
-                { model: Room, as: 'room', include: [ { model: require('../models/Buildings'), as: 'building', include: [ { model: require('../models/Campus'), as: 'campus' } ] } ] },
+                {
+                    model: Room,
+                    as: 'room',
+                    include: [{
+                        model: require('../models/Buildings'),
+                        as: 'building',
+                        include: [{ model: require('../models/Campus'), as: 'campus' }]
+                    }]
+                },
                 { model: Teacher, as: 'teacher' },
                 { model: require('../models/TimeSlot'), as: 'timeSlot' }
             ],
             order: [ ['date', 'ASC'], ['time_slot_id', 'ASC'] ]
         });
 
-        // Chuyển đổi dữ liệu về dạng Frontend
-        const events = transformInstancesToEvents(instances);
-        res.status(200).json(new SuccessResponse(events, 'Lấy thời khóa biểu thành công'));
+        // Chuyển đổi dữ liệu về dạng Frontend (nếu cần)
+        // const events = transformInstancesToEvents(instances);
+
+        // Trả về kết quả
+        res.status(200).json({
+            success: true,
+            message: 'Lấy thời khóa biểu thành công',
+            data: instances // Hoặc events nếu bạn dùng hàm transform
+        });
+
     } catch (error) {
         console.error('Lỗi khi lấy schedule instances:', error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };
-
 /**
  * Lấy instances cho một user (teacher hoặc student)
  * POST /api/v1/schedule-instances/instances/for-user

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import authService from '../services/authService';
-import { fetchScheduleForUserOnDate } from '../services/scheduleService';
+import { fetchScheduleForUserOnDate, getAllTimeSlots } from '../services/scheduleService';
 import { Link } from 'react-router-dom';
 import { getNowInVN } from '../utils/timeUtils';
 
@@ -427,44 +427,84 @@ export default function Home() {
           try {
             const weekSchedule = await fetchScheduleForUserOnDate(teacherRes.id, 'teacher');
             if (!cancelled && Array.isArray(weekSchedule) && weekSchedule.length > 0) {
-              const mapped = weekSchedule.map(it => {
-                // prefer instance-level timeSlot, fallback to schedule.timeSlot
-                const slot = (it.raw && (it.raw.timeSlot || it.raw.schedule?.timeSlot)) || null;
-                const formatTwo = (n) => (n === undefined || n === null) ? '00' : String(n).padStart(2, '0');
-                const timeRange = slot ? `${formatTwo(slot.start_hour)}:${formatTwo(slot.start_min)} - ${formatTwo(slot.end_hour)}:${formatTwo(slot.end_min)}` : (it.timeslot?.name || '');
+              // fetch time slots for accurate start/end calculation
+              let rawTimeSlots = [];
+              try {
+                rawTimeSlots = await getAllTimeSlots();
+              } catch { rawTimeSlots = []; }
 
-                // prefer courseClass name from schedule, then subject/title
-                const courseName = it.subject?.name || it.title || it.course || 'Môn học';
+              const normalizeTimeSlots = (raw = []) => (raw || []).map(s => ({
+                ...s,
+                start: s.start || (s.start_hour !== undefined ? `${String(s.start_hour).padStart(2,'0')}:${String(s.start_min || 0).padStart(2,'0')}` : null),
+                end: s.end || (s.end_hour !== undefined ? `${String(s.end_hour).padStart(2,'0')}:${String(s.end_min || 0).padStart(2,'0')}` : null),
+              }));
 
-                // room may be instance-level override (it.room) and include building/campus
-                const room = it.room || (it.raw && it.raw.room) || null;
+              const normalizeInstance = (it, timeSlots = []) => {
+                const scheduleObj = it.schedule || {};
+                const scheduleTimeSlot = scheduleObj.timeSlot || it.timeSlot || null;
+                const timeSlotId = scheduleTimeSlot?.id || it.time_slot_id || null;
+                const numOfPeriod = scheduleObj?.num_of_period ?? it.num_of_period ?? 1;
 
-                const teacherObj = it.teacher || (it.raw && it.raw.teacher) || null;
+                let startTime = null;
+                let endTime = null;
 
-                // className: prefer top-level className, then nested class.name, then schedule.courseClass.name
-                const className = it.className
-                  || (it.class && it.class.name)
-                  || (it.raw && it.raw.schedule && it.raw.schedule.courseClass && (it.raw.schedule.courseClass.class?.name || it.raw.schedule.courseClass.name))
-                  || '';
+                if (timeSlotId && timeSlots.length > 0) {
+                  const startSlot = timeSlots.find(ts => ts.id === timeSlotId);
+                  const endSlotId = Number(timeSlotId) + Number(numOfPeriod) - 1;
+                  const endSlot = timeSlots.find(ts => ts.id === endSlotId);
+                  if (startSlot && startSlot.start) startTime = startSlot.start;
+                  if (endSlot && endSlot.end) endTime = endSlot.end;
+                }
+
+                if ((!startTime || !endTime) && scheduleTimeSlot) {
+                  if (!startTime && scheduleTimeSlot.start_hour !== undefined) startTime = `${String(scheduleTimeSlot.start_hour).padStart(2,'0')}:${String(scheduleTimeSlot.start_min || 0).padStart(2,'0')}`;
+                  if (!endTime && scheduleTimeSlot.end_hour !== undefined) endTime = `${String(scheduleTimeSlot.end_hour).padStart(2,'0')}:${String(scheduleTimeSlot.end_min || 0).padStart(2,'0')}`;
+                }
+
+                if ((!startTime || !endTime) && (it.start_datetime || it.end_datetime)) {
+                  try {
+                    if (!startTime && it.start_datetime) startTime = new Date(it.start_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    if (!endTime && it.end_datetime) endTime = new Date(it.end_datetime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                  } catch {
+                    // ignore parse errors
+                  }
+                }
+
+                const rawTimeStr = it.time || scheduleTimeSlot?.name || it.timeslot?.name || '';
+                if ((!startTime || !endTime) && rawTimeStr && rawTimeStr.includes('-')) {
+                  const parts = rawTimeStr.split('-').map(s => s.trim());
+                  if (!startTime) startTime = parts[0];
+                  if (!endTime && parts[1]) endTime = parts[1];
+                }
+
+                const timeRange = startTime && endTime ? `${startTime} - ${endTime}` : (startTime || rawTimeStr || '');
+
+                const courseClass = scheduleObj.courseClass || null;
+                const className = courseClass?.class?.name || courseClass?.name || it.class?.name || it.className || '';
+                const subjectName = courseClass?.subject?.name || it.subject?.name || it.title || it.course || 'Môn học';
+
+                const room = it.room || scheduleObj.room || (it.raw && it.raw.room) || null;
+                const teacherObj = it.teacher || scheduleObj.teacher || (it.raw && it.raw.teacher) || null;
 
                 return {
                   id: it.id,
-                  course: courseName,
+                  course: subjectName,
                   className,
-                  timeslot: { name: it.timeslot?.name, idx: it.timeslot?.idx },
+                  timeslot: { id: timeSlotId, name: scheduleTimeSlot?.name || it.timeslot?.name, idx: scheduleTimeSlot?.idx ?? it.timeslot?.idx },
                   time: timeRange,
+                  startTime,
+                  endTime,
                   date: it.date,
-                  subject: { name: it.subject?.name || it.title },
+                  subject: { name: subjectName },
                   teacher: { name: teacherObj?.name, teacher_identifier: teacherObj?.teacher_identifier },
-                  class: it.class || (it.raw && it.raw.schedule && it.raw.schedule.courseClass && it.raw.schedule.courseClass.class) || null,
+                  class: courseClass ? { id: courseClass?.class?.id ?? courseClass?.id, name: className } : (it.class || null),
                   room: room ? { code: room.code, name: room.name, floor_number: room.floor_number, building: room.building || {} } : null,
-                  raw: it.raw,
+                  raw: it,
                 };
-              });
-              // set and debug
+              };
+
+              const mapped = (weekSchedule || []).map(it => normalizeInstance(it, normalizeTimeSlots(rawTimeSlots)));
               setScheduleWeek(mapped);
-              console.debug('Raw weekSchedule from API:', weekSchedule);
-              console.debug('Mapped scheduleWeek for UI:', mapped);
             }
           } catch (err) {
             console.warn('Failed to fetch week schedule', err);

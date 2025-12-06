@@ -1,131 +1,30 @@
 import React, {useEffect, useMemo, useState} from "react";
 import useSchedulerStore, {
-    setCourses, setRooms, setSchedules, setSelectedSemester, setTeachers, updateSemesterConfig, useConstraints,
-    useCourses,
+    setCourses, setRooms, setSchedules, setSelectedSemester, setTeachers, updateSemesterConfig, useSelectedConstraints,
+    useCourses, useEquipments, useRoomEquipments,
     useRooms, useSchedulingActions,
     useSelectedCourses, useSelectedRooms, useSelectedSemester,
-    useSelectedTeachers, useSemesterConfig, useSemesters,
-    useTeachers
+    useSelectedTeachers, useSemesterConfig, useSemesters, useSubjectRequiresEquipment, useSubjects,
+    useTeachers, useConstraints, useCourseClasses, setConstraints
 } from "../../stores/ScheduleDataStore.js";
-import {BookOpen, CheckCircle2, CheckSquare, Home, RefreshCw, Square, Users} from "lucide-react";
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell, Legend, Line,
-    LineChart,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis
-} from "recharts";
+import {BookOpen, CheckCircle2, CheckSquare, Home, RefreshCw, Square, Users, Clock, Maximize} from "lucide-react";
 import {getAllCourseClasses} from "../../services/courseClassService.js";
 import {getAllTeachers} from "../../services/teacherService.js";
-import {getAllRooms} from "../../services/roomService.js";
+import {getAllRooms, getAllRoomsWithEquipment} from "../../services/roomService.js";
 import {callGenerateSchedule} from "../../services/scheduleService.js";
 import ConstraintSelector from "../constrant/ConstraintSelector.jsx";
-import {getAll} from "../../services/constraintService.js";
-
-/**
- * Chuyển đổi chuỗi "2-1, 3-7" thành mảng [[2, 1], [3, 7]]
- */
-const parseBusySlots = (slotsString) => {
-    if (!slotsString) return [];
-    try {
-        return slotsString
-            .split(",")
-            .map((part) => part.trim())
-            .filter((part) => part.includes("-"))
-            .map((part) => {
-                const [day, slot] = part.split("-");
-                return [parseInt(day.trim()), parseInt(slot.trim())];
-            })
-            .filter((arr) => !isNaN(arr[0]) && !isNaN(arr[1]));
-    } catch (error) {
-        console.error("Lỗi parse busy slots:", error);
-        return [];
-    }
-};
-
-/**
- * Hàm chính để format dữ liệu cho API
- */
-const formatDataForApi = (state, data) => {
-    const {
-        selectedRoomIds,
-        selectedTeacherIds,
-        selectedCourseIds,
-        courseParams,
-        teacherBusySlots,
-        semesterConfig,
-    } = state;
-
-    const {allRooms, allTeachers, allCourses} = data;
-
-    // 1. Format Rooms
-    const rooms = allRooms
-        .filter((room) => selectedRoomIds.has(room.id))
-        .map((room) => ({
-            id: room.id,
-            name: room.name,
-            capacity: room.capacity_max, // Sử dụng capacity_max
-        }));
-
-    // 2. Format Teachers
-    const teachers = allTeachers
-        .filter((teacher) => selectedTeacherIds.has(teacher.id))
-        .map((teacher) => ({
-            id: teacher.id,
-            name: teacher.name,
-            busy_slots: parseBusySlots(teacherBusySlots[teacher.id]),
-        }));
-
-    // 3. Format Courses
-    const courses = allCourses
-        .filter((course) => selectedCourseIds.has(course.id))
-        .map((course) => {
-            const params = courseParams[course.id] || {};
-            return {
-                id: course.id, // ID của chính lớp học phần
-                course_id: course.subject_id, // ID của môn học (subject)
-                teacher_id: course.teacher_id,
-                class_id: course.class_id,
-                student_count: parseInt(course.slot || 0),
-                weeks_needed: parseInt(course.weeks_needed || 10),
-                sessions_per_week: parseInt(course.session_per_week || 0),
-                duration_per_session: parseInt(course.duration_per_session || 0),
-            };
-        });
-
-    // 4. Format Config (thêm start_date)
-    const finalSemesterConfig = {
-        start_date: semesterConfig.start_date,
-        start_week: parseInt(semesterConfig.start_week),
-        end_week: parseInt(semesterConfig.end_week),
-        max_concurrent_courses: parseInt(semesterConfig.max_concurrent_courses),
-    };
-
-    return {
-        rooms,
-        teachers,
-        courses,
-        semester_config: finalSemesterConfig,
-    };
-};
-export const convertConstraintsToAPI = (selectedConstraints) => {
-    return selectedConstraints.map(constraint => ({
-        name: constraint.code,
-        weight: constraint.weight
-    }));
-};
+import {getAllConstraints} from "../../services/constraintService.js";
+import {formatDataForApi, parseBusySlots, convertConstraintsToAPI} from "../../utils/resourceUtils.js";
+import {BarChart2, PlayCircle} from "lucide-react"; // Thêm icon mới
+import PreSchedulingDashboard from "./PreScheduleMetricDashboard.jsx"; // Import component mới
+import {formatToTestData} from "../../utils/resourceUtils.js";
+import ScheduleProgressModal from "./ScheduleProgressModal.jsx"; // Import hàm format
 const testData = {
     "courses": [
         {
             "id": 1,
             "course_id": 101,
-            "class_id": 1,
+            "class_ids": [1],
             "teacher_id": 1,
             "student_count": 50,
             "weeks_needed": 3,
@@ -138,7 +37,7 @@ const testData = {
         {
             "id": 21,
             "course_id": 101,
-            "class_id": 1,
+            "class_ids": [1],
             "teacher_id": 1,
             "student_count": 25,
             "weeks_needed": 4,
@@ -151,7 +50,7 @@ const testData = {
         {
             "id": 2,
             "course_id": 102,
-            "class_id": 2,
+            "class_ids": [2],
             "teacher_id": 3,
             "student_count": 40,
             "weeks_needed": 5,
@@ -164,7 +63,7 @@ const testData = {
         {
             "id": 3,
             "course_id": 103,
-            "class_id": 2,
+            "class_ids": [2],
             "teacher_id": 2,
             "student_count": 60,
             "weeks_needed": 5,
@@ -177,7 +76,7 @@ const testData = {
         {
             "id": 4,
             "course_id": 104,
-            "class_id": 2,
+            "class_ids": [2],
             "teacher_id": 3,
             "student_count": 45,
             "weeks_needed": 4,
@@ -190,7 +89,7 @@ const testData = {
         {
             "id": 5,
             "course_id": 105,
-            "class_id": 3,
+            "class_ids": [3],
             "teacher_id": 3,
             "student_count": 35,
             "weeks_needed": 3,
@@ -203,7 +102,7 @@ const testData = {
         {
             "id": 6,
             "course_id": 106,
-            "class_id": 3,
+            "class_ids": [3],
             "teacher_id": 4,
             "student_count": 35,
             "weeks_needed": 4,
@@ -412,10 +311,15 @@ const ResourceManager = () => {
     const courses = useCourses();
     const teachers = useTeachers();
     const rooms = useRooms();
+    const subjects = useSubjects();
+    const equipments = useEquipments();
+    const roomEquipments = useRoomEquipments();
+    const subjectRequiresEquipments = useSubjectRequiresEquipment();
     const selectedCourses = useSelectedCourses();
     const selectedTeachers = useSelectedTeachers();
     const selectedRooms = useSelectedRooms();
     const actions = useSchedulingActions();
+    const constraints = useConstraints();
     const [courseParams, setCourseParams] = useState({}); // { courseId: { student_count: 50, ... } }
     const [teacherBusySlots, setTeacherBusySlots] = useState({}); // { teacherId: "2-1, 2-2" }
     const semesterConfig = useSemesterConfig();
@@ -423,33 +327,64 @@ const ResourceManager = () => {
     const selectedSemester = useSelectedSemester();
     const [startWeek, setStartWeek] = useState('');
     const [endWeek, setEndWeek] = useState('');
-    const [errors, setErrors] = useState({ startWeek: '', endWeek: '' });
-    const [constraints, setConstraints] = useState([]);
-    const selectedConstraints = useConstraints();
+    const [errors, setErrors] = useState({startWeek: '', endWeek: ''});
+    const selectedConstraints = useSelectedConstraints();
+    const [showDashboard, setShowDashboard] = useState(false); // State hiển thị popup
+    const [dashboardData, setDashboardData] = useState(null);  // Data cho popup
+
+    // --- STATE CHO STREAMING ---
+    const [isScheduling, setIsScheduling] = useState(false); // Để bật Modal
+    const [scheduleProgress, setScheduleProgress] = useState(0);
+    const [currentPhase, setCurrentPhase] = useState('phase1'); // phase1, phase2, phase3
+    const [fitnessValue, setFitnessValue] = useState(null);
+    const [streamLogs, setStreamLogs] = useState([]);
+    const [isStreamComplete, setIsStreamComplete] = useState(false);
+    const [schedulingResult, setSchedulingResult] = useState(null); // Lưu kết quả cuối cùng
+
+
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         try {
+    //             // Khởi tạo dữ liệu
+    //             const [dataCourse, dataTeacher, dataRoom, constraints] = await Promise.all([
+    //                 getAllCourseClasses(),
+    //             ]);
+    //
+    //             console.log("Loaded data:", {dataCourse, dataTeacher, dataRoom, constraints});
+    //
+    //             setCourses(dataCourse);
+    //         } catch (error) {
+    //             console.error("Error loading data:", error);
+    //         }
+    //     };
+    //
+    //     fetchData();
+    // }, []);
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Khởi tạo dữ liệu
-                const [dataCourse, dataTeacher, dataRoom, constraints] = await Promise.all([
-                    getAllCourseClasses(),
-                    getAllTeachers(),
-                    getAllRooms(),
-                    getAll()
-                ]);
-
-                console.log("Loaded data:", {dataCourse, dataTeacher, dataRoom, constraints});
-
-                setCourses(dataCourse);
-                setTeachers(dataTeacher);
-                setRooms(dataRoom);
-                setConstraints(constraints);
-            } catch (error) {
-                console.error("Error loading data:", error);
-            }
-        };
-
-        fetchData();
+        console.log("Constraist Classes updated:", constraints);
+        // setConstraints(courseClasses);
     }, []);
+
+    // Hàm chuẩn bị dữ liệu và mở Dashboardc
+    const handlePreCheck = () => {
+        // Validate cơ bản trước
+        if (!semesterConfig.start_week || !semesterConfig.end_week) {
+            alert("Vui lòng cấu hình tuần học trước!");
+            return;
+        }
+
+        const formattedData = formatToTestData(
+            selectedCourses,
+            selectedRooms,
+            selectedTeachers, // Vẫn truyền teacher để check availability
+            semesterConfig,
+            constraints
+        );
+
+        setDashboardData(formattedData);
+        setShowDashboard(true);
+    };
 
     const extractIdsFromObjects = (objArray) => {
         return objArray.map(obj => obj.id);
@@ -533,25 +468,22 @@ const ResourceManager = () => {
         clearActions[type]();
     };
 
-
     // Statistics calculations
     const courseStats = useMemo(() => {
-        const selected = courses.filter(c =>
+        const safeCourses = courses || [];
+        const selected = safeCourses.filter(c =>
             selectedCourses.some(sc => sc.id === c.id)
         );
-
-        const totalStudents = selected.reduce((sum, c) => sum + c.student_count, 0);
-        const totalSessions = selected.reduce((sum, c) => sum + (c.weeks_needed * c.sessions_per_week), 0);
-        const avgStudents = selected.length > 0 ? (totalStudents / selected.length).toFixed(1) : 0;
-        const totalHours = selected.reduce((sum, c) => sum + (c.weeks_needed * c.sessions_per_week * c.duration_per_session), 0);
+        console.log(selected);
+        const totalStudents = selected.reduce((sum, c) => sum + (c.total_enrollment || 0), 0);
+        const totalHours = selected.reduce((sum, c) => sum + ((c.weeks_needed || 0) * (c.sessions_per_week || 0) * (c.duration_per_session || 0)), 0);
 
         return {
-            total: courses.length,
+            total: safeCourses.length,
             selected: selected.length,
             totalStudents,
-            avgStudents,
-            totalSessions,
             totalHours,
+            selectionRate: safeCourses.length > 0 ? ((selected.length / safeCourses.length) * 100).toFixed(1) : 0
         };
     }, [courses, selectedCourses]);
 
@@ -560,35 +492,68 @@ const ResourceManager = () => {
             selectedTeachers.some(st => st.id === t.id)
         );
 
-        // const totalCoursesCovered = [...new Set(selected.flatMap(t => t.can_teach_courses))].length;
-        // const avgCoursesPerTeacher = selected.length > 0 ? (selected.reduce((sum, t) => sum + t.can_teach_courses.length, 0) / selected.length).toFixed(1) : 0;
-
         return {
             total: teachers.length,
             selected: selected.length,
         };
     }, [teachers, selectedTeachers]);
 
+    // const roomStats = useMemo(() => {
+    //     const selected = rooms.filter(r =>
+    //         selectedRooms.some(sr => sr.id === r.id)
+    //     );
+    //
+    //     const totalCapacity = selected.reduce((sum, r) => sum + r.capacity, 0);
+    //     const avgCapacity = selected.length > 0 ? (totalCapacity / selected.length).toFixed(1) : 0;
+    //     const maxCapacity = selected.length > 0 ? Math.max(...selected.map(r => r.capacity)) : 0;
+    //     const minCapacity = selected.length > 0 ? Math.min(...selected.map(r => r.capacity)) : 0;
+    //
+    //     return {
+    //         total: rooms.length,
+    //         selected: selected.length,
+    //         totalCapacity,
+    //         avgCapacity,
+    //         maxCapacity,
+    //         minCapacity,
+    //     };
+    // }, [rooms, selectedRooms]);
     const roomStats = useMemo(() => {
-        const selected = rooms.filter(r =>
+        const safeRooms = rooms || [];
+        const selected = safeRooms.filter(r =>
             selectedRooms.some(sr => sr.id === r.id)
         );
+        console.log("Selected rooms for stats:", selected);
 
-        const totalCapacity = selected.reduce((sum, r) => sum + r.capacity, 0);
+        const totalCapacity = selected.reduce((sum, r) => sum + (r.capacity_max || 0), 0);
+        const optimalCapacity = selected.reduce((sum, r) => sum + (r.capacity_optimal || 0), 0);
         const avgCapacity = selected.length > 0 ? (totalCapacity / selected.length).toFixed(1) : 0;
-        const maxCapacity = selected.length > 0 ? Math.max(...selected.map(r => r.capacity)) : 0;
-        const minCapacity = selected.length > 0 ? Math.min(...selected.map(r => r.capacity)) : 0;
 
         return {
-            total: rooms.length,
+            total: safeRooms.length,
             selected: selected.length,
-            totalCapacity,
-            avgCapacity,
-            maxCapacity,
-            minCapacity,
+            totalCapacity: totalCapacity,
+            optimalCapacity: optimalCapacity,
+            avgCapacity: avgCapacity,
+            selectionRate: safeRooms.length > 0 ? ((selected.length / safeRooms.length) * 100).toFixed(1) : 0
         };
     }, [rooms, selectedRooms]);
 
+    const constraintStats = useMemo(() => {
+        const safeConstraints = constraints || [];
+        const safeSelected = selectedConstraints || [];
+
+        // Đếm số lượng cứng/mềm đã chọn
+        const hardSelected = safeSelected.filter(c => c.type === 'H').length;
+        const softSelected = safeSelected.filter(c => c.type === 'S').length;
+
+        return {
+            total: safeConstraints.length,
+            selected: safeSelected.length,
+            hardSelected,
+            softSelected,
+            selectionRate: safeConstraints.length > 0 ? ((safeSelected.length / safeConstraints.length) * 100).toFixed(1) : 0
+        };
+    }, [constraints, selectedConstraints]);
     // Chart data
     const courseChartData = useMemo(() => courses.map(c => ({
         name: `Course ${c.course_id}`,
@@ -603,15 +568,11 @@ const ResourceManager = () => {
         capacity: r.capacity,
         selected: selectedRooms.includes(r.id),
     })), [rooms, selectedRooms]);
-    // //
-    // const teacherCoverageData = useMemo(() => teachers.map(t => ({
-    //     name: t.name,
-    //     courses: t.can_teach_courses.length,
-    //     selected: selectedTeachers.includes(t.id),
-    // })), [teachers, selectedTeachers]);
+
     const teacherCoverageData = () => {
 
     }
+
     const selectionDistribution = useMemo(() => [
         {
             name: 'Đã chọn',
@@ -627,48 +588,52 @@ const ResourceManager = () => {
 
     const renderCourseList = () => (
         <div className="space-y-2">
-            {courses.map(course => (
-                <div
-                    key={course.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedCourses.includes(course)
-                            ? 'border-emerald-500 bg-emerald-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => toggleSelection(course, 'courses')}
-                >
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3 flex-1">
-                            {selectedCourses.includes(course) ? (
-                                <CheckSquare className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0"/>
-                            ) : (
-                                <Square className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"/>
-                            )}
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-gray-900">{course.name}</h3>
-                                <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-gray-600">
-                                    <div className="flex items-center">
-                                        <span className="font-medium">Môn học:</span>
-                                        <span className="ml-1">ID {course.subject_id}</span>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">Lớp:</span>
-                                        <span className="ml-1">ID {course.class_id}</span>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">Học kỳ:</span>
-                                        <span className="ml-1">ID {course.semester_id}</span>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">Giảng viên:</span>
-                                        <span className="ml-1">{course.teacher_id}</span>
+            {courses.map(course => {
+                const isSelected = selectedCourses.some(s => s.id === course.id);
+                return (
+                    <div
+                        key={course.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            isSelected
+                                ? 'border-emerald-500 bg-emerald-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleSelection(course, 'courses')}
+                    >
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-3 flex-1">
+                                {isSelected ? (
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0"/>
+                                ) : (
+                                    <Square className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"/>
+                                )}
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-gray-900">{course.name}</h3>
+                                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                        <div className="flex items-center">
+                                            <span className="font-medium">Môn học:</span>
+                                            <span className="ml-1">ID {course.subject_id}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">Lớp:</span>
+                                            <span className="ml-1">ID {course.class_id}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">Học kỳ:</span>
+                                            <span className="ml-1">ID {course.semester_id}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">Giảng viên:</span>
+                                            <span className="ml-1">{course.teacher_id}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                )
+
+            })}
         </div>
     );
 
@@ -711,49 +676,51 @@ const ResourceManager = () => {
 
     const renderRoomList = () => (
         <div className="space-y-2">
-            {rooms.map(room => (
-                <div
-                    key={room.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedRooms.includes(room)
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => toggleSelection(room, 'rooms')}
-                >
-                    <div className="flex items-start space-x-3">
-                        {selectedRooms.includes(room) ? (
-                            <CheckSquare className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0"/>
-                        ) : (
-                            <Square className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"/>
-                        )}
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">{room.name}</h3>
-                            <div className="mt-2 space-y-1 text-sm text-gray-600">
-                                <div className="flex items-center">
-                                    <span className="font-medium">Mã phòng:</span>
-                                    <span className="ml-1">{room.code}</span>
-                                </div>
-                                {room.type && (
+            {rooms.map(room => {
+                const isSelected = selectedRooms.some(s => s.id === room.id);
+                return (
+                    <div
+                        key={room.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            isSelected
+                                ? 'border-purple-500 bg-purple-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleSelection(room, 'rooms')}
+                    >
+                        <div className="flex items-start space-x-3">
+                            {isSelected ? (
+                                <CheckSquare className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0"/>
+                            ) : (
+                                <Square className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"/>
+                            )}
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900">{room.name}</h3>
+                                <div className="mt-2 space-y-1 text-sm text-gray-600">
                                     <div className="flex items-center">
-                                        <span className="font-medium">Loại:</span>
-                                        <span
-                                            className="ml-1 px-2 py-0.5 bg-gray-100 rounded text-xs">{room.type}</span>
+                                        <span className="font-medium">Mã phòng:</span>
+                                        <span className="ml-1">{room.code}</span>
                                     </div>
-                                )}
-                                <div className="flex items-center">
-                                    <Home className="w-4 h-4 mr-1"/>
-                                    <span>Tối đa: <span
-                                        className="font-medium">{room.capacity_max}</span> | Tối ưu: <span
-                                        className="font-medium">{room.capacity_optimal}</span></span>
-                                </div>
-                                {room.floor_number > 0 && (
-                                    <div className="text-xs text-gray-500">
-                                        Tầng {room.floor_number}
+                                    {room.type && (
+                                        <div className="flex items-center">
+                                            <span className="font-medium">Loại:</span>
+                                            <span
+                                                className="ml-1 px-2 py-0.5 bg-gray-100 rounded text-xs">{room.type}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center">
+                                        <Home className="w-4 h-4 mr-1"/>
+                                        <span>Tối đa: <span
+                                            className="font-medium">{room.capacity_max}</span> | Tối ưu: <span
+                                            className="font-medium">{room.capacity_optimal}</span></span>
                                     </div>
-                                )}
-                                {room.status && (
-                                    <div className="text-xs">
+                                    {room.floor_number > 0 && (
+                                        <div className="text-xs text-gray-500">
+                                            Tầng {room.floor_number}
+                                        </div>
+                                    )}
+                                    {room.status && (
+                                        <div className="text-xs">
                                     <span className={`px-2 py-0.5 rounded ${
                                         room.status === 'active'
                                             ? 'bg-green-100 text-green-700'
@@ -761,142 +728,235 @@ const ResourceManager = () => {
                                     }`}>
                                         {room.status}
                                     </span>
-                                    </div>
-                                )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            ))}
+                    </div>)
+            })}
         </div>
     );
 
+    // const renderStatistics = () => {
+    //     const stats = activeTab === 'courses' ? courseStats : activeTab === 'teachers' ? teacherStats : roomStats;
+    //
+    //     return (
+    //         <div className="bg-white rounded-lg border border-gray-200 p-6">
+    //             <h2 className="text-lg font-bold text-gray-900 mb-4">Thống kê chi tiết</h2>
+    //
+    //             {/* Summary Cards */}
+    //             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    //                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+    //                     <div className="text-sm text-blue-600 font-medium">Tổng số</div>
+    //                     <div className="text-2xl font-bold text-blue-900">{stats.total}</div>
+    //                 </div>
+    //                 <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 rounded-lg">
+    //                     <div className="text-sm text-emerald-600 font-medium">Đã chọn</div>
+    //                     <div className="text-2xl font-bold text-emerald-900">{stats.selected}</div>
+    //                 </div>
+    //                 {activeTab === 'courses' && (
+    //                     <>
+    //                         <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+    //                             <div className="text-sm text-purple-600 font-medium">Tổng SV</div>
+    //                             <div className="text-2xl font-bold text-purple-900">{courseStats.totalStudents}</div>
+    //                         </div>
+    //                         <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+    //                             <div className="text-sm text-orange-600 font-medium">Tổng giờ</div>
+    //                             <div className="text-2xl font-bold text-orange-900">{courseStats.totalHours}</div>
+    //                         </div>
+    //                     </>
+    //                 )}
+    //                 {activeTab === 'teachers' && (
+    //                     <></>
+    //                     // <>
+    //                     //     <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+    //                     //         <div className="text-sm text-purple-600 font-medium">Khóa phủ</div>
+    //                     //         <div className="text-2xl font-bold text-purple-900">{teacherStats.totalCoursesCovered}</div>
+    //                     //     </div>
+    //                     //     <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+    //                     //         <div className="text-sm text-orange-600 font-medium">TB khóa/GV</div>
+    //                     //         <div className="text-2xl font-bold text-orange-900">{teacherStats.avgCoursesPerTeacher}</div>
+    //                     //     </div>
+    //                     // </>
+    //                 )}
+    //                 {activeTab === 'rooms' && (
+    //                     <>
+    //                         <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+    //                             <div className="text-sm text-purple-600 font-medium">Sức chứa</div>
+    //                             <div className="text-2xl font-bold text-purple-900">{roomStats.totalCapacity}</div>
+    //                         </div>
+    //                         <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+    //                             <div className="text-sm text-orange-600 font-medium">TB/phòng</div>
+    //                             <div className="text-2xl font-bold text-orange-900">{roomStats.avgCapacity}</div>
+    //                         </div>
+    //                     </>
+    //                 )}
+    //             </div>
+    //
+    //         </div>
+    //     );
+    // };
+
     const renderStatistics = () => {
-        const stats = activeTab === 'courses' ? courseStats : activeTab === 'teachers' ? teacherStats : roomStats;
+        // Xác định stats dựa trên activeTab
+        let stats;
+        let tabTitle;
+
+        switch (activeTab) {
+            case 'courses':
+                stats = courseStats;
+                tabTitle = 'Khóa học';
+                break;
+            case 'teachers':
+                stats = teacherStats;
+                tabTitle = 'Giảng viên';
+                break;
+            case 'rooms':
+                stats = roomStats;
+                tabTitle = 'Phòng học';
+                break;
+            case 'constraints':
+                stats = constraintStats;
+                tabTitle = 'Ràng buộc';
+                break;
+            default:
+                stats = courseStats;
+                tabTitle = 'Mục';
+        }
+
+        // Helper component
+        const StatCard = ({ title, value, subValue, colorClass, icon: Icon }) => (
+            <div className={`p-4 rounded-lg border ${colorClass} transition-all duration-200 hover:shadow-md`}>
+                <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium opacity-80">{title}</div>
+                    {Icon && <Icon className="w-5 h-5 opacity-60" />}
+                </div>
+                <div className="text-2xl font-bold">{value}</div>
+                {subValue && <div className="text-xs mt-1 opacity-70">{subValue}</div>}
+            </div>
+        );
 
         return (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Thống kê chi tiết</h2>
+            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <BarChart2 className="w-5 h-5 text-indigo-600" />
+                        Thống kê {tabTitle}
+                    </h2>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
-                        <div className="text-sm text-blue-600 font-medium">Tổng số</div>
-                        <div className="text-2xl font-bold text-blue-900">{stats.total}</div>
+                    <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <span>Đã chọn: <span className="font-bold text-indigo-700">{stats.selectionRate}%</span></span>
+                        <div className="w-32 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-indigo-600 transition-all duration-500"
+                                style={{ width: `${stats.selectionRate}%` }}
+                            ></div>
+                        </div>
                     </div>
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 rounded-lg">
-                        <div className="text-sm text-emerald-600 font-medium">Đã chọn</div>
-                        <div className="text-2xl font-bold text-emerald-900">{stats.selected}</div>
-                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Card 1 & 2: Chung cho tất cả */}
+                    <StatCard
+                        title="Tổng số lượng"
+                        value={stats.total || 0}
+                        subValue="Dữ liệu hệ thống"
+                        colorClass="bg-blue-50 border-blue-100 text-blue-900"
+                        icon={BookOpen}
+                    />
+
+                    <StatCard
+                        title="Đã chọn"
+                        value={stats.selected || 0}
+                        subValue={`${stats.total - stats.selected} chưa chọn`}
+                        colorClass="bg-emerald-50 border-emerald-100 text-emerald-900"
+                        icon={CheckCircle2}
+                    />
+
+                    {/* Card 3 & 4: Tùy biến theo Tab */}
                     {activeTab === 'courses' && (
                         <>
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
-                                <div className="text-sm text-purple-600 font-medium">Tổng SV</div>
-                                <div className="text-2xl font-bold text-purple-900">{courseStats.totalStudents}</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
-                                <div className="text-sm text-orange-600 font-medium">Tổng giờ</div>
-                                <div className="text-2xl font-bold text-orange-900">{courseStats.totalHours}</div>
-                            </div>
+                            <StatCard
+                                title="Tổng Sinh viên"
+                                value={stats.totalStudents?.toLocaleString() || 0}
+                                subValue="Dự kiến tham gia"
+                                colorClass="bg-purple-50 border-purple-100 text-purple-900"
+                                icon={Users}
+                            />
+                            <StatCard
+                                title="Tổng giờ dạy"
+                                value={stats.totalHours?.toLocaleString() || 0}
+                                subValue="Tổng tải hệ thống"
+                                colorClass="bg-orange-50 border-orange-100 text-orange-900"
+                                icon={Clock}
+                            />
                         </>
                     )}
+
                     {activeTab === 'teachers' && (
-                        <></>
-                        // <>
-                        //     <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
-                        //         <div className="text-sm text-purple-600 font-medium">Khóa phủ</div>
-                        //         <div className="text-2xl font-bold text-purple-900">{teacherStats.totalCoursesCovered}</div>
-                        //     </div>
-                        //     <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
-                        //         <div className="text-sm text-orange-600 font-medium">TB khóa/GV</div>
-                        //         <div className="text-2xl font-bold text-orange-900">{teacherStats.avgCoursesPerTeacher}</div>
-                        //     </div>
-                        // </>
+                        <>
+                            <StatCard
+                                title="Số Khoa tham gia"
+                                value={stats.uniqueFaculties || 0}
+                                subValue="Dựa trên GV đã chọn"
+                                colorClass="bg-purple-50 border-purple-100 text-purple-900"
+                                icon={Home}
+                            />
+                            <StatCard
+                                title="Tỷ lệ sẵn sàng"
+                                value={`${stats.selectionRate}%`}
+                                subValue="Mức độ phủ GV"
+                                colorClass="bg-orange-50 border-orange-100 text-orange-900"
+                                icon={BarChart2}
+                            />
+                        </>
                     )}
+
                     {activeTab === 'rooms' && (
                         <>
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
-                                <div className="text-sm text-purple-600 font-medium">Sức chứa</div>
-                                <div className="text-2xl font-bold text-purple-900">{roomStats.totalCapacity}</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
-                                <div className="text-sm text-orange-600 font-medium">TB/phòng</div>
-                                <div className="text-2xl font-bold text-orange-900">{roomStats.avgCapacity}</div>
-                            </div>
+                            <StatCard
+                                title="Tổng sức chứa"
+                                value={stats.totalCapacity?.toLocaleString() || 0}
+                                subValue={`Tối ưu: ${stats.optimalCapacity || 0}`}
+                                colorClass="bg-purple-50 border-purple-100 text-purple-900"
+                                icon={Users}
+                            />
+                            <StatCard
+                                title="Trung bình / Phòng"
+                                value={stats.avgCapacity || 0}
+                                subValue="Sức chứa trung bình"
+                                colorClass="bg-orange-50 border-orange-100 text-orange-900"
+                                icon={Maximize}
+                            />
+                        </>
+                    )}
+
+                    {/* --- PHẦN MỚI CHO CONSTRAINTS --- */}
+                    {activeTab === 'constraints' && (
+                        <>
+                            <StatCard
+                                title="Ràng buộc Cứng"
+                                value={stats.hardSelected || 0}
+                                subValue="Bắt buộc thỏa mãn"
+                                colorClass="bg-red-50 border-red-100 text-red-900"
+                                // Bạn cần import ShieldAlert từ lucide-react hoặc dùng icon khác
+                                icon={props => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
+                            />
+                            <StatCard
+                                title="Ràng buộc Mềm"
+                                value={stats.softSelected || 0}
+                                subValue="Tối ưu hóa (Penalty)"
+                                colorClass="bg-indigo-50 border-indigo-100 text-indigo-900"
+                                // Bạn cần import Scale từ lucide-react hoặc dùng icon khác
+                                icon={props => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>}
+                            />
                         </>
                     )}
                 </div>
-
-                {/* Charts */}
-                {/*<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">*/}
-                {/*    /!* Distribution Pie Chart *!/*/}
-                {/*    <div>*/}
-                {/*        <h3 className="text-sm font-semibold text-gray-700 mb-3">Phân bố lựa chọn</h3>*/}
-                {/*        <ResponsiveContainer width="100%" height={200}>*/}
-                {/*            <PieChart>*/}
-                {/*                <Pie*/}
-                {/*                    data={selectionDistribution}*/}
-                {/*                    cx="50%"*/}
-                {/*                    cy="50%"*/}
-                {/*                    labelLine={false}*/}
-                {/*                    label={({name, value}) => `${name}: ${value}`}*/}
-                {/*                    outerRadius={80}*/}
-                {/*                    fill="#8884d8"*/}
-                {/*                    dataKey="value"*/}
-                {/*                >*/}
-                {/*                    {selectionDistribution.map((entry, index) => (*/}
-                {/*                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]}/>*/}
-                {/*                    ))}*/}
-                {/*                </Pie>*/}
-                {/*                <Tooltip/>*/}
-                {/*            </PieChart>*/}
-                {/*        </ResponsiveContainer>*/}
-                {/*    </div>*/}
-
-                {/*    /!* Bar Chart based on tab *!/*/}
-                {/*    <div>*/}
-                {/*        <h3 className="text-sm font-semibold text-gray-700 mb-3">*/}
-                {/*            {activeTab === 'courses' ? 'Số sinh viên theo khóa' :*/}
-                {/*                activeTab === 'teachers' ? 'Số khóa giảng viên có thể dạy' :*/}
-                {/*                    'Sức chứa phòng học'}*/}
-                {/*        </h3>*/}
-                {/*        <ResponsiveContainer width="100%" height={200}>*/}
-                {/*            <BarChart data={activeTab === 'courses' ? courseChartData : roomCapacityData}>*/}
-                {/*                <CartesianGrid strokeDasharray="3 3"/>*/}
-                {/*                <XAxis dataKey="name" tick={{fontSize: 12}}/>*/}
-                {/*                <YAxis/>*/}
-                {/*                <Tooltip/>*/}
-                {/*                <Bar*/}
-                {/*                    dataKey={activeTab === 'courses' ? 'students' : activeTab === 'teachers' ? 'courses' : 'capacity'}*/}
-                {/*                    fill="#3b82f6"*/}
-                {/*                    radius={[8, 8, 0, 0]}*/}
-                {/*                />*/}
-                {/*            </BarChart>*/}
-                {/*        </ResponsiveContainer>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/* Additional Course Statistics */}
-                {/*{activeTab === 'courses' && (*/}
-                {/*    <div className="mt-6">*/}
-                {/*        <h3 className="text-sm font-semibold text-gray-700 mb-3">Phân tích chi tiết khóa học</h3>*/}
-                {/*        <ResponsiveContainer width="100%" height={200}>*/}
-                {/*            <LineChart data={courseChartData}>*/}
-                {/*                <CartesianGrid strokeDasharray="3 3"/>*/}
-                {/*                <XAxis dataKey="name" tick={{fontSize: 12}}/>*/}
-                {/*                <YAxis/>*/}
-                {/*                <Tooltip/>*/}
-                {/*                <Legend/>*/}
-                {/*                <Line type="monotone" dataKey="weeks" stroke="#8b5cf6" name="Số tuần"/>*/}
-                {/*                <Line type="monotone" dataKey="sessions" stroke="#ec4899" name="Buổi/tuần"/>*/}
-                {/*            </LineChart>*/}
-                {/*        </ResponsiveContainer>*/}
-                {/*    </div>*/}
-                {/*)}*/}
             </div>
         );
     };
-
     const handleCourseParamChange = (courseId, field, value) => {
         setCourseParams((prev) => ({
             ...prev,
@@ -921,6 +981,7 @@ const ResourceManager = () => {
             [name]: value,
         }));
     };
+
     const calculateMaxWeeks = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -936,6 +997,7 @@ const ResourceManager = () => {
         const maxWeeks = calculateMaxWeeks(semester.start, semester.end);
         return weekNumber >= 1 && weekNumber <= maxWeeks;
     };
+
     const handleSchedule = async () => {
         const selectedCourseIds = new Set(extractIdsFromObjects(selectedCourses));
         const selectedTeacherIds = new Set(extractIdsFromObjects(selectedTeachers));
@@ -955,12 +1017,11 @@ const ResourceManager = () => {
                 allCourses: courses,
             }
         )
-        console.log("Formatted data for schedule generation:", formattedData);
         testData.constraints = convertConstraintsToAPI(selectedConstraints);
         const res = await callGenerateSchedule(testData);
         setSchedules(res);
-        console.log("Schedule generation response:", res);
     }
+
     const handleSemesterChange = (e) => {
         const semesterId = parseInt(e.target.value);
         const semester = semesters.find(s => s.id === semesterId);
@@ -969,11 +1030,12 @@ const ResourceManager = () => {
         // Reset tuần và errors khi đổi học kỳ
         setStartWeek('');
         setEndWeek('');
-        setErrors({ startWeek: '', endWeek: '' });
+        setErrors({startWeek: '', endWeek: ''});
 
         // Gọi hàm xử lý tùy chỉnh của bạn ở đây
         onSemesterChange(semester);
     };
+
     const onSemesterChange = (semester) => {
         setSelectedSemester(semester);
     };
@@ -985,8 +1047,9 @@ const ResourceManager = () => {
     };
     // Validate tuần bắt đầu
     const validateStartWeek = (value) => {
+        console.log("Semter:", selectedSemester);
         const week = parseInt(value);
-        const newErrors = { ...errors };
+        const newErrors = {...errors};
 
         if (!selectedSemester) {
             newErrors.startWeek = 'Vui lòng chọn học kỳ trước';
@@ -1011,11 +1074,10 @@ const ResourceManager = () => {
         setErrors(newErrors);
         return !newErrors.startWeek;
     };
-
     // Validate tuần kết thúc
     const validateEndWeek = (value) => {
         const week = parseInt(value);
-        const newErrors = { ...errors };
+        const newErrors = {...errors};
 
         if (!selectedSemester) {
             newErrors.endWeek = 'Vui lòng chọn học kỳ trước';
@@ -1051,7 +1113,7 @@ const ResourceManager = () => {
         if (endWeek) {
             validateEndWeek(endWeek);
         }
-        updateSemesterConfig({start_week: parseInt(value) });
+        updateSemesterConfig({start_week: parseInt(value)});
 
 
     };
@@ -1066,8 +1128,148 @@ const ResourceManager = () => {
         if (startWeek) {
             validateStartWeek(startWeek);
         }
-        updateSemesterConfig({end_week: parseInt(value) });
+        updateSemesterConfig({end_week: parseInt(value)});
     };
+
+    // --- HÀM XỬ LÝ STREAMING (Thay thế handleSchedule cũ) ---
+    const handleScheduleStream = async () => {
+        // 1. Chuẩn bị dữ liệu (Giống hệt code cũ)
+        const selectedCourseIds = new Set(extractIdsFromObjects(selectedCourses));
+        const selectedRoomIds = new Set(extractIdsFromObjects(selectedRooms));
+
+
+        const selectedTeacherIds = new Set();
+        // console.log("Selected Courses for Teachers:", selectedCourses);
+        // console.log("ALl teacher: ", teachers);
+        // console.log("All subject", subjects);
+        // //  log 20 first rooms
+        // console.log("First 20 rooms", rooms.slice(0, 20));
+        // // console.log("All rooms", rooms)
+        // console.log("All equipment", equipments);
+        // console.log("All roomEquipments", roomEquipments);
+        // console.log("All subjectRequiresEquipments", subjectRequiresEquipments);
+        for (const course of selectedCourses) {
+            if (course.teacher_id) { // Kiểm tra an toàn để đảm bảo id tồn tại
+                selectedTeacherIds.add(course.teacher_id);
+            }
+        }
+        const formattedData = formatDataForApi(
+            {
+                selectedRoomIds,
+                selectedTeacherIds,
+                selectedCourseIds,
+                courseParams,
+                teacherBusySlots,
+                semesterConfig
+            },
+            {
+                allRooms: rooms,
+                allTeachers: teachers,
+                allCourses: selectedCourses, // Lưu ý: đây là danh sách selectedCourses
+                allSubjects: subjects, // <--- THÊM MỚI
+                allSubjectRequirements: subjectRequiresEquipments, // <--- THÊM MỚI
+                allEquipments: equipments // <--- THÊM MỚI
+            }
+        );
+        const payload = {
+            courses: formattedData.courses,
+            teachers: formattedData.teachers,
+            rooms: formattedData.rooms,
+            semester_config: formattedData.semester_config,
+            constraints: convertConstraintsToAPI(selectedConstraints),
+            // fixed_schedule: fixedScheduleData,
+            ga_config: {
+                population_size: 100,
+                time_limit_seconds: 300
+            }
+        };
+        console.log("Scheduling Payload:", payload);
+
+        // 2. Reset State & Mở Modal
+        setIsScheduling(true);
+        setScheduleProgress(0);
+        setStreamLogs(["Bắt đầu kết nối đến server..."]);
+        setIsStreamComplete(false);
+        setFitnessValue(null);
+        setCurrentPhase('phase1');
+
+        try {
+            // 3. Gọi Fetch với POST method
+            const response = await fetch('http://localhost:5001/api/schedule/stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) throw new Error("Lỗi kết nối server");
+
+            // 4. Xử lý Stream Reader
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, {stream: true});
+
+                // Tách các message SSE (phân cách bởi \n\n)
+                const parts = buffer.split('\n\n');
+                buffer = parts.pop(); // Giữ lại phần thừa chưa đủ message
+
+                for (const part of parts) {
+                    if (part.trim() === '') continue;
+
+                    // Parse dòng: "data: {...}" hoặc "event: ... \n data: ..."
+                    const lines = part.split('\n');
+                    let eventType = 'message';
+                    let dataStr = '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) eventType = line.substring(7).trim();
+                        if (line.startsWith('data: ')) dataStr = line.substring(6).trim();
+                    }
+
+                    if (dataStr) {
+                        try {
+                            const data = JSON.parse(dataStr);
+
+                            if (eventType === 'result') {
+                                // --- HOÀN TẤT ---
+                                console.log("Final Result:", data);
+                                setSchedulingResult(data);
+                                setSchedules(data); // Lưu vào Global Store
+                                setIsStreamComplete(true);
+                                setScheduleProgress(100);
+                                setStreamLogs(prev => [...prev, "Xếp lịch hoàn tất!"]);
+                            } else if (eventType === 'error') {
+                                // --- LỖI ---
+                                setStreamLogs(prev => [...prev, `❌ Error: ${data.message}`]);
+                                setIsStreamComplete(true); // Dừng spinner
+                            } else {
+                                // --- UPDATE TIẾN ĐỘ ---
+                                if (data.phase) setCurrentPhase(data.phase);
+                                if (data.percent) setScheduleProgress(data.percent);
+                                if (data.detail?.fitness) setFitnessValue(data.detail.final_fitness);
+                                if (data.message) setStreamLogs(prev => [...prev, data.message]);
+                            }
+                        } catch (e) {
+                            console.error("JSON Parse Error", e);
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error("Stream Error:", error);
+            setStreamLogs(prev => [...prev, `❌ Lỗi hệ thống: ${error.message}`]);
+            setIsStreamComplete(true);
+        }
+    };
+
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-200 gray:text-gray-600">
@@ -1246,17 +1448,17 @@ const ResourceManager = () => {
                         <BookOpen className="w-5 h-5 inline mr-2"/>
                         Khóa học
                     </button>
-                    <button
-                        onClick={() => setActiveTab('teachers')}
-                        className={`px-6 py-3 font-medium transition-all ${
-                            activeTab === 'teachers'
-                                ? 'text-blue-600 border-b-2 border-blue-600'
-                                : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                        <Users className="w-5 h-5 inline mr-2"/>
-                        Giảng viên
-                    </button>
+                    {/*<button*/}
+                    {/*    onClick={() => setActiveTab('teachers')}*/}
+                    {/*    className={`px-6 py-3 font-medium transition-all ${*/}
+                    {/*        activeTab === 'teachers'*/}
+                    {/*            ? 'text-blue-600 border-b-2 border-blue-600'*/}
+                    {/*            : 'text-gray-600 hover:text-gray-900'*/}
+                    {/*    }`}*/}
+                    {/*>*/}
+                    {/*    <Users className="w-5 h-5 inline mr-2"/>*/}
+                    {/*    Giảng viên*/}
+                    {/*</button>*/}
                     <button
                         onClick={() => setActiveTab('rooms')}
                         className={`px-6 py-3 font-medium transition-all ${
@@ -1279,13 +1481,25 @@ const ResourceManager = () => {
                         <Home className="w-5 h-5 inline mr-2"/>
                         Ràng buộc
                     </button>
-                    <button
-                        onClick={() => handleSchedule('rooms')}
-                        className = {"text-gray-600 hover:text-gray-900"}
-                    >
-                        <Home className="w-5 h-5 inline mr-2"/>
-                        Xếp lịch
-                    </button>
+                    <div className="flex gap-3">
+                        {/* Nút Check Data Dashboard */}
+                        <button
+                            onClick={handlePreCheck}
+                            className="px-5 py-2.5 bg-indigo-100 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-200 transition-all flex items-center gap-2"
+                        >
+                            <BarChart2 className="w-5 h-5"/>
+                            Phân tích & Kiểm tra
+                        </button>
+
+                        {/* Nút Xếp lịch trực tiếp */}
+                        <button
+                            onClick={handleScheduleStream}
+                            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-sm"
+                        >
+                            <PlayCircle className="w-5 h-5"/>
+                            Bắt đầu Xếp lịch
+                        </button>
+                    </div>
                 </div>
 
                 {/* Statistics Section */}
@@ -1321,9 +1535,27 @@ const ResourceManager = () => {
                     {activeTab === 'courses' && renderCourseList()}
                     {activeTab === 'teachers' && renderTeacherList()}
                     {activeTab === 'rooms' && renderRoomList()}
+                    {/*{activeTab === 'constraints' && renderConstraintList()}*/}
                     {activeTab === 'constraints' && (
-                        <ConstraintSelector constraintsProps = {constraints}/>
+                        <ConstraintSelector constraintsProps={constraints}/>
                     )}
+                    {showDashboard && dashboardData && (
+                        <PreSchedulingDashboard
+                            data={dashboardData}
+                            onClose={() => setShowDashboard(false)}
+                        />
+                    )}
+                    {/* Modal Progress */}
+                    <ScheduleProgressModal
+                        isOpen={isScheduling}
+                        onClose={() => setIsScheduling(false)} // Đóng modal
+                        progress={scheduleProgress}
+                        logs={streamLogs}
+                        currentPhase={currentPhase}
+                        fitness={fitnessValue}
+                        isComplete={isStreamComplete}
+                        result={schedulingResult}
+                    />
                 </div>
             </div>
         </div>

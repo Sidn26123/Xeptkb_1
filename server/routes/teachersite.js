@@ -9,4 +9,10 @@ router.get('/profile', verifyToken, authorize('teacher', 'admin'), teachersiteCo
 // Allow teachers to update their own contact info (address, email_personal)
 router.put('/profile', verifyToken, authorize('teacher', 'admin'), teachersiteController.updateProfile);
 
+// Instructor unavailable times (teacher interface)
+router.get('/unavailable-times', verifyToken, authorize('teacher', 'admin'), teachersiteController.getUnavailableTimes);
+router.post('/unavailable-times', verifyToken, authorize('teacher', 'admin'), teachersiteController.replaceUnavailableTimes);
+router.post('/unavailable-times/add', verifyToken, authorize('teacher', 'admin'), teachersiteController.addUnavailableTime);
+router.delete('/unavailable-times', verifyToken, authorize('teacher', 'admin'), teachersiteController.deleteUnavailableTimes);
+
 module.exports = router;

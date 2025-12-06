@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const { verifyToken, authorize } = require('../middleware/auth');
 const scheduleGenerationController = require('../controller/scheduleGenerationController');
 

@@ -7,6 +7,11 @@ export const getAllRooms = async () => {
   return res?.data?.data ?? [];
 };
 
+export const getAllRoomsWithEquipment = async () => {
+    const res = await api.get('/rooms/full');
+    return res?.data?.data ?? [];
+}
+
 export const getRoomById = async (id) => {
   const res = await api.get(`/rooms/${id}`);
   return res?.data?.data ?? null;

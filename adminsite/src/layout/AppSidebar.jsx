@@ -49,7 +49,7 @@ const navItems = [
     subItems: [
       { name: "Chatbot", path: "/chatbot", pro: false },
       { name: "Hướng dẫn sử dụng", path: "/guide", pro: false },
-      { name: "Quản lý nguồn lực đầu vào", path: "/scheduler/inputs", pro: false },
+      { name: "Xep thu cong", path: "/manual-scheduling", pro: false },
       { name: "Quản lý lịch xếp phòng", path: "/scheduler/schedule", pro: false },
       { name: "Research Schedule", path: "/research-schedule", pro: false },
     ],
@@ -73,22 +73,22 @@ const navItems = [
       { name: "Constraint Management", path: "/constraint-management", pro: false },
     ],
   },
-  {
-    name: "Merge Classes",
-    icon: <Icon color="#3b82f6" />, // blue-500
-    subItems: [
-      { name: "Select Class", path: "/select-merge-class", pro: false },
-      { name: "Merged Timetable", path: "/merged-timetable", pro: false },
-    ],
-  },
-  {
-    name: "Split Classes",
-    icon: <Icon color="#f59e42" />, // orange-400
-    subItems: [
-      { name: "Select Class", path: "/select-split-class", pro: false },
-      { name: "Split Timetable", path: "/split-timetable", pro: false },
-    ],
-  },
+  // {
+  //   name: "Merge Classes",
+  //   icon: <Icon color="#3b82f6" />, // blue-500
+  //   subItems: [
+  //     { name: "Select Class", path: "/select-merge-class", pro: false },
+  //     { name: "Merged Timetable", path: "/merged-timetable", pro: false },
+  //   ],
+  // },
+  // {
+  //   name: "Split Classes",
+  //   icon: <Icon color="#f59e42" />, // orange-400
+  //   subItems: [
+  //     { name: "Select Class", path: "/select-split-class", pro: false },
+  //     { name: "Split Timetable", path: "/split-timetable", pro: false },
+  //   ],
+  // },
   {
     name: "Print Timetable",
     icon: <Icon color="#06b6d4" />, // cyan-500

@@ -30,7 +30,7 @@ exports.getFullInfoCourseClassById = async (req, res) => {
     const courseClass = await CourseClass.findByPk(req.params.id, {
       include: [{
         model: Subject, // Chỉ định model bạn muốn "include"
-        as: 'subject'   // Dùng đúng alias 'as' bạn đã định nghĩa trong CourseClass.associate
+        as: 'subject'
       }]
     });
 
@@ -65,8 +65,8 @@ exports.getAllFullInfoCourseClasses = async (req, res) => {
 // Tạo lớp học phần mới
 exports.createCourseClass = async (req, res) => {
   try {
-    const { name, class_id, subject_id, teacher_id, semester_id } = req.body;
-    const newCourseClass = await CourseClass.create({ name, class_id, subject_id, teacher_id, semester_id });
+    const { name, class_id, subject_id, teacher_id, semester_id, slot, duration_per_session, session_per_week } = req.body;
+    const newCourseClass = await CourseClass.create({ name, class_id, subject_id, teacher_id, semester_id, slot, duration_per_session, session_per_week });
     res.status(201).json(new SuccessResponse(newCourseClass, 'Tạo lớp học phần thành công', 201));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));

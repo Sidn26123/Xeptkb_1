@@ -370,7 +370,20 @@ export default function SemesterManagement() {
                     <option value="finished">Đã kết thúc</option>
                     <option value="upcoming">Sắp diễn ra</option>
                   </select>
-                  <Button size="md" variant="primary" className="ml-2" onClick={handleOpenAdd}>+ Thêm học kỳ</Button>
+                  <div className="flex items-center gap-3">
+                    <Button
+                        size="sm"
+                        className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      Import Excel
+                    </Button>
+
+                    <Button size="md" variant="primary"
+                            className="!px-6 !py-2 font-semibold bg-green-600 hover:bg-green-700"
+                            onClick={handleOpenAdd}>
+                      Thêm học kỳ
+                    </Button>
+                  </div>
                 </div>
               </div>
 

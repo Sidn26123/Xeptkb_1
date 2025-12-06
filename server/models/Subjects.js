@@ -39,10 +39,10 @@ const Subject = sequelize.define('Subject', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  requires_lab: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
+  // requires_lab: {
+  //   type: DataTypes.BOOLEAN,
+  //   defaultValue: false,
+  // },
 }, {
   tableName: 'subjects',
   timestamps: false,

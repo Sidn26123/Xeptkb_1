@@ -245,33 +245,31 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
       </div>
 
       {/* Week Navigation (only shown in week view) */}
-      (
-        <div className="week-navigation">
-        <button 
-          className="week-nav-btn" 
-          onClick={handlePrevWeek} 
-          disabled={!canGoPrevWeek()}
-          title="Tuần trước"
-        >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-          <span className="week-info">
-            Tuần {weekNumber}: {format(weekStart, 'dd/MM', { locale: vi })} - {format(weekEnd, 'dd/MM/yyyy', { locale: vi })}
-          </span>
-        <button 
-          className="week-nav-btn" 
-          onClick={handleNextWeek} 
-          disabled={!canGoNextWeek()}
-          title="Tuần sau"
-        >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-        </div>
-      )
+      <div className="week-navigation">
+      <button 
+        className="week-nav-btn" 
+        onClick={handlePrevWeek} 
+        disabled={!canGoPrevWeek()}
+        title="Tuần trước"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+        <span className="week-info">
+          Tuần {weekNumber}: {format(weekStart, 'dd/MM', { locale: vi })} - {format(weekEnd, 'dd/MM/yyyy', { locale: vi })}
+        </span>
+      <button 
+        className="week-nav-btn" 
+        onClick={handleNextWeek} 
+        disabled={!canGoNextWeek()}
+        title="Tuần sau"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      </div>
 
       {/* Timetable / Month Grid */}
       <div className="timetable-table-container">

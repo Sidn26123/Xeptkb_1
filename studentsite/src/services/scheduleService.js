@@ -42,8 +42,13 @@ export async function fetchScheduleEventsByStudent(classId, semesterId) {
         semesterId
       }
     });
-    const data = response?.data ?? [];
-    return (Array.isArray(data) ? data : []).map(event => ({
+    // API shape can be: { success, message, data: [ ... ] }
+    // Normalize to an array of items. Be defensive in case server returns
+    // either the array directly or wrapped in `data`.
+    let payload = response?.data ?? [];
+    if (payload && payload.data && Array.isArray(payload.data)) payload = payload.data;
+    const arr = Array.isArray(payload) ? payload : [];
+    return arr.map(event => ({
       ...event,
       start: event.start ? new Date(event.start) : null,
       end: event.end ? new Date(event.end) : null,
@@ -54,22 +59,8 @@ export async function fetchScheduleEventsByStudent(classId, semesterId) {
   }
 }
 
-// Fetch schedule instances for a teacher on a specific date range (YYYY-MM-DD)
-export async function fetchScheduleForStudentOnDate(classId, startDate = null, endDate = null) {
-  // Delegate to unified user API. If startDate is not provided, compute a
-  // dynamic shrinking-week range: from today -> upcoming Sunday. If today is
-  // Sunday, range will be Sunday -> next Sunday.
-  if (!teacherId) return [];
-  try {
-    return await fetchScheduleForUserOnDate(teacherId, 'teacher', startDate, endDate);
-  } catch (err) {
-    console.error('Error fetching schedule for teacher on date:', err);
-    return [];
-  }
-}
-
 // Fetch schedule instances for a user (teacher or student) on a specific date range
-export async function fetchScheduleForUserOnDate(userId, role, startDate = null, endDate = null) {
+export async function fetchScheduleForUserOnDate(userId, role, startDate = null, endDate = null, classId = null) {
   // If caller supplies explicit startDate (and optional endDate) use them.
   // Otherwise compute a shrinking-week range: start = today (or Sunday if today
   // is Sunday), end = upcoming Sunday (the Sunday that ends this logical week).
@@ -107,6 +98,10 @@ export async function fetchScheduleForUserOnDate(userId, role, startDate = null,
       startDate,
       endDate,
     };
+    // For student role, classId is required
+    if (role === 'student' && classId) {
+      body.classId = classId;
+    }
     const response = await api.post('/schedule-instances/instances/daily', body);
     const instances = response?.data?.data ?? [];
 
@@ -213,7 +208,6 @@ export default {
   getScheduleInstanceById,
   fetchScheduleForUserOnDate,
   fetchScheduleEventsByStudent,
-  fetchScheduleForStudentOnDate,
   getAllTimeSlots,
   fetchScheduleForClassOnDate,
 };

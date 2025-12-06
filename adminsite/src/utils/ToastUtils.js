@@ -2,6 +2,7 @@ import { toast } from 'react-toastify';
 
 const autoClose = 1000;
 export const showSuccess = (message) => {
+    console.log("showSuccess called with message:", message);
     toast.success(message, {
         position: 'top-right',
         autoClose: autoClose,

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PageMeta from '../components/common/PageMeta.jsx';
 import Button from '../components/ui/button/Button.jsx';
 import Modal from '../components/ui/modal/index.jsx';
-import {getAll} from '../services/constraintService.js';
+import {getAllConstraints} from '../services/constraintService.js';
 
 
 export default function ConstraintManagement() {
@@ -17,7 +17,7 @@ export default function ConstraintManagement() {
 
     // Mock data - thay thế bằng API call thực tế
     useEffect(() => {
-        getAll().then(data => setConstraints(data));
+        getAllConstraints().then(data => setConstraints(data));
     }, []);
 
     const handleTypeChange = (type) => {

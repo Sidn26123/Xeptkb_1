@@ -166,8 +166,17 @@ export default function FacultyManagement() {
                 Làm mới
               </Button>
             </div>
-            <div>
-              <Button size="md" variant="primary" onClick={handleAddOpen}>
+            <div className="flex items-center gap-3">
+              <Button
+                  size="sm"
+                  className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700"
+              >
+                Import Excel
+              </Button>
+
+              <Button size="md" variant="primary"
+                      className="!px-6 !py-2 font-semibold bg-green-600 hover:bg-green-700"
+                      onClick={handleAddOpen}>
                 Thêm khoa
               </Button>
             </div>

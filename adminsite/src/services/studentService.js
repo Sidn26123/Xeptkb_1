@@ -26,11 +26,15 @@ export const deleteStudent = async (id) => {
   const res = await api.delete(`/students/${id}`);
   return res?.data ?? null;
 };
-
+export const bulkImportStudents = async (datalist) => {
+  const res = await api.post('/students/bulk-import', datalist);
+  return res?.response?.data ?? null;
+}
 export default {
   getAllStudents,
   getStudentById,
   createStudent,
   updateStudent,
   deleteStudent,
+  bulkImportStudents
 };

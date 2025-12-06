@@ -1,5 +1,6 @@
 const Class = require('../models/Classes');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
+const {bulkImportClasses} = require("../services/classService");
 
 // Lấy tất cả lớp học
 exports.getAllClasses = async (req, res) => {
@@ -18,8 +19,8 @@ exports.getClassById = async (req, res) => {
       include: [
         { model: require('../models/Faculty'), as: 'faculty' },
         { model: require('../models/CourseClasses'), as: 'courseclasses', include: [
-            { model: require('../models/Subjects'), as: 'Subject' },
-            { model: require('../models/Teachers'), as: 'Teacher' }
+            { model: require('../models/Subjects'), as: 'subject' },
+            { model: require('../models/Teachers'), as: 'teacher' }
         ] }
       ]
     });
@@ -35,8 +36,8 @@ exports.getClassById = async (req, res) => {
 // Tạo lớp học mới
 exports.createClass = async (req, res) => {
   try {
-    const { name, training_type_id, faculty_id } = req.body;
-    const newClass = await Class.create({ name, training_type_id, faculty_id });
+    const { name, code, training_type_id, faculty_id } = req.body;
+    const newClass = await Class.create({ name, code, training_type_id, faculty_id });
     res.status(201).json(new SuccessResponse(newClass, 'Tạo lớp học thành công', 201));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));
@@ -46,10 +47,10 @@ exports.createClass = async (req, res) => {
 // Cập nhật lớp học
 exports.updateClass = async (req, res) => {
   try {
-    const { name, training_type_id, faculty_id } = req.body;
+    const { name, code, training_type_id, faculty_id } = req.body;
     const classItem = await Class.findByPk(req.params.id);
     if (!classItem) return res.status(404).json(new ErrorResponse('Không tìm thấy lớp học', 404));
-    await classItem.update({ name, training_type_id, faculty_id });
+    await classItem.update({ name, code, training_type_id, faculty_id });
     res.status(200).json(new SuccessResponse(classItem, 'Cập nhật lớp học thành công'));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));
@@ -65,5 +66,31 @@ exports.deleteClass = async (req, res) => {
     res.status(200).json(new SuccessResponse(null, 'Xóa lớp học thành công'));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));
+  }
+};
+
+exports.bulkImportClasses = async (req, res) => {
+  try {
+    const result = await bulkImportClasses(req.body);
+
+    if (result.error === 'EMPTY_DATA')
+      return res.status(400).json(new ErrorResponse('Dữ liệu import trống', 400));
+
+    if (result.error === 'NO_VALID_ITEM')
+      return res.status(400).json(new ErrorResponse('Không có dữ liệu hợp lệ', 400));
+
+    if (result.error === 'VALIDATION_ERROR') {
+      return res.status(422).json({
+        error: 'Dữ liệu import có lỗi tham chiếu',
+        errors: result.errors
+      });
+    }
+
+    return res.status(201).json(
+        new SuccessResponse(result.data, `Đã import thành công ${result.data.length} lớp học`)
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(new ErrorResponse('Lỗi Server: ' + err.message, 500));
   }
 };

@@ -12,7 +12,7 @@ import {
     Loader2, AlertCircle, BarChart3, Activity, Award, TrendingDown
 } from 'lucide-react';
 import ScheduleDensityCharts from "../components/reports/ScheduleDensityCharts.jsx";
-import SchedulerViewer from "../components/admin/SchedulerViewer.jsx";
+import SchedulerViewer from "../components/scheduler/SchedulerViewer.jsx";
 import AlgorithmInputSelector from "../components/scheduler/SchedulerInput.jsx";
 
 // === Component Thẻ Thống Kê (Helper) ===

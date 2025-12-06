@@ -3,6 +3,7 @@ const router = express.Router();
 const scheduleController = require('../controller/scheduleController');
 const scheduleInstanceController = require('../controller/scheduleInstanceController');
 const { verifyToken, authorize } = require('../middleware/auth');
+const manualController = require("../controller/manualScheduleController");
 router.post('/filter', verifyToken, authorize('admin'), scheduleController.getSchedulesByFilter);
 router.get('/formatted', verifyToken, authorize('admin'), scheduleController.getFormattedSchedules);
 // router.post('/save', verifyToken, authorize('admin'), scheduleController.createScheduleWithDB);
@@ -13,7 +14,9 @@ router.get('/formatted', verifyToken, authorize('admin'), scheduleController.get
  * @access  Admin only
  */
 router.post('/save', verifyToken, authorize('admin'), scheduleController.saveSchedule);
-
+router.get('/manual/grid',verifyToken, authorize('admin'), manualController.getManualGridData);
+router.post('/manual/check', verifyToken, authorize('admin'), manualController.checkConflict);
+router.post('/manual/save', verifyToken, authorize('admin'), scheduleController.saveManualSchedule);
 /**
  * @route   GET /api/schedules/generations
  * @desc    Lấy tất cả schedule generations
@@ -63,6 +66,7 @@ router.get('/semesters/:semesterId/generations', verifyToken, authorize('admin')
  */
 router.delete('/generations/:id', verifyToken, authorize('admin'), scheduleController.deleteGeneration);
 router.post('/schedule', verifyToken, authorize('admin'), scheduleController.createScheduleWithDB);
+router.post('/save-manual', verifyToken, authorize('admin'), scheduleController.saveManualSchedule);
 router.get('/', verifyToken, authorize('admin'), scheduleController.getAllSchedules);
 router.get('/:id', verifyToken, authorize('admin'), scheduleController.getScheduleById);
 router.post('/', verifyToken, authorize('admin'), scheduleController.createSchedule);

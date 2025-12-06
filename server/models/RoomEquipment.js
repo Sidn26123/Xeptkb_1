@@ -41,4 +41,18 @@ const RoomEquipment = sequelize.define('RoomEquipment', {
     { fields: ['equipment_id'] },
     { fields: ['room_id'] }
   ],
-});module.exports = RoomEquipment;
+});
+
+RoomEquipment.associate = (models) => {
+    RoomEquipment.belongsTo(models.Room, {
+        foreignKey: 'room_id',
+        as: 'room'
+    });
+
+    RoomEquipment.belongsTo(models.Equipment, {
+        foreignKey: 'equipment_id',
+        as: 'equipment'
+    });
+};
+
+module.exports = RoomEquipment;

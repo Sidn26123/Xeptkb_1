@@ -1,5 +1,6 @@
 const Equipment = require('../models/Equipments');
 const { SuccessResponse, ErrorResponse } = require('../utils/responseUtils');
+const {bulkImportEquipments} = require("../services/equipmentService");
 
 // Lấy tất cả thiết bị
 exports.getAllEquipments = async (req, res) => {
@@ -63,5 +64,31 @@ exports.deleteEquipment = async (req, res) => {
     res.status(200).json(new SuccessResponse(null, 'Xóa thiết bị thành công'));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));
+  }
+};
+// Import hàng loạt thiết bị
+exports.bulkImportEquipments = async (req, res) => {
+  try {
+    const result = await bulkImportEquipments(req.body);
+
+    if (result.error === 'EMPTY_DATA')
+      return res.status(400).json(new ErrorResponse('Dữ liệu import trống', 400));
+
+    if (result.error === 'NO_VALID_ITEM')
+      return res.status(400).json(new ErrorResponse('Không có dữ liệu hợp lệ để import', 400));
+
+    if (result.error === 'VALIDATION_ERROR')
+      return res.status(422).json({
+        error: 'Dữ liệu import có lỗi, vui lòng kiểm tra lại file',
+        errors: result.errors
+      });
+
+    return res.status(201).json(
+        new SuccessResponse(result.data, `Đã import thành công ${result.data.length} thiết bị`)
+    );
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json(new ErrorResponse('Lỗi Server: ' + err.message, 500));
   }
 };

@@ -1,21 +1,27 @@
 const cors = require("cors");
 
-const allowedOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173,http://localhost:8080,http://localhost:8081, http://127.0.0.1:5173")
-  .split(",")
-  .map(origin => origin.trim())
-  .filter(Boolean);
+// Danh sách các domain Frontend / Localhost thông thường
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || "http://localhost:5173,http://localhost:8080,http://localhost:8081,http://127.0.0.1:5173")
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
 
 const corsOptions = {
   origin(origin, callback) {
-    // Cho phép request nội bộ, Postman, server không có header Origin
+    // 1. Cho phép request không có origin (Server-to-Server, Postman, Mobile App)
     if (!origin) return callback(null, true);
 
-    // Nếu origin nằm trong danh sách cho phép
+    // 2. Cho phép request từ danh sách allowedOrigins (Localhost frontend)
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    // Nếu không, từ chối và log lại
+    // 3. [MỚI] Cho phép request từ Extension (Edge/Chrome đều dùng chrome-extension://)
+    if (origin.startsWith('chrome-extension://')) {
+      return callback(null, true);
+    }
+
+    // 4. Nếu không thỏa mãn điều kiện nào -> Chặn
     console.warn(`[CORS] Origin bị từ chối: ${origin}`);
     callback(new Error("Not allowed by CORS"));
   },
@@ -24,7 +30,8 @@ const corsOptions = {
   exposedHeaders: ['Authorization'],
   credentials: true,
   optionsSuccessStatus: 200,
-  maxAge: 86400 // Cache preflight requests 1 ngày
+  maxAge: 86400
 };
 
+// Xuất ra middleware đã được cấu hình
 module.exports = cors(corsOptions);

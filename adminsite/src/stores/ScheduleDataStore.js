@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import {create} from 'zustand';
 
 const useSchedulerStore = create((set) => ({
     // --- DATA ---
@@ -78,7 +78,18 @@ const useSchedulerStore = create((set) => ({
     courses: [],
     teachers: [],
     rooms: [],
+    equipments: [],
+    days: [],
+    timeslots: [],
     semesters: [],
+    classes: [],
+    buildings: [],
+    faculties: [],
+    constraints: [],
+    roomEquipments: [],
+    subjectRequiresEquipment: [],
+    courseClasses: [],
+
     selected_courses: [], //ids of selected courses for scheduling
     selected_teachers: [],  //id of selected teacher for scheduling
     selected_rooms: [],
@@ -139,18 +150,10 @@ const useSchedulerStore = create((set) => ({
         },
     ],
 
-    subjects: [
-        'Chào cờ',
-        'Tiếng Anh có yêu tố nước ngoài',
-        'Sinh hoạt',
-        'Toán',
-        'Ngữ văn',
-        'Vật lý',
-        'Hóa học',
-    ],
+    subjects: [],
 
 
-    semester_config:{
+    semester_config: {
         max_concurrent_courses: 4,
         start_week: 1,
         end_week: 15,
@@ -414,16 +417,74 @@ const useSchedulerStore = create((set) => ({
             }));
         },
 
-        setConstraints: (constraints) =>
+        setSelectedConstraints: (constraints) =>
             set(() => ({
                 selected_constraints: Array.isArray(constraints) ? constraints : [],
             })),
-    },
+
+
+        setBuildings: (buildings) =>
+            set(() => ({
+                buildings: buildings,
+            })),
+
+        setFaculties: (faculties) =>
+            set(() => ({
+                faculties: faculties,
+            })),
+
+        setClasses: (classes) =>
+            set(() => ({
+                classes: classes,
+            })),
+
+        setDays: (days) =>
+            set(() => ({
+                days: days,
+            })),
+
+        setTimeslots: (timeslots) =>
+            set(() => ({
+                timeslots: timeslots,
+            })),
+
+        setEquipments: (equipments) =>
+            set(() => ({
+                equipments: equipments,
+            })),
+
+        setConstraints: (constraints) =>
+            set(() => ({
+                constraints: constraints,
+            })),
+        setSubjects: (subjects) =>
+            set(() => ({
+                subjects: subjects,
+            })),
+
+        setRoomEquipments: (roomEquipments) =>
+            set(() => ({
+                roomEquipments: roomEquipments,
+            })),
+
+        setSubjectRequiresEquipment: (subjectRequiresEquipment) =>
+            set(() => ({
+                subjectRequiresEquipment: subjectRequiresEquipment,
+            })),
+
+        setCourseClasses: (courseClasses) =>
+            set(() => ({
+                courseClasses: courseClasses,
+            })),
+
+    }
+
 }));
 export const useCourses = () => useSchedulerStore((state) => state.courses);
 export const useTeachers = () => useSchedulerStore((state) => state.teachers);
 export const useRooms = () => useSchedulerStore((state) => state.rooms);
-export const useConstraints = () => useSchedulerStore((state) => state.selected_constraints);
+export const useSelectedConstraints = () => useSchedulerStore((state) => state.selected_constraints);
+export const useConstraints = () => useSchedulerStore((state) => state.constraints);
 export const useSemesterConfig = () =>
     useSchedulerStore((state) => state.semester_config);
 export const useSchedules = () => useSchedulerStore((state) => state.schedules);
@@ -436,6 +497,16 @@ export const useSelectedCourses = () => useSchedulerStore((state) => state.selec
 export const useSelectedTeachers = () => useSchedulerStore((state) => state.selected_teachers);
 export const useSelectedRooms = () => useSchedulerStore((state) => state.selected_rooms);
 export const useSelectedSemester = () => useSchedulerStore((state) => state.selected_semester);
+export const useEquipments = () => useSchedulerStore((state) => state.equipments);
+export const useDays = () => useSchedulerStore((state) => state.days);
+export const useTimeslots = () => useSchedulerStore((state) => state.timeslots);
+export const useBuildings = () => useSchedulerStore((state) => state.buildings);
+export const useFaculties = () => useSchedulerStore((state) => state.faculties);
+export const useClasses = () => useSchedulerStore((state) => state.classes);
+export const useRoomEquipments = () => useSchedulerStore((state) => state.roomEquipments);
+export const useSubjectRequiresEquipment = () => useSchedulerStore((state) => state.subjectRequiresEquipment);
+export const useCourseClasses = () => useSchedulerStore((state) => state.courseClasses);
+
 export const useSchedulingActions = () =>
     useSchedulerStore((state) => state.actions);
 export const setCourses = (courses) =>
@@ -457,5 +528,27 @@ export const addConstraint = (constraint) =>
     useSchedulerStore.getState().actions.addConstraint(constraint);
 export const removeConstraint = (constraintId) =>
     useSchedulerStore.getState().actions.removeConstraint(constraintId);
+export const setSelectedConstraints = (constraints) =>
+    useSchedulerStore.getState().actions.setSelectedConstraints(constraints);
+export const setBuildings = (buildings) =>
+    useSchedulerStore.getState().actions.setBuildings(buildings);
+export const setFaculties = (faculties) =>
+    useSchedulerStore.getState().actions.setFaculties(faculties);
+export const setClasses = (classes) =>
+    useSchedulerStore.getState().actions.setClasses(classes);
+export const setDays = (days) =>
+    useSchedulerStore.getState().actions.setDays(days);
+export const setTimeslots = (timeslots) =>
+    useSchedulerStore.getState().actions.setTimeslots(timeslots);
+export const setEquipments = (equipments) =>
+    useSchedulerStore.getState().actions.setEquipments(equipments);
 export const setConstraints = (constraints) =>
     useSchedulerStore.getState().actions.setConstraints(constraints);
+export const setSubjects = (subjects) =>
+    useSchedulerStore.getState().actions.setSubjects(subjects);
+export const setRoomEquipments = (roomEquipments) =>
+    useSchedulerStore.getState().actions.setRoomEquipments(roomEquipments);
+export const setSubjectRequiresEquipment = (subjectRequiresEquipment) =>
+    useSchedulerStore.getState().actions.setSubjectRequiresEquipment(subjectRequiresEquipment);
+export const setCourseClasses = (courseClasses) =>
+    useSchedulerStore.getState().actions.setCourseClasses(courseClasses);

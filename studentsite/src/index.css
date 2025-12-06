@@ -855,3 +855,47 @@ span.flatpickr-weekday,
 .shadow-range-pill {
   box-shadow: 0 6px 14px rgba(99,102,241,0.12), 0 1px 2px rgba(0,0,0,0.04);
 }
+/* ============================================================
+   CUSTOM UTILITIES FOR CLEAN SCHEDULE / TIMETABLE UI (NO COLOR BLOCK)
+   ============================================================ */
+
+@layer components {
+  /* Wrapper cho từng ô ngày trong lịch */
+  .schedule-day {
+    @apply flex flex-col border border-gray-200 dark:border-gray-700 
+           rounded-xl p-3 min-h-[120px] bg-white/80 dark:bg-gray-900/40
+           transition hover:shadow-md;
+  }
+
+  /* Tiêu đề ngày */
+  .schedule-day-header {
+    @apply text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex justify-between;
+  }
+
+  /* Item môn học — không dùng background */
+  .schedule-item {
+    @apply flex flex-col gap-1 border-l-2 border-gray-300 dark:border-gray-600 
+           pl-3 py-1 text-sm leading-tight text-gray-700 dark:text-gray-200;
+  }
+
+  /* Tên môn học */
+  .schedule-item-title {
+    @apply font-medium text-gray-800 dark:text-white;
+  }
+
+  /* Thời gian học */
+  .schedule-item-time {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  /* Grid cho lịch dạng 7 cột */
+  .schedule-grid {
+    @apply grid grid-cols-7 gap-4 w-full;
+  }
+
+  /* Card popup khi click vào môn học */
+  .schedule-detail-card {
+    @apply p-4 rounded-xl border border-gray-200 dark:border-gray-700 
+           bg-white dark:bg-gray-900 shadow-lg w-full max-w-sm;
+  }
+}

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import PageMeta from '../components/common/PageMeta.jsx';
 import Button from '../components/ui/button/Button.jsx';
 import Modal from '../components/ui/modal/index.jsx';
-import {getAllClasses, createClass, updateClass, deleteClass} from '../services/classService.js';
+import {getAllClasses, createClass, updateClass, deleteClass, bulkImportClasses} from '../services/classService.js';
 import {getAllTrainingTypes, createTrainingType, updateTrainingType} from '../services/trainingTypeService.js';
 import {getAllFaculties} from '../services/facultyService.js';
 
@@ -11,6 +11,8 @@ import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {useForm} from 'react-hook-form';
 import {showError, showSuccess} from "../utils/ToastUtils.js";
+import DataImportModal from "../components/common/DataImportModal.jsx";
+import {handleBackendErrors} from "../utils/formUtils.js";
 
 // Schema cho Lớp học
 const classSchema = yup.object({
@@ -58,11 +60,46 @@ export default function ClassManagement() {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editClass, setEditClass] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [classToDelete, setClassToDelete] = useState(null);
     // form state used by add/edit modals
-    const [form, setForm] = useState({name: '', training_type_id: '', faculty_id: ''});
+    const [form, setForm] = useState({name: '', code: '', training_type_id: '', faculty_id: ''});
     const [errors, setErrors] = useState(null);
     // training type form state
     const [ttForm, setTtForm] = useState({name: '', code: '', description: ''});
+    const [isImportOpen, setIsImportOpen] = useState(false);
+    const [importErrors, setImportErrors] = useState([]);
+
+    const importMapping = {
+        'Tên lớp': 'name',
+        'Mã lớp': 'code',
+        'Mã Khoa': 'faculty_code',      // Excel nhập mã, Backend tự map sang ID
+        'Mã Hệ Đào Tạo': 'training_type_code' // Excel nhập mã
+    };
+    const handleImportData = async (data) => {
+        setImportErrors([]);
+        try {
+            // Gọi API
+            await bulkImportClasses(data);
+
+            // Thành công
+            setIsImportOpen(false);
+            fetchList();
+            showSuccess(`Đã thêm ${data.length} lớp học thành công!`);
+        } catch (err) {
+            console.error("Import failed", err);
+            const res = err?.response?.data;
+
+            // Xử lý lỗi 422 (Validation)
+            if (res?.errors && Array.isArray(res.errors)) {
+                setImportErrors(res.errors); // Hiển thị list lỗi trong Modal
+            } else {
+                // Lỗi khác hiển thị Toast
+                showError(res?.error || res?.message || 'Lỗi import lớp học');
+            }
+        }
+    };
+
 
     // Form cho Thêm Lớp
     const classAddForm = useForm({
@@ -75,6 +112,11 @@ export default function ClassManagement() {
         fetchTrainingTypes();
         fetchFaculties();
     }, []);
+
+    const handleOpenImport = () => {
+        setImportErrors([]);
+        setIsImportOpen(true);
+    };
 
     const fetchList = async () => {
         try {
@@ -107,6 +149,7 @@ export default function ClassManagement() {
         setEditClass(cls);
         setForm({
             name: cls.name || '',
+            code: cls.code || '',
             training_type_id: cls.training_type_id || '',
             faculty_id: cls.faculty_id || '',
         });
@@ -116,7 +159,7 @@ export default function ClassManagement() {
     const handleEditClose = () => {
         setEditClass(null);
         setIsEditOpen(false);
-        setForm({name: '', training_type_id: '', faculty_id: ''});
+        setForm({name: '', code: '',training_type_id: '', faculty_id: ''});
         setErrors(null);
     };
 
@@ -141,18 +184,32 @@ export default function ClassManagement() {
             fetchList();
         } catch (err) {
             showError('Cập nhật lớp học thất bại.');
+            console.log('Update failed:', err);
             handleBackendErrors(err);
         }
     };
 
-    const handleDeleteClass = async (id) => {
-        if (!window.confirm('Bạn có chắc muốn xóa lớp này?')) return;
+    // const handleDeleteClass = async (id) => {
+    //     if (!window.confirm('Bạn có chắc muốn xóa lớp này?')) return;
+    //     try {
+    //         await deleteClass(id);
+    //         fetchList();
+    //     } catch (err) {
+    //         console.error('Delete failed', err);
+    //         alert(err?.response?.data?.message || 'Lỗi khi xóa lớp');
+    //     }
+    // };
+    const handleDeleteClass = async () => {
+        if (!classToDelete) return;
         try {
-            await deleteClass(id);
+            await deleteClass(classToDelete.id);
+            showSuccess('Đã xóa lớp học thành công');
             fetchList();
+            setIsDeleteModalOpen(false);
+            setClassToDelete(null);
         } catch (err) {
             console.error('Delete failed', err);
-            alert(err?.response?.data?.message || 'Lỗi khi xóa lớp');
+            showError(err?.response?.data?.message || 'Lỗi khi xóa lớp');
         }
     };
 
@@ -162,39 +219,13 @@ export default function ClassManagement() {
         setErrors(null);
         setIsAddOpen(true);
     };
+
     const handleAddClose = () => {
         setIsAddOpen(false);
         setForm({name: '', training_type_id: '', faculty_id: ''});
         setErrors(null);
     };
 
-    // Generic backend error mapper: supports react-hook-form instances or plain component errors
-    const handleBackendErrors = (err, formInstance) => {
-        const payload = err?.response?.data;
-        const list = payload?.errors;
-        if (formInstance && typeof formInstance.setError === 'function') {
-            if (Array.isArray(list)) {
-                list.forEach(e => {
-                    if (e.field) formInstance.setError(e.field, {type: 'server', message: e.message});
-                });
-            } else {
-                formInstance.setError('root.serverError', {type: 'server', message: payload?.message || err.message});
-            }
-        } else {
-            if (Array.isArray(list)) {
-                const map = {};
-                list.forEach(e => {
-                    if (e.field) map[e.field] = e.message;
-                });
-                setErrors(map);
-            } else {
-                setErrors(payload?.message || err.message || 'Lỗi từ server');
-            }
-        }
-    };
-
-
-    // --- Handlers cho Loại Đào Tạo (TT) ---
 
     const handleCategoryChange = (id) => {
         // Toggle: if clicking the already-selected category, reset to 'all'
@@ -240,6 +271,10 @@ export default function ClassManagement() {
         }
     };
 
+    const confirmDelete = (cls) => {
+        setClassToDelete(cls);
+        setIsDeleteModalOpen(true);
+    };
     // (removed unused filteredClasses) — using combined `filtered` below for search + category
 
     // Combined search + category filter (include faculty name)
@@ -277,6 +312,7 @@ export default function ClassManagement() {
                     </div>
                 </div>
                 <div className="flex justify-between items-center p-4">
+                    {/* Phần bên trái: Các nút lọc (Giữ nguyên) */}
                     <div className="flex flex-wrap gap-2">
                         <Button
                             onClick={() => handleCategoryChange('all')}
@@ -296,41 +332,58 @@ export default function ClassManagement() {
                             </Button>
                         ))}
                     </div>
-                    <div className="flex justify-end items-center gap-3 p-4">
-                        <Button size="md" variant="primary"
-                                className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700"
-                                onClick={handleAddOpen}>
+
+                    {/* Phần bên phải: Các nút hành động (Đã sửa) */}
+                    <div className="flex items-center gap-3">
+                        <Button
+                            size="sm"
+                            className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                            onClick={handleOpenImport}
+                        >
+                            Import Excel
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="primary"
+                            className="!px-6 !py-2 font-semibold bg-blue-600 hover:bg-blue-700"
+                            onClick={handleAddOpen}
+                        >
                             Thêm lớp học
                         </Button>
-                        <Button size="md" variant="secondary"
-                                className="!px-6 !py-2 font-semibold bg-gray-200 hover:bg-gray-300" onClick={openAddTT}>
+
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            className="!px-6 !py-2 font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800"
+                            onClick={openAddTT}
+                        >
                             Thêm loại đào tạo
                         </Button>
                     </div>
-                </div>
-                <div className="max-w-full overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">STT</th>
-                            <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Tên
-                                lớp
-                            </th>
-                            <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Loại
-                                hình đào tạo
-                            </th>
-                            <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Khoa</th>
-                            <th className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Thao
-                                tác
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                        {filtered.map((cls, idx) => (
-                            <tr key={cls.id}>
-                                <td className="px-5 py-4 sm:px-6 text-start">{idx + 1}</td>
-                                <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{cls.name}</td>
-                                <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{(trainingTypes.find(t => String(t.id) === String(cls.training_type_id)) || {}).name || cls.training_type_id}</td>
+            </div>
+            <div className="max-w-full overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                    <tr>
+                        <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">STT</th>
+                        <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Tên
+                            lớp
+                        </th>
+                        <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Loại
+                            hình đào tạo
+                        </th>
+                        <th className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Khoa</th>
+                        <th className="px-5 py-3 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400">Thao
+                            tác
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                    {filtered.map((cls, idx) => (
+                        <tr key={cls.id}>
+                            <td className="px-5 py-4 sm:px-6 text-start">{idx + 1}</td>
+                            <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{cls.name}</td>
+                            <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{(trainingTypes.find(t => String(t.id) === String(cls.training_type_id)) || {}).name || cls.training_type_id}</td>
                                 <td className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{(faculties.find(f => String(f.id) === String(cls.faculty_id)) || {}).name || cls.faculty_id}</td>
                                 <td className="px-4 py-3 text-center">
                                     <Button size="sm" variant="outline" className="mr-2" onClick={() => {
@@ -378,6 +431,13 @@ export default function ClassManagement() {
                                 className="w-full border border-blue-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                                 type="text" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})}
                                 placeholder="Nhập tên lớp" required/>
+                        </div>
+                        <div>
+                            <label className="block mb-2 text-sm font-semibold text-gray-700">Mã lớp</label>
+                            <input
+                                className="w-full border border-blue-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                                type="text" value={form.code} onChange={(e) => setForm({...form,  code: e.target.value})}
+                                placeholder="Nhập mã lớp" required/>
                         </div>
                         <div>
                             <label className="block mb-2 text-sm font-semibold text-gray-700">Loại hình đào tạo</label>
@@ -433,18 +493,14 @@ export default function ClassManagement() {
                    className="max-w-lg w-full mx-auto bg-white/98 shadow-2xl">
                 <div className="p-8 bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg">
                     <h2 className="text-2xl font-bold mb-6 text-center text-yellow-700">Sửa thông tin lớp học</h2>
-                    <form className="space-y-5" onSubmit={async (e) => {
-                        e.preventDefault();
-                        setErrors(null);
-                        try {
-                            await updateClass(editClass.id, form);
-                            setIsEditOpen(false);
-                            fetchList();
-                        } catch (err) {
-                            console.error(err);
-                            setErrors(err?.response?.data || err?.message);
-                        }
-                    }}>
+                    <form className="space-y-5" onSubmit={handleUpdateClass}>
+                        <div>
+                            <label className="block mb-2 text-sm font-semibold text-gray-700">Mã lớp</label>
+                            <input
+                                className="w-full border border-yellow-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                                type="text" value={form.code} onChange={(e) => setForm({...form, code: e.target.value})}
+                                required/>
+                        </div>
                         <div>
                             <label className="block mb-2 text-sm font-semibold text-gray-700">Tên lớp</label>
                             <input
@@ -493,6 +549,7 @@ export default function ClassManagement() {
                         <div className="flex justify-end mt-6 gap-3">
                             <Button size="md" variant="primary"
                                     className="bg-yellow-500 hover:bg-yellow-600 font-semibold px-6 py-2 rounded-lg shadow"
+                                    // onClick={() => handleUpdateClass(classAddForm)}
                                     type="submit">Lưu</Button>
                             <Button size="md" variant="outline" className="font-semibold px-6 py-2 rounded-lg shadow"
                                     onClick={handleEditClose}>Hủy</Button>
@@ -507,7 +564,7 @@ export default function ClassManagement() {
                     <h2 className="text-xl font-bold mb-4">{editingTT ? 'Sửa loại đào tạo' : 'Thêm loại đào tạo'}</h2>
                     <form onSubmit={handleSaveTT} className="space-y-4">
                         <div>
-                            <label className="block mb-1 text-sm">Tên</label>
+                        <label className="block mb-1 text-sm">Tên</label>
                             <input className="w-full border rounded px-3 py-2" value={ttForm.name}
                                    onChange={(e) => setTtForm({...ttForm, name: e.target.value})} required/>
                         </div>
@@ -526,6 +583,40 @@ export default function ClassManagement() {
                             <Button type="submit" variant="primary">Lưu</Button>
                         </div>
                     </form>
+                </div>
+            </Modal>
+            <DataImportModal
+                isOpen={isImportOpen}
+                onClose={() => setIsImportOpen(false)}
+                onImport={handleImportData}
+                title="Import Lớp Học"
+                columnMapping={importMapping} // Map cột Excel
+                templateName={"class_import_template.xlsx"} // Tên file mẫu
+                errors={importErrors}         // Truyền lỗi vào
+            />
+            {/* 🆕 MODAL CONFIRM DELETE */}
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} className="max-w-md w-full mx-auto bg-white rounded-xl shadow-2xl">
+                <div className="p-6 text-center">
+                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                        <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">Xác nhận xóa</h3>
+                    <div className="mt-2 px-7 py-3">
+                        <p className="text-sm text-gray-500">
+                            Bạn có chắc chắn muốn xóa lớp <b>{classToDelete?.name}</b> không?
+                            <br/>Hành động này không thể hoàn tác.
+                        </p>
+                    </div>
+                    <div className="flex justify-center gap-4 mt-6">
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                            Hủy
+                        </Button>
+                        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleDeleteClass}>
+                            Xóa ngay
+                        </Button>
+                    </div>
                 </div>
             </Modal>
         </>

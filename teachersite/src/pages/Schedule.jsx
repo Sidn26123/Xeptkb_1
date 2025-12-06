@@ -248,7 +248,8 @@ export default function Schedule() {
 
   return (
     // limit page to single viewport height; inner content scrolls
-    <div className="h-full bg-gray-100 overflow-hidden">
+    <div className="h-full bg-gray-100 overflow-hidden flex items-center justify-center pb-20 pl-20 pr-20">
+      <div className="w-full h-full bg-white rounded-lg shadow-lg p-6 scale-105 overflow-auto">
         <div className="space-y-4">
           <div>
             <div className="mb-3 flex items-center justify-end">
@@ -263,7 +264,7 @@ export default function Schedule() {
                 currentMonth={monthCursor}
                 onMonthChange={setMonthCursor}
                 events={events}
-                onEventClick={handleEventClick}               
+                onEventClick={handleEventClick}
                 semesters={semesters}
                 selectedSemester={selectedSemester}
                 externalWeekNumber={selectedWeekNumber}
@@ -297,6 +298,7 @@ export default function Schedule() {
           onSave={handleSaveEdit}
           detail={editModal.detail}
         />
+      </div>
     </div>
   );
 }

@@ -7,6 +7,8 @@ const {
     createStudentValidator,
     updateStudentValidator
 } = require('../validators/studentValidator');
+const {body} = require("express-validator");
+const classController = require("../controller/classController");
 
 // Lấy tất cả sinh viên
 router.get('/', verifyToken, authorize('admin'), studentController.getAllStudents);
@@ -42,4 +44,15 @@ router.delete(
     studentController.deleteStudent
 );
 
+router.post(
+    '/bulk-import',
+    verifyToken,
+    authorize('admin'),
+    [
+        // Validate nhanh: Bắt buộc body phải là Array và không rỗng
+        body().isArray({ min: 1 }).withMessage('Dữ liệu gửi lên phải là một danh sách và không được để trống')
+    ],
+    validateRequest,
+    studentController.bulkImport
+)
 module.exports = router;

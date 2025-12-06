@@ -106,3 +106,12 @@ dist-ssr/
 services/config-server/
 
 docker-compose.yml
+# release files/folders
+*.apk
+*.aab
+*.ipa
+*.xcarchive
+*.pak
+*.exe
+/release/
+**/release/

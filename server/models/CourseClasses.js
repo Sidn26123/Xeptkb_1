@@ -14,40 +14,22 @@ const CourseClass = sequelize.define('CourseClass', {
     subject_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'subjects',
-            key: 'id',
-        },
+        references: { model: 'subjects', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT',
     },
-    class_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'classes',
-            key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT',
-    },
+    // Đã xóa class_id ở đây
     semester_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'semesters',
-            key: 'id',
-        },
+        references: { model: 'semesters', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT',
     },
     teacher_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'teachers',
-            key: 'id',
-        },
+        references: { model: 'teachers', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT',
     },
@@ -63,25 +45,46 @@ const CourseClass = sequelize.define('CourseClass', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    total_enrollment: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    }
 }, {
     tableName: 'courseclasses',
     timestamps: false,
     indexes: [
         { fields: ['subject_id'] },
-        { fields: ['class_id'] },
+        // { fields: ['class_id'] }, // Đã xóa index này
         { fields: ['semester_id'] },
         { fields: ['teacher_id'] }
     ],
 });
-// Associations
+
+// ASSOCIATIONS
 CourseClass.associate = (models) => {
+    // Các quan hệ cũ
     CourseClass.belongsTo(models.Subject, { foreignKey: 'subject_id', as: 'subject' });
-    CourseClass.belongsTo(models.Class, { foreignKey: 'class_id', as: 'class' });
     CourseClass.belongsTo(models.Semester, { foreignKey: 'semester_id', as: 'semester' });
     CourseClass.belongsTo(models.Teacher, { foreignKey: 'teacher_id', as: 'teacher' });
-    CourseClass.hasMany(models.Schedule, {
+    CourseClass.hasMany(models.Schedule, { foreignKey: 'course_class_id', as: 'schedules' });
+
+    // === QUAN HỆ MỚI (N-N) ===
+
+    // 1. Quan hệ trực tiếp với bảng trung gian (Để query check is_primary)
+    // VD: courseClass.getClassGroups()
+    CourseClass.hasMany(models.CourseClassGroup, {
         foreignKey: 'course_class_id',
-        as: 'schedules'
+        as: 'classGroups'
+    });
+
+    // 2. Quan hệ tắt (Shortcut) để lấy danh sách Lớp SV trực tiếp
+    // VD: courseClass.getClasses()
+    CourseClass.belongsToMany(models.Class, {
+        through: models.CourseClassGroup,
+        foreignKey: 'course_class_id',
+        otherKey: 'class_id',
+        as: 'classes'
     });
 };
+
 module.exports = CourseClass;

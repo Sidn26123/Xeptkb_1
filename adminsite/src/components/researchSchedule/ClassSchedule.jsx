@@ -6,7 +6,7 @@ import ClassScheduleDetailModal from "./ClassScheduleDetailModal";
 import SemesterSchedule from "./SemesterSchedule";
 import {getAllSemesters} from '../../services/semesterService';
 import {getAllClasses} from '../../services/classService';
-import {getAllRooms} from '../../services/roomService.js';
+import {getAllRooms, getAllRoomsWithEquipment} from '../../services/roomService.js';
 import {getAllCourseClasses} from '../../services/courseClassService.js';
 import {getAllSchedules} from "../../services/scheduleService.js";
 import {fetchScheduleEvents} from "../../services/scheduleService.js";
@@ -53,7 +53,7 @@ export default function ClassSchedule() {
         async function fetchCaches() {
             try {
                 const [roomsData, ccData] = await Promise.all([
-                    getAllRooms(),
+                    getAllRoomsWithEquipment(),
                     getAllCourseClasses(),
                 ]);
                 if (!mounted) return;
@@ -143,7 +143,45 @@ export default function ClassSchedule() {
                 setLoading(true);
                 const fetched = await fetchScheduleEvents(selectedClassId, semesterId);
                 if (!mounted) return;
-                setEvents(Array.isArray(fetched) ? fetched : []);
+                console.log('Fetched schedule events after semester change:', fetched);
+
+                const apiData = Array.isArray(fetched) ? fetched : [];
+                const mappedEvents = apiData.map(item => {
+                    // 1. Tạo chuỗi thời gian start đầy đủ để component so sánh ngày
+                    // Format: YYYY-MM-DDTHH:mm:ss
+                    const timeString = `${String(item.timeSlot.start_hour).padStart(2, '0')}:${String(item.timeSlot.start_min).padStart(2, '0')}:00`;
+                    const endTimeString = `${String(item.timeSlot.end_hour).padStart(2, '0')}:${String(item.timeSlot.end_min).padStart(2, '0')}:00`;
+                    const startDateTime = `${item.date}T${timeString}`;
+                    const endDateTime = `${item.date}T${endTimeString}`;
+
+                    return {
+                        id: item.id,
+                        // Cần thiết: Để component biết ngày nào
+                        start: startDateTime,
+                        end: endDateTime,
+                        // Cần thiết: Để component biết tiết nào
+                        time_slot_idx: item.timeSlot.idx,
+
+                        // Cần thiết: Số tiết học (để rowSpan)
+                        num_of_period: item.schedule.num_of_period,
+
+                        // Thông tin hiển thị
+                        title: item.schedule.courseClass.subject.name, // Tên môn học
+                        course_name: item.schedule.courseClass.name,   // Tên lớp học phần
+
+                        // Xử lý an toàn null/undefined cho giáo viên
+                        teacher: item.teacher ? item.teacher.name : 'Chưa có GV',
+
+                        // Xử lý phòng học
+                        room: item.room ? item.room.code : 'Chưa xếp phòng',
+
+                        // Các thông tin phụ khác nếu cần
+                        subject: 'event-blue', // Class CSS màu sắc (tùy chọn)
+                    };
+                });
+
+                setEvents(mappedEvents);
+                // setEvents();
             } catch (err) {
                 console.error('Error fetching schedule after semester change:', err);
                 if (!mounted) return;
@@ -157,15 +195,51 @@ export default function ClassSchedule() {
         return () => { mounted = false; };
     }, [selectedSemester, selectedClassId, semesters]);
 
+    // const handleEventClick = (event) => {
+    //     setModal({
+    //         open: true,
+    //         detail: {
+    //             subject: event.title,
+    //             teacher: event.teacher,
+    //             room: event.room,
+    //             time: `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`,
+    //             date: format(event.start, 'EEEE, dd/MM/yyyy', {locale: viLocale}),
+    //             type: event.type === 'lecture' ? 'Lý thuyết' : event.type === 'lab' ? 'Thực hành' : 'Thi',
+    //             code: event.subject,
+    //         }
+    //     });
+    // };
     const handleEventClick = (event) => {
+        // 1. Log ra xem nó bị lỗi gì
+        console.log("Event data clicked:", event);
+
+        // 2. Chuyển đổi an toàn sang Date Object
+        // Nếu event.start là chuỗi, new Date() sẽ chuyển nó.
+        // Nếu nó đã là Date, new Date() sẽ copy nó.
+        const startDate = event.start ? new Date(event.start) : null;
+        const endDate = event.end ? new Date(event.end) : null;
+
+        // 3. Kiểm tra tính hợp lệ của Date (tránh lỗi Invalid time value)
+        const isValidStart = startDate && !isNaN(startDate.getTime());
+        const isValidEnd = endDate && !isNaN(endDate.getTime());
+
         setModal({
             open: true,
             detail: {
-                subject: event.title,
-                teacher: event.teacher,
-                room: event.room,
-                time: `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`,
-                date: format(event.start, 'EEEE, dd/MM/yyyy', {locale: viLocale}),
+                subject: event.title || event.name || "Không có tên",
+                teacher: event.teacher || "Chưa có GV",
+                room: event.room || "Chưa có phòng",
+
+                // Xử lý an toàn khi format giờ
+                time: (isValidStart && isValidEnd)
+                    ? `${format(startDate, 'HH:mm')} - ${format(endDate, 'HH:mm')}`
+                    : 'Chưa xác định thời gian',
+
+                // Xử lý an toàn khi format ngày
+                date: isValidStart
+                    ? format(startDate, 'EEEE, dd/MM/yyyy', {locale: viLocale})
+                    : 'Chưa xác định ngày',
+
                 type: event.type === 'lecture' ? 'Lý thuyết' : event.type === 'lab' ? 'Thực hành' : 'Thi',
                 code: event.subject,
             }

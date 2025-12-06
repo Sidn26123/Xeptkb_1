@@ -245,8 +245,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
       </div>
 
       {/* Week Navigation (only shown in week view) */}
-      (
-        <div className="week-navigation">
+      <div className="week-navigation">
         <button 
           className="week-nav-btn" 
           onClick={handlePrevWeek} 
@@ -270,8 +269,7 @@ export default function ModernTimeTable({ events = [], onEventClick, semesters =
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
-        </div>
-      )
+      </div>
 
       {/* Timetable / Month Grid */}
       <div className="timetable-table-container">

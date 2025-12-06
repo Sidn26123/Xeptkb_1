@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     AlertCircle,
     CheckCircle,
@@ -7,656 +7,467 @@ import {
     Users,
     Clock,
     AlertTriangle,
+    Activity,
+    BarChart3,
+    CheckSquare
 } from 'lucide-react';
-import {useCourses, useTeachers} from "../../stores/ScheduleDataStore.js";
 
-const ScheduleAnalyzer = ({courses, teachers, rooms, result}) => {
-    // Input data
-    // const courses = useCourses();
-    //
-    // const teachers = useTeachers();
-    // const result = {
-    //     success: true,
-    //     semester: {
-    //         start_week: 1,
-    //         end_week: 10,
-    //         max_concurrent: 4,
-    //     },
-    //     courses: [
-    //         {
-    //             course_id: 106,
-    //             class_id: 6,
-    //             teacher_id: 4,
-    //             room_id: 3,
-    //             start_week: 1,
-    //             end_week: 4,
-    //             duration: 4,
-    //             student_count: 35,
-    //             weekly_slots: [
-    //                 { day: 3, period: 2, duration: 2 },
-    //                 { day: 6, period: 2, duration: 2 },
-    //             ],
-    //         },
-    //         {
-    //             course_id: 107,
-    //             class_id: 7,
-    //             teacher_id: 4,
-    //             room_id: 1,
-    //             start_week: 6,
-    //             end_week: 10,
-    //             duration: 5,
-    //             student_count: 55,
-    //             weekly_slots: [
-    //                 { day: 4, period: 3, duration: 2 },
-    //                 { day: 6, period: 6, duration: 2 },
-    //                 { day: 2, period: 10, duration: 2 },
-    //             ],
-    //         },
-    //         {
-    //             course_id: 104,
-    //             class_id: 4,
-    //             teacher_id: 3,
-    //             room_id: 2,
-    //             start_week: 1,
-    //             end_week: 4,
-    //             duration: 4,
-    //             student_count: 45,
-    //             weekly_slots: [
-    //                 { day: 6, period: 5, duration: 2 },
-    //                 { day: 4, period: 4, duration: 2 },
-    //             ],
-    //         },
-    //         {
-    //             course_id: 102,
-    //             class_id: 2,
-    //             teacher_id: 1,
-    //             room_id: 4,
-    //             start_week: 5,
-    //             end_week: 7,
-    //             duration: 3,
-    //             student_count: 40,
-    //             weekly_slots: [
-    //                 { day: 2, period: 9, duration: 2 },
-    //                 { day: 3, period: 7, duration: 2 },
-    //             ],
-    //         },
-    //         {
-    //             course_id: 101,
-    //             class_id: 1,
-    //             teacher_id: 1,
-    //             room_id: 1,
-    //             start_week: 1,
-    //             end_week: 4,
-    //             duration: 4,
-    //             student_count: 50,
-    //             weekly_slots: [
-    //                 { day: 2, period: 3, duration: 2 },
-    //                 { day: 6, period: 4, duration: 2 },
-    //             ],
-    //         },
-    //         {
-    //             course_id: 105,
-    //             class_id: 5,
-    //             teacher_id: 3,
-    //             room_id: 1,
-    //             start_week: 5,
-    //             end_week: 7,
-    //             duration: 3,
-    //             student_count: 50,
-    //             weekly_slots: [
-    //                 { day: 2, period: 5, duration: 2 },
-    //                 { day: 6, period: 1, duration: 2 },
-    //             ],
-    //         },
-    //         {
-    //             course_id: 104,
-    //             class_id: 4,
-    //             teacher_id: 2,
-    //             room_id: 2,
-    //             start_week: 6,
-    //             end_week: 9,
-    //             duration: 4,
-    //             student_count: 45,
-    //             weekly_slots: [
-    //                 { day: 5, period: 8, duration: 2 },
-    //                 { day: 7, period: 3, duration: 2 },
-    //             ],
-    //         },
-    //     ],
-    //     fitness: 18,
-    //     generations: 4,
-    // };
-
+const ScheduleAnalyzer = ({ courses, teachers, rooms, result }) => {
     const [activeTab, setActiveTab] = useState('violations');
 
-    // Analysis functions
-    const analyzeSchedule = () => {
+    // Helper: Lấy tên từ ID (Vì result chỉ trả về ID)
+    const getCourseName = (id) => courses.find(c => c.id === id)?.name || `Course ${id}`;
+    const getTeacherName = (id) => teachers.find(t => t.id === id)?.name || `Teacher ${id}`;
+    const getRoomName = (id) => rooms.find(r => r.id === id)?.name || `Room ${id}`;
+
+    // --- Main Analysis Logic ---
+    const analysis = useMemo(() => {
+        if (!result || !result.courses) return null;
+
         const violations = [];
         const warnings = [];
         const stats = {
-            totalCourses: result.courses.length,
-            totalSessions: 0,
-            totalHours: 0,
+            totalScheduled: result.courses.length,
+            totalInputCourses: courses.length,
+            totalStudents: 0,
+            utilizationRate: 0
         };
 
-        // Check missing courses
-        const scheduledCourseIds = new Set(
-            result.courses.map((c) => c.course_id)
-        );
-        const missingCourses = courses.filter(
-            (c) => !scheduledCourseIds.has(c.course_id)
-        );
+        // 1. Kiểm tra môn học còn thiếu
+        const scheduledIds = new Set(result.courses.map(c => c.course_id));
+        const missing = courses.filter(c => !scheduledIds.has(c.id));
 
-        if (missingCourses.length > 0) {
+        if (missing.length > 0) {
             violations.push({
                 type: 'MISSING_COURSES',
                 severity: 'critical',
-                message: `${missingCourses.length} môn học chưa được xếp lịch`,
-                details: missingCourses.map((c) => `Course ${c.course_id}`),
+                message: `${missing.length} môn học chưa được xếp lịch`,
+                details: missing.map(c => `${c.name} (ID: ${c.id})`)
             });
         }
 
-        // Check each scheduled course
-        result.courses.forEach((scheduled) => {
-            const courseInfo = courses.find(
-                (c) => c.course_id === scheduled.course_id
-            );
-            if (!courseInfo) return;
+        // Map để check conflict
+        const teacherTimeMap = new Map(); // key: teacherId-week-day-period
+        const roomTimeMap = new Map();    // key: roomId-week-day-period
 
-            const expectedSessions =
-                courseInfo.weeks_needed * courseInfo.sessions_per_week;
-            const scheduledSessions =
-                scheduled.weekly_slots.length * scheduled.duration;
-            const expectedHours =
-                expectedSessions * courseInfo.duration_per_session;
-            const scheduledHours =
-                scheduled.weekly_slots.reduce(
-                    (sum, slot) => sum + slot.duration,
-                    0
-                ) * scheduled.duration;
+        // 2. Duyệt qua từng môn đã xếp
+        result.courses.forEach(scheduled => {
+            // Lấy thông tin gốc từ props đầu vào
+            const inputCourse = courses.find(c => c.id === scheduled.course_id);
+            const room = rooms.find(r => r.id === scheduled.room_id);
+            const teacher = teachers.find(t => t.id === scheduled.teacher_id);
 
-            stats.totalSessions += scheduledSessions;
-            stats.totalHours += scheduledHours;
+            if (!inputCourse) return;
 
-            // Check missing sessions
-            if (scheduledHours < expectedHours) {
+            // Cộng dồn thống kê (Lấy student_count từ inputCourse vì result không có)
+            const studentCount = inputCourse.student_count || inputCourse.total_enrollment || 0;
+            stats.totalStudents += studentCount;
+
+            // --- A. Kiểm tra Sức chứa (Capacity) ---
+            // Ưu tiên check capacity_max, fallback về capacity
+            const roomCapacity = room ? (room.capacity_max || room.capacity) : 0;
+
+            if (room && studentCount > roomCapacity) {
                 violations.push({
-                    type: 'INSUFFICIENT_HOURS',
+                    type: 'CAPACITY_OVERFLOW',
                     severity: 'critical',
-                    message: `Course ${scheduled.course_id} thiếu tiết học`,
+                    message: `Quá tải phòng học: ${inputCourse.name}`,
                     details: [
-                        `Cần: ${expectedHours} tiết, Có: ${scheduledHours} tiết`,
-                    ],
+                        `Phòng ${room.name} (Sức chứa: ${roomCapacity})`,
+                        `Sĩ số: ${studentCount}`,
+                        `Vượt quá: ${studentCount - roomCapacity} sinh viên`
+                    ]
                 });
             }
 
-            // Check duration mismatch
-            if (scheduled.duration !== courseInfo.weeks_needed) {
+            // --- B. Kiểm tra Giáo viên ---
+            // Nếu input yêu cầu GV cố định mà kết quả khác
+            if (inputCourse.teacher_id && inputCourse.teacher_id !== scheduled.teacher_id) {
                 warnings.push({
-                    type: 'DURATION_MISMATCH',
+                    type: 'TEACHER_MISMATCH',
                     severity: 'warning',
-                    message: `Course ${scheduled.course_id} thời gian không khớp`,
+                    message: `Thay đổi giáo viên: ${inputCourse.name}`,
                     details: [
-                        `Cần: ${courseInfo.weeks_needed} tuần, Có: ${scheduled.duration} tuần`,
-                    ],
+                        `Yêu cầu: ${getTeacherName(inputCourse.teacher_id)}`,
+                        `Được xếp: ${getTeacherName(scheduled.teacher_id)}`
+                    ]
                 });
             }
 
-            // Check sessions per week
-            if (
-                scheduled.weekly_slots.length !== courseInfo.sessions_per_week
-            ) {
-                warnings.push({
-                    type: 'SESSIONS_MISMATCH',
-                    severity: 'warning',
-                    message: `Course ${scheduled.course_id} số buổi/tuần không khớp`,
-                    details: [
-                        `Cần: ${courseInfo.sessions_per_week} buổi, Có: ${scheduled.weekly_slots.length} buổi`,
-                    ],
-                });
-            }
+            // --- C. Xây dựng Map Check Trùng Lịch ---
+            scheduled.weekly_slots.forEach(slot => {
+                // Loop qua các tuần học
+                for (let w = scheduled.start_week; w <= scheduled.end_week; w++) {
+                    // Loop qua các tiết trong slot
+                    for (let p = 0; p < slot.duration; p++) {
+                        const currentPeriod = slot.period + p;
 
-            // Check room capacity
-            const room = rooms.find((r) => r.id === scheduled.room_id);
-            if (room && scheduled.student_count > room.capacity) {
-                violations.push({
-                    type: 'ROOM_CAPACITY',
-                    severity: 'critical',
-                    message: `Course ${scheduled.course_id} vượt sức chứa phòng`,
-                    details: [
-                        `${scheduled.student_count} SV > ${room.capacity} chỗ (${room.name})`,
-                    ],
-                });
-            }
+                        // Check Teacher
+                        const tKey = `${scheduled.teacher_id}-${w}-${slot.day}-${currentPeriod}`;
+                        if (teacherTimeMap.has(tKey)) {
+                            teacherTimeMap.get(tKey).push(scheduled.course_id);
+                        } else {
+                            teacherTimeMap.set(tKey, [scheduled.course_id]);
+                        }
 
-            // Check teacher assignment
-            const teacher = teachers.find((t) => t.id === scheduled.teacher_id);
-            if (
-                teacher &&
-                !teacher.can_teach_courses.includes(scheduled.course_id)
-            ) {
-                violations.push({
-                    type: 'INVALID_TEACHER',
-                    severity: 'critical',
-                    message: `Course ${scheduled.course_id} giáo viên không đủ năng lực`,
-                    details: [
-                        `${teacher.name} không thể dạy Course ${scheduled.course_id}`,
-                    ],
-                });
-            }
-        });
-
-        // Check time conflicts
-        const conflicts = checkTimeConflicts();
-        violations.push(...conflicts.violations);
-        warnings.push(...conflicts.warnings);
-
-        return { violations, warnings, stats };
-    };
-
-    const checkTimeConflicts = () => {
-        const violations = [];
-        const warnings = [];
-
-        // Group courses by week
-        for (
-            let week = result.semester.start_week;
-            week <= result.semester.end_week;
-            week++
-        ) {
-            const coursesInWeek = result.courses.filter(
-                (c) => c.start_week <= week && c.end_week >= week
-            );
-
-            // Check teacher conflicts
-            const teacherSlots = {};
-            coursesInWeek.forEach((course) => {
-                course.weekly_slots.forEach((slot) => {
-                    const key = `${course.teacher_id}-${slot.day}-${slot.period}`;
-                    if (!teacherSlots[key]) teacherSlots[key] = [];
-                    teacherSlots[key].push(course.course_id);
-                });
-            });
-
-            Object.entries(teacherSlots).forEach(([key, courseIds]) => {
-                if (courseIds.length > 1) {
-                    const [teacherId, day, period] = key.split('-');
-                    const teacher = teachers.find(
-                        (t) => t.id === parseInt(teacherId)
-                    );
-                    violations.push({
-                        type: 'TEACHER_CONFLICT',
-                        severity: 'critical',
-                        message: `${teacher?.name || 'Teacher ' + teacherId} bị trùng lịch`,
-                        details: [
-                            `Tuần ${week}, Thứ ${day}, Tiết ${period}: Courses ${courseIds.join(', ')}`,
-                        ],
-                    });
+                        // Check Room
+                        const rKey = `${scheduled.room_id}-${w}-${slot.day}-${currentPeriod}`;
+                        if (roomTimeMap.has(rKey)) {
+                            roomTimeMap.get(rKey).push(scheduled.course_id);
+                        } else {
+                            roomTimeMap.set(rKey, [scheduled.course_id]);
+                        }
+                    }
                 }
             });
+        });
 
-            // Check room conflicts
-            const roomSlots = {};
-            coursesInWeek.forEach((course) => {
-                course.weekly_slots.forEach((slot) => {
-                    const key = `${course.room_id}-${slot.day}-${slot.period}`;
-                    if (!roomSlots[key]) roomSlots[key] = [];
-                    roomSlots[key].push(course.course_id);
+        // 3. Tổng hợp Conflict từ Map
+
+        // Conflict Giáo viên
+        teacherTimeMap.forEach((courseIds, key) => {
+            const uniqueCourses = [...new Set(courseIds)];
+            if (uniqueCourses.length > 1) {
+                const [tId, week, day, period] = key.split('-');
+                violations.push({
+                    type: 'TEACHER_CONFLICT',
+                    severity: 'critical',
+                    message: `Trùng lịch Giáo viên: ${getTeacherName(parseInt(tId))}`,
+                    details: [
+                        `Tuần ${week}, Thứ ${day}, Tiết ${period}`,
+                        `Các môn: ${uniqueCourses.map(id => getCourseName(id)).join(', ')}`
+                    ]
                 });
-            });
-
-            Object.entries(roomSlots).forEach(([key, courseIds]) => {
-                if (courseIds.length > 1) {
-                    const [roomId, day, period] = key.split('-');
-                    const room = rooms.find((r) => r.id === parseInt(roomId));
-                    violations.push({
-                        type: 'ROOM_CONFLICT',
-                        severity: 'critical',
-                        message: `${room?.name || 'Room ' + roomId} bị trùng lịch`,
-                        details: [
-                            `Tuần ${week}, Thứ ${day}, Tiết ${period}: Courses ${courseIds.join(', ')}`,
-                        ],
-                    });
-                }
-            });
-        }
-
-        return { violations, warnings };
-    };
-
-    const getInsights = () => {
-        const insights = [];
-
-        // Course load distribution
-        const coursesByWeek = {};
-        for (
-            let w = result.semester.start_week;
-            w <= result.semester.end_week;
-            w++
-        ) {
-            coursesByWeek[w] = result.courses.filter(
-                (c) => c.start_week <= w && c.end_week >= w
-            ).length;
-        }
-
-        const maxLoad = Math.max(...Object.values(coursesByWeek));
-        const minLoad = Math.min(...Object.values(coursesByWeek));
-
-        insights.push({
-            title: 'Phân bố tải',
-            value: `${minLoad}-${maxLoad} môn/tuần`,
-            description: `Tải cao nhất: ${maxLoad} môn, thấp nhất: ${minLoad} môn`,
+            }
         });
 
-        // Teacher workload
-        const teacherLoads = {};
-        result.courses.forEach((c) => {
-            teacherLoads[c.teacher_id] = (teacherLoads[c.teacher_id] || 0) + 1;
+        // Conflict Phòng
+        roomTimeMap.forEach((courseIds, key) => {
+            const uniqueCourses = [...new Set(courseIds)];
+            if (uniqueCourses.length > 1) {
+                const [rId, week, day, period] = key.split('-');
+                violations.push({
+                    type: 'ROOM_CONFLICT',
+                    severity: 'critical',
+                    message: `Trùng lịch Phòng: ${getRoomName(parseInt(rId))}`,
+                    details: [
+                        `Tuần ${week}, Thứ ${day}, Tiết ${period}`,
+                        `Các môn: ${uniqueCourses.map(id => getCourseName(id)).join(', ')}`
+                    ]
+                });
+            }
         });
 
-        const avgLoad =
-            Object.values(teacherLoads).reduce((a, b) => a + b, 0) /
-            teachers.length;
-        insights.push({
-            title: 'Khối lượng giảng dạy',
-            value: `${avgLoad.toFixed(1)} môn/GV`,
-            description: `Từ ${Math.min(...Object.values(teacherLoads))} đến ${Math.max(...Object.values(teacherLoads))} môn`,
-        });
+        // Lọc bớt duplicate message (do trùng nhiều tiết liên tiếp)
+        const uniqueViolations = violations.filter((v, i, a) =>
+            a.findIndex(t => t.message === v.message && t.details[0] === v.details[0]) === i
+        );
 
-        // Room utilization
-        const roomUsage = {};
-        result.courses.forEach((c) => {
-            const slots = c.weekly_slots.length * c.duration;
-            roomUsage[c.room_id] = (roomUsage[c.room_id] || 0) + slots;
-        });
+        return { violations: uniqueViolations, warnings, stats };
+    }, [courses, teachers, rooms, result]);
 
-        const totalSlots = Object.values(roomUsage).reduce((a, b) => a + b, 0);
-        insights.push({
-            title: 'Sử dụng phòng',
-            value: `${totalSlots} buổi học`,
-            description: `${rooms.length} phòng được sử dụng`,
-        });
-
-        // Fitness score interpretation
-        const fitnessLevel =
-            result.fitness < 10
-                ? 'Xuất sắc'
-                : result.fitness < 30
-                  ? 'Tốt'
-                  : result.fitness < 50
-                    ? 'Chấp nhận được'
-                    : 'Cần cải thiện';
-        insights.push({
-            title: 'Điểm đánh giá',
-            value: fitnessLevel,
-            description: `Fitness: ${result.fitness} (${result.generations} thế hệ)`,
-        });
-
-        return insights;
-    };
-
-    const analysis = analyzeSchedule();
-    const insights = getInsights();
+    if (!result) return null;
+    if (!analysis) return <div className="p-6 text-center">Đang phân tích dữ liệu...</div>;
 
     return (
-        <div className="w-full max-w-6xl mx-auto p-6 bg-gray-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                    Phân Tích Kết Quả Xếp TKB
-                </h1>
-                <p className="text-gray-600">
-                    Kiểm tra tính hợp lệ và đánh giá chất lượng thời khóa biểu
-                </p>
+        <div className="w-full max-w-7xl mx-auto p-6 bg-slate-50 min-h-screen font-sans text-slate-800">
+            {/* Header */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-slate-200">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800 mb-2">
+                            Kết Quả Xếp Thời Khóa Biểu
+                        </h1>
+                        <div className="flex flex-wrap gap-3 text-sm text-slate-500">
+                            <Badge icon={Activity} label={`Fitness: ${result.final_fitness?.toFixed(2) || 0}`} />
+                            <span className="text-slate-300">|</span>
+                            <Badge icon={Clock} label={`Runtime: ${result.total_time_seconds?.toFixed(2) || 0}s`} />
+                            {result.schedule_summary?.total_courses && (
+                                <>
+                                    <span className="text-slate-300">|</span>
+                                    <Badge icon={CheckSquare} label={`Courses: ${result.schedule_summary.total_courses}`} />
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <div className={`px-4 py-2 rounded-lg font-semibold border ${result.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                        {result.success ? 'Xếp lịch thành công' : 'Thất bại / Chưa tối ưu'}
+                    </div>
+                </div>
             </div>
 
-            {/* Summary Cards */}
+            {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">
-                                Vi phạm nghiêm trọng
-                            </p>
-                            <p className="text-3xl font-bold text-red-600">
-                                {analysis.violations.length}
-                            </p>
-                        </div>
-                        <XCircle className="w-12 h-12 text-red-600 opacity-20" />
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">Cảnh báo</p>
-                            <p className="text-3xl font-bold text-yellow-600">
-                                {analysis.warnings.length}
-                            </p>
-                        </div>
-                        <AlertTriangle className="w-12 h-12 text-yellow-600 opacity-20" />
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">
-                                Môn học đã xếp
-                            </p>
-                            <p className="text-3xl font-bold text-blue-600">
-                                {analysis.stats.totalCourses}
-                            </p>
-                        </div>
-                        <Calendar className="w-12 h-12 text-blue-600 opacity-20" />
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">
-                                Tổng số tiết
-                            </p>
-                            <p className="text-3xl font-bold text-green-600">
-                                {analysis.stats.totalHours}
-                            </p>
-                        </div>
-                        <Clock className="w-12 h-12 text-green-600 opacity-20" />
-                    </div>
-                </div>
+                <KpiCard
+                    label="Vi phạm (Critical)"
+                    value={analysis.violations.length}
+                    icon={XCircle}
+                    color="red"
+                    subText={analysis.violations.length === 0 ? "Hợp lệ" : "Cần xử lý"}
+                />
+                <KpiCard
+                    label="Cảnh báo (Warning)"
+                    value={analysis.warnings.length}
+                    icon={AlertTriangle}
+                    color="yellow"
+                    subText="Kiểm tra lại logic"
+                />
+                <KpiCard
+                    label="Độ phủ môn học"
+                    value={`${analysis.stats.totalScheduled}/${analysis.stats.totalInputCourses}`}
+                    icon={Calendar}
+                    color="blue"
+                    subText={Math.round((analysis.stats.totalScheduled/analysis.stats.totalInputCourses)*100) + "% hoàn thành"}
+                />
+                <KpiCard
+                    label="Tổng sinh viên"
+                    value={analysis.stats.totalStudents}
+                    icon={Users}
+                    color="green"
+                    subText="Đang phục vụ"
+                />
             </div>
 
-            {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-lg mb-6">
-                <div className="border-b border-gray-200">
-                    <div className="flex space-x-4 px-6">
-                        <button
-                            onClick={() => setActiveTab('violations')}
-                            className={`py-4 px-4 border-b-2 font-medium text-sm ${
-                                activeTab === 'violations'
-                                    ? 'border-red-500 text-red-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            Vi phạm ({analysis.violations.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('warnings')}
-                            className={`py-4 px-4 border-b-2 font-medium text-sm ${
-                                activeTab === 'warnings'
-                                    ? 'border-yellow-500 text-yellow-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            Cảnh báo ({analysis.warnings.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('insights')}
-                            className={`py-4 px-4 border-b-2 font-medium text-sm ${
-                                activeTab === 'insights'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            Thông tin chi tiết
-                        </button>
-                    </div>
+            {/* Tabs & Content */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                <div className="flex border-b border-slate-200 overflow-x-auto">
+                    <TabButton
+                        active={activeTab === 'violations'}
+                        onClick={() => setActiveTab('violations')}
+                        count={analysis.violations.length}
+                        color="red"
+                    >
+                        Vi phạm
+                    </TabButton>
+                    <TabButton
+                        active={activeTab === 'warnings'}
+                        onClick={() => setActiveTab('warnings')}
+                        count={analysis.warnings.length}
+                        color="yellow"
+                    >
+                        Cảnh báo
+                    </TabButton>
+                    <TabButton
+                        active={activeTab === 'insights'}
+                        onClick={() => setActiveTab('insights')}
+                        color="blue"
+                    >
+                        Phân tích tải & Penalty
+                    </TabButton>
                 </div>
 
                 <div className="p-6">
                     {activeTab === 'violations' && (
-                        <div>
-                            {analysis.violations.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                                    <p className="text-xl font-semibold text-green-600">
-                                        Không có vi phạm nghiêm trọng!
-                                    </p>
-                                    <p className="text-gray-600 mt-2">
-                                        Thời khóa biểu hợp lệ và đáp ứng các
-                                        ràng buộc bắt buộc
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {analysis.violations.map((v, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="border-l-4 border-red-500 bg-red-50 p-4 rounded"
-                                        >
-                                            <div className="flex items-start">
-                                                <XCircle className="w-5 h-5 text-red-600 mt-0.5 mr-3" />
-                                                <div className="flex-1">
-                                                    <p className="font-semibold text-red-800">
-                                                        {v.message}
-                                                    </p>
-                                                    <ul className="mt-2 text-sm text-red-700 space-y-1">
-                                                        {v.details.map(
-                                                            (d, i) => (
-                                                                <li key={i}>
-                                                                    • {d}
-                                                                </li>
-                                                            )
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <IssueList issues={analysis.violations} type="error" emptyMsg="Tuyệt vời! Không có vi phạm ràng buộc cứng." />
                     )}
-
                     {activeTab === 'warnings' && (
-                        <div>
-                            {analysis.warnings.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                                    <p className="text-xl font-semibold text-green-600">
-                                        Không có cảnh báo!
-                                    </p>
-                                    <p className="text-gray-600 mt-2">
-                                        Tất cả các thông số đều ổn
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {analysis.warnings.map((w, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded"
-                                        >
-                                            <div className="flex items-start">
-                                                <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 mr-3" />
-                                                <div className="flex-1">
-                                                    <p className="font-semibold text-yellow-800">
-                                                        {w.message}
-                                                    </p>
-                                                    <ul className="mt-2 text-sm text-yellow-700 space-y-1">
-                                                        {w.details.map(
-                                                            (d, i) => (
-                                                                <li key={i}>
-                                                                    • {d}
-                                                                </li>
-                                                            )
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <IssueList issues={analysis.warnings} type="warning" emptyMsg="Không có cảnh báo nào." />
                     )}
-
                     {activeTab === 'insights' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {insights.map((insight, idx) => (
-                                <div
-                                    key={idx}
-                                    className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow"
-                                >
-                                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                                        {insight.title}
-                                    </h3>
-                                    <p className="text-3xl font-bold text-blue-600 mb-2">
-                                        {insight.value}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        {insight.description}
-                                    </p>
-                                </div>
-                            ))}
-
-                            <div className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow md:col-span-2">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                                    Phân bố môn học theo tuần
-                                </h3>
-                                <div className="flex items-end space-x-2 h-32">
-                                    {Object.entries(
-                                        result.schedule_summary
-                                            ?.concurrent_load || {}
-                                    ).map(([week, count]) => (
-                                        <div
-                                            key={week}
-                                            className="flex-1 flex flex-col items-center"
-                                        >
-                                            <div
-                                                className={`w-full rounded-t transition-all ${
-                                                    count > 3
-                                                        ? 'bg-red-500'
-                                                        : count > 2
-                                                          ? 'bg-yellow-500'
-                                                          : 'bg-green-500'
-                                                }`}
-                                                style={{
-                                                    height: `${(count / 4) * 100}%`,
-                                                }}
-                                            />
-                                            <span className="text-xs text-gray-600 mt-2">
-                                                {week}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <p className="text-sm text-gray-600 mt-4">
-                                    <span className="inline-block w-3 h-3 bg-green-500 rounded mr-2">
-                                        Nhẹ (≤2 môn)
-                                    </span>
-
-                                    <span className="inline-block w-3 h-3 bg-yellow-500 rounded ml-4 mr-2">
-                                        Vừa (3 môn)
-                                    </span>
-                                    <span className="inline-block w-3 h-3 bg-red-500 rounded ml-4 mr-2">
-                                        Cao (tren 3 môn)
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
+                        <InsightView result={result} />
                     )}
                 </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Sub Components ---
+
+const Badge = ({ icon: Icon, label }) => (
+    <span className="flex items-center gap-1.5">
+        <Icon size={14} className="text-slate-400" />
+        {label}
+    </span>
+);
+
+const KpiCard = ({ label, value, icon: Icon, color, subText }) => {
+    const styles = {
+        red: "text-red-600 bg-red-50 border-red-100",
+        yellow: "text-yellow-600 bg-yellow-50 border-yellow-100",
+        blue: "text-blue-600 bg-blue-50 border-blue-100",
+        green: "text-emerald-600 bg-emerald-50 border-emerald-100"
+    };
+
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-2">
+                <p className="text-slate-500 text-sm font-medium">{label}</p>
+                <div className={`p-2 rounded-lg ${styles[color]}`}>
+                    <Icon size={20} />
+                </div>
+            </div>
+            <p className="text-2xl font-bold text-slate-800">{value}</p>
+            <p className="text-xs text-slate-400 mt-1">{subText}</p>
+        </div>
+    );
+};
+
+const TabButton = ({ active, onClick, children, count, color }) => {
+    let activeStyle = "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50";
+    if (active) {
+        if (color === 'red') activeStyle = "border-red-500 text-red-700 bg-red-50/50";
+        else if (color === 'yellow') activeStyle = "border-yellow-500 text-yellow-700 bg-yellow-50/50";
+        else activeStyle = "border-blue-500 text-blue-700 bg-blue-50/50";
+    }
+
+    return (
+        <button
+            onClick={onClick}
+            className={`flex-1 py-4 px-6 text-sm font-semibold border-b-2 transition-all flex justify-center items-center gap-2 whitespace-nowrap ${activeStyle}`}
+        >
+            {children}
+            {count > 0 && (
+                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                    color === 'red' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                }`}>
+                    {count}
+                </span>
+            )}
+        </button>
+    );
+};
+
+const IssueList = ({ issues, type, emptyMsg }) => {
+    if (issues.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+                <CheckCircle className="w-16 h-16 text-emerald-300 mb-4" />
+                <p className="text-lg font-medium text-slate-700">{emptyMsg}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3">
+            {issues.map((issue, idx) => (
+                <div key={idx} className={`p-4 rounded-lg border-l-4 ${
+                    type === 'error' ? 'bg-red-50 border-red-500' : 'bg-yellow-50 border-yellow-500'
+                }`}>
+                    <div className="flex items-start gap-3">
+                        {type === 'error'
+                            ? <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                            : <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                        }
+                        <div>
+                            <h3 className={`font-semibold ${type === 'error' ? 'text-red-800' : 'text-yellow-800'}`}>
+                                {issue.message}
+                            </h3>
+                            <ul className={`mt-2 space-y-1 text-sm ${type === 'error' ? 'text-red-700' : 'text-yellow-700'}`}>
+                                {issue.details.map((d, i) => <li key={i}>• {d}</li>)}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const InsightView = ({ result }) => {
+    // Xử lý dữ liệu concurrent_load từ JSON
+    const loadData = result.schedule_summary?.concurrent_load || {};
+    // Chuyển object {"6": 1, ...} thành mảng để sort
+    const sortedWeeks = Object.keys(loadData).sort((a, b) => parseInt(a) - parseInt(b));
+    const maxLoad = Math.max(...Object.values(loadData), 1);
+    const maxConcurrentLimit = result.semester?.max_concurrent || 4;
+
+    return (
+        <div className="space-y-8">
+            {/* Chart: Phân bố tải theo tuần */}
+            <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-indigo-600" />
+                    Phân bố tải theo tuần (Concurrent Load)
+                </h3>
+                <div className="bg-white p-6 rounded-lg border border-slate-200 overflow-x-auto">
+                    <div className="flex items-end gap-2 h-48 min-w-[600px]">
+                        {sortedWeeks.map(week => {
+                            const count = loadData[week];
+                            const heightPercentage = Math.max((count / maxLoad) * 100, 10); // Min 10% height
+                            const isOverloaded = count > maxConcurrentLimit;
+
+                            return (
+                                <div key={week} className="flex-1 flex flex-col items-center group relative min-w-[30px]">
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none whitespace-nowrap z-10">
+                                        Tuần {week}: {count} môn
+                                    </div>
+
+                                    {/* Bar */}
+                                    <div
+                                        style={{ height: `${heightPercentage}%` }}
+                                        className={`w-full rounded-t-md transition-all relative ${
+                                            isOverloaded ? 'bg-red-400 hover:bg-red-500' : 'bg-indigo-400 hover:bg-indigo-500'
+                                        }`}
+                                    >
+                                        <span className="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] text-white font-bold">
+                                            {count}
+                                        </span>
+                                    </div>
+
+                                    {/* Label */}
+                                    <span className="text-xs text-slate-500 mt-2 font-medium">W{week}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="mt-4 flex gap-6 text-sm justify-center">
+                        <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 bg-indigo-400 rounded"></span>
+                            <span className="text-slate-600">Trong giới hạn (≤ {maxConcurrentLimit})</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 bg-red-400 rounded"></span>
+                            <span className="text-slate-600">Quá tải</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Penalty Breakdown */}
+                <div className="border border-slate-200 rounded-xl p-5 bg-white">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-orange-500" />
+                        Chi tiết điểm phạt (Penalty)
+                    </h3>
+                    <div className="space-y-3">
+                        {Object.keys(result.penalty_breakdown || {}).length === 0 ? (
+                            <p className="text-slate-400 italic text-center py-4">Không có penalty (Điểm tuyệt đối 0)</p>
+                        ) : (
+                            Object.entries(result.penalty_breakdown).map(([key, val]) => (
+                                <div key={key} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded hover:bg-slate-100 transition-colors">
+                                    <span className="text-slate-700 font-medium">{key}</span>
+                                    <span className="font-mono font-bold text-red-600">-{val}</span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Phase Results (Nếu có) */}
+                {result.phase_results && (
+                    <div className="border border-slate-200 rounded-xl p-5 bg-white">
+                        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-blue-500" />
+                            Tiến trình thuật toán
+                        </h3>
+                        <div className="space-y-3">
+                            {Object.entries(result.phase_results).map(([phase, data]) => (
+                                <div key={phase} className="flex items-center justify-between text-sm p-3 border border-slate-100 rounded-lg">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-slate-700 capitalize">{phase}</span>
+                                        <span className="text-xs text-slate-400">Generations: {data.generations}</span>
+                                    </div>
+                                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${data.success ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                        Fitness: {data.fitness.toFixed(1)}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

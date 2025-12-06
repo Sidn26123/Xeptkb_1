@@ -6,6 +6,7 @@ const { validateRequest } = require('../middleware/validate');
 const { createRoomValidator, updateRoomValidator } = require('../validators/roomValidator');
 
 router.get('/', verifyToken, authorize('admin'), roomController.getAllRooms);
+router.get('/full', verifyToken, authorize('admin'), roomController.getAllRoomsWithEquipment);
 router.get('/:id', verifyToken, authorize('admin'), roomController.getRoomById);
 router.post('/', verifyToken, authorize('admin'), createRoomValidator, validateRequest, roomController.createRoom);
 router.put('/:id', verifyToken, authorize('admin'), updateRoomValidator, validateRequest, roomController.updateRoom);

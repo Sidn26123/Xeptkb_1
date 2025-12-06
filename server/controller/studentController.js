@@ -2,6 +2,8 @@ const { Student, User, Class, Faculty } = require('../models');
 const { SuccessResponse, ErrorResponse, ValidationResponse } = require('../utils/responseUtils');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const {bulkImportClasses} = require("../services/classService");
+const {bulkImportStudents} = require("../services/studentService");
 
 // Lấy tất cả sinh viên
 exports.getAllStudents = async (req, res) => {
@@ -9,7 +11,7 @@ exports.getAllStudents = async (req, res) => {
     const students = await Student.findAll({
       include: [
         { model: User, as: 'user', attributes: ['id', 'username', 'role'] },
-        { model: Class, as: 'class', attributes: ['id', 'name', 'faculty_id'], include: [{ model: Faculty, as: 'faculty', attributes: ['id', 'name', 'faculty_id'] }] }
+        { model: Class, as: 'class', attributes: ['id', 'name', 'code'], include: [{ model: Faculty, as: 'faculty', attributes: ['id', 'name', 'code'] }] }
       ]
     });
     res.status(200).json(new SuccessResponse(students, 'Lấy danh sách sinh viên thành công'));
@@ -224,5 +226,31 @@ exports.deleteStudent = async (req, res) => {
     res.status(200).json(new SuccessResponse(null, 'Xóa sinh viên thành công'));
   } catch (err) {
     res.status(500).json(new ErrorResponse(err.message, 500));
+  }
+};
+
+exports.bulkImport = async (req, res) => {
+  try {
+    const result = await bulkImportStudents(req.body);
+
+    if (result.error === 'EMPTY_DATA')
+      return res.status(400).json(new ErrorResponse('Dữ liệu import trống', 400));
+
+    if (result.error === 'NO_VALID_ITEM')
+      return res.status(400).json(new ErrorResponse('Không có dữ liệu hợp lệ', 400));
+
+    if (result.error === 'VALIDATION_ERROR') {
+      return res.status(422).json({
+        error: 'Dữ liệu import có lỗi tham chiếu',
+        errors: result.errors
+      });
+    }
+
+    return res.status(201).json(
+        new SuccessResponse(result.data, `Đã import thành công ${result.data.length} lớp học`)
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(new ErrorResponse('Lỗi Server: ' + err.message, 500));
   }
 };

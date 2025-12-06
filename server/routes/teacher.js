@@ -23,5 +23,10 @@ router.put('/:id',  verifyToken, authorize('admin'), validateTeacher, validateRe
 router.get('/', verifyToken, authorize('admin'), teacherController.getAllTeachers);
 router.get('/:id',  verifyToken, authorize('admin'), teacherController.getTeacherById);
 router.delete('/:id',  verifyToken, authorize('admin'), teacherController.deleteTeacher);
-
+router.post(
+    '/bulk-import',
+    verifyToken,
+    authorize('admin'),
+    teacherController.bulkImport
+)
 module.exports = router;

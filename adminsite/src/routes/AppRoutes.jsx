@@ -25,6 +25,9 @@ import CourseClassManagement from "../pages/CourseClassManagement.jsx";
 import {ReportPage} from "../pages/ReportPage.jsx";
 import SchedulerPage from "../pages/SchedulerPage.jsx";
 import ConstraintManagement from "../pages/ConstraintManagement.jsx";
+import BackupManager from "../components/backups/BackupManagement.jsx";
+import ManualScheduler from "../components/scheduler/ManualScheduler.jsx";
+// import ScheduleChangeRequests from "../pages/ScheduleChangeRequests.jsx";
 // research schedule is a single management page; child views are rendered inside it
 
 export default function AppRoutes() {
@@ -53,6 +56,9 @@ export default function AppRoutes() {
         <Route path="/room-management" element={<RoomManagement />} />
         <Route path="/research-schedule" element={<ResearchScheduleManagement />} />
         <Route path={'/constraint-management'} element={<ConstraintManagement />} />
+        <Route path={'/backup'} element={<BackupManager />} />
+        <Route path={'/manual-scheduling'} element={<ManualScheduler />} />
+        {/*<Route path="/schedule-change-requests" element={<ScheduleChangeRequests />} />*/}
       </Route>
     </Routes>
   );

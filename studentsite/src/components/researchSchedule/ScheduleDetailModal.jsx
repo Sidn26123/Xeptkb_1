@@ -158,9 +158,9 @@ export default function ScheduleDetailModal({ open = false, onClose = () => {}, 
                     </svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lớp học</p>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Giảng viên</p>
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">
-                      {(fullDetail || detail).className  || "-"}
+                      {(fullDetail || detail).teacher  || "-"}
                     </p>
                   </div>
                 </div>
