@@ -1,22 +1,14 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASS,
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres', // Bắt buộc đổi từ mysql sang postgres
     logging: false,
     dialectOptions: {
-      charset: 'utf8mb4',
+        ssl: {
+            require: true,
+            rejectUnauthorized: false // Cần thiết để kết nối tới Supabase từ bên ngoài (như Render)
+        }
     },
-    define: {
-      charset: 'utf8mb4',
-      collate: 'utf8mb4_unicode_ci',
-    }
-  }
-);
+});
 
 module.exports = sequelize;
